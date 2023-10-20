@@ -1,0 +1,12 @@
+certifi==2022.12.7
+chardet==3.0.4
+idna==2.9
+numpy==1.22.0
+pandas==0.25.3
+python-dateutil==2.8.1
+pytz==2020.1
+requests==2.23.0
+six==1.14.0
+urllib3==1.26.5
+email-validator==1.1.0
+paho-mqtt>=1.6.0
