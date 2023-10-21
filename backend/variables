@@ -1,9 +1,0 @@
-#to backend
-ticker = string
-dt = string
-timeframe = string
-
-#to front
-matches = list[list1,list2]
-
-#Enter button
