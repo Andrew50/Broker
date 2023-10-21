@@ -4,8 +4,8 @@ import os
 import sys
 src = os.path.dirname(os.path.abspath(__file__))
 parent = src.split('Stocks2')[0]
-sys.path.append(parent + (r'Stocks2/'))
-from backend.Match import Match
+##sys.path.append(parent + (r'Stocks2/'))
+##from backend.Match import Match
 
 admin = "dog1"
 adminpswd = "dog1"
@@ -32,7 +32,7 @@ def home():
             return render_template("index2.html")
         else:
             global data_out
-            data_out = Match.compute(data_in)
+            ##data_out = Match.compute(data_in)
             print(data_out)
             return redirect(url_for("views.Return"))
     else:
