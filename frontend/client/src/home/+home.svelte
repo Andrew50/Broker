@@ -5,7 +5,7 @@
 		count += 1;
 	}
 
-</script>
+</script> 
 
 
 <form action="" method="POST">
