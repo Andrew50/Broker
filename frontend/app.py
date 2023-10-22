@@ -13,11 +13,9 @@ def base():
 def home(path):
     return send_from_directory('client/public', path)
 
-
 @app.route("/rand")
 def hello():
     return str(random.randint(0, 100))
-
 
 if __name__ == "__main__":
     app.run(debug=True)
