@@ -1,12 +1,22 @@
 <script>
-  let rand = -1;
+	let count = 0;
 
-  function getRand() {
-    fetch("./rand")
-      .then(d => d.text())
-      .then(d => (rand = d));
-  }
+	function increment() {
+		count += 4;
+	}
+
 </script>
 
-<h1>Your number is {rand}!</h1>
-<button on:click={getRand}>Get a random number</button>
+
+<form action="" method="POST">
+    <p><input type="text" name="usr" size="10" /></p>
+    <p><input type="text" name="password" size="10" /></p>
+    <p><input type="submit" value="Send Request" /></p>
+</form>
+
+
+<button on:click={increment}>
+  
+	Clicked {count}
+	{count === 1 ? 'time' : 'times'}
+</button>
