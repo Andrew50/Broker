@@ -497,7 +497,8 @@ class Data: #object
 						print('nice gpu code')
 					else:
 						x = d[i-bars:i]
-						x = preprocessing.normalize(x, axis=0)
+						
+						#x = preprocessing.normalize(x, axis=0)
 						if type != 'ml':
 							x = x[:, 3]
 							if type == 'dtw':
