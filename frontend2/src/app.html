@@ -10,3 +10,22 @@
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>
+<script context="module">
+	export async function load({ fetch }) {
+	  const response = await fetch('/api/data');
+	  const data = await response.json();
+	  return {
+		props: {
+		  message: data.message
+		}
+	  };
+	}
+  </script>
+  
+  <script>
+	export let message;
+  </script>
+  
+  <main>
+	<h1>{message}</h1>
+  </main>
