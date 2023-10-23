@@ -8,7 +8,7 @@ export default {
     vite: {
       server: {
         proxy: {
-          '/api': 'http://localhost:5000', // Proxy API requests to Flask backend
+          '/src': 'http://localhost:5000', // Proxy API requests to Flask backend
         },
       },
     },
