@@ -37,7 +37,7 @@
         }
       });
       const responseData = await response.json();
-      data = responseData;
+      data = JSON.parse(responseData);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
