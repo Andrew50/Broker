@@ -6,6 +6,7 @@
     <a href="/match">Match</a>>
 </div>
 
+
 <style>
     .index {
     text-align: center;
