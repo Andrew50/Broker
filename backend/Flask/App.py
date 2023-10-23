@@ -6,8 +6,11 @@ app = Flask(__name__)
 def get_data():
     # Sample data to be returned for GET request
     message = {
-        'message': 'This is a GET request'
+        "message": "Hello, JSON!",
+        "status": "success"
     }
+
+    # Using jsonify to convert the dictionary to JSON and send it as the response
     return jsonify(message)
 
 if __name__ == '__main__':

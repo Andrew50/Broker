@@ -11,5 +11,7 @@ export const GET = ({ request }) => {
     }
 
     const res = await fetch('https://')
-    return new Response(JSON.stringify({ message: "Hello" }), {status:200})
+    return new Response(JSON.stringify({ message: "Hello" }), { status: 200 })
+
+
 }
