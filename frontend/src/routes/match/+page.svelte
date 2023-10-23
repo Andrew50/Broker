@@ -22,27 +22,7 @@
     
 </div>
 
-<main>
-  <h1>Data from the server:</h1>
-  <table>
-    <thead>
-      <tr>
-        <th>Ticker</th>
-        <th>Datetime</th>
-        <th>Score</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each data as row (row.column1)}
-        <tr>
-          <td>{row.column1}</td>
-          <td>{row.column2}</td>
-          <td>{row.column3}</td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
-</main>
+
 
 {#if isLoading}
   <p>Loading...</p>
