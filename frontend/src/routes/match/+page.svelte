@@ -80,6 +80,8 @@
   async function fetchData() {
     try {
       isLoading = true;
+      
+          
       userInput = ticker.concat('.',dt,'.',tf)
       console.log(userInput)
       const url = `http://127.0.0.1:5000/api/data?inputString=${userInput}`
@@ -94,15 +96,19 @@
       const responseData = await response.json();
       console.log('Response from the server:', responseData)
       data = responseData;
+      
     } catch (error) {
       console.error('Error fetching data:', error);
     }finally{
         isLoading = false
     }
+
+    
   }
 
   async function postData() {
   try {
+
     const postData = { key: 'value' }; // Modify the data you want to send
 
     const response = await fetch('http://127.0.0.1:5000/api/data', {

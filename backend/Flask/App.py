@@ -16,7 +16,7 @@ CORS(app)
 
 
 
-@app.route('/api/data', methods=['GET','OPTIONS'])
+@app.route('/api/data', methods=['GET'])
 def get_data():
     print(request.args)
     string = request.args.get('inputString')
