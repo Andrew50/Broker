@@ -53,6 +53,9 @@
   let dt = '';
   async function fetchData() {
     try {
+      if (ticker == '' | dt == '' | tf == ''){
+          return
+      }
       userInput = ticker.concat('.',dt,'.',tf)
       console.log(userInput)
       const url = `http://127.0.0.1:5000/api/data?inputString=${userInput}`
