@@ -313,7 +313,7 @@ class Screener:
 			return browser
 
 		def get_full(refresh):
-			df1 = pd.read_feather("sync/files/full_scan.feather")
+			df1 = pd.read_feather("C:/dev/Broker/backend/scripts/sync/files/full_scan.feather")
 			if not refresh: return df1['ticker'].tolist()
 			df2 = pd.read_feather("sync/files/current_scan.feather")
 			df3 = pd.concat([df1,df2]).drop_duplicates(subset = ['ticker'])		

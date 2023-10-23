@@ -6,7 +6,8 @@
             <input type="text" id="ticker" bind:value ={ticker} name="ticker" placeholder="Enter Ticker" required><br><br>
 
             <label for="datetime">Datetime:</label>
-            <input type="datetime-local" bind:value ={dt} id="datetime" name="datetime" required><br><br>
+            
+            <input type="text" bind:value ={dt} id="datetime" name="datetime" required><br><br>
 
             <label for="timeframe">Timeframe:</label>
             <input type="text" id="timeframe" bind:value ={tf} name="timeframe" placeholder="Enter Timeframe" required><br><br>

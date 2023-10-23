@@ -26,7 +26,7 @@ def get_data():
     try:
         message = Match.compute(string)
         
-    except TimeoutError:
+    except FloatingPointError:
 
         message = ''
     return jsonify(message)
