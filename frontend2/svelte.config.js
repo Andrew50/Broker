@@ -1,16 +1,10 @@
-import adapter from '@sveltejs/adapter-static';
+import adapter from '@sveltejs/adapter-auto';
 
-export default {
-  kit: {
-    // ... other configurations
-    target: '#svelte',
-    adapter: adapter(),
-    vite: {
-      server: {
-        proxy: {
-          '/src': 'http://localhost:5000', // Proxy API requests to Flask backend
-        },
-      },
-    },
-  },
+/** @type {import('@sveltejs/kit').Config} */
+const config = {
+	kit: {
+		adapter: adapter()
+	}
 };
+
+export default config;
