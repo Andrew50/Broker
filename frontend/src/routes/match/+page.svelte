@@ -61,9 +61,8 @@
     try {
       isLoading = true;
       
-          
-      userInput = ticker.concat('.',dt,'.',tf)
-      console.log(userInput)
+        
+      userInput = ticker.concat('_',dt,'_',tf)
       const url = `http://127.0.0.1:5000/api/data?inputString=${userInput}`
 
       const response = await fetch(url, {
@@ -79,31 +78,16 @@
       
     } catch (error) {
       console.error('Error fetching data:', error);
-    }finally{
-        isLoading = false
     }
+    isLoading = false
+    
 
     
   }
 
-  async function postData() {
-  try {
 
-    const postData = { key: 'value' }; // Modify the data you want to send
 
-    const response = await fetch('http://127.0.0.1:5000/api/data', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(postData), // Convert data to JSON
-    });
 
-    const responseData = await response.json();
-    console.log('Response from the server:', responseData);
-  } catch (error) {
-    console.error('Error sending data:', error);
-  }
 }
 
   // Call the fetchData function when the component is mounted

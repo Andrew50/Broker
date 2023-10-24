@@ -24,21 +24,16 @@ CORS(app)
 @app.route('/api/data', methods=['GET'])
 def get_data():
     
-    print(request.args)
+    
     string = request.args.get('inputString')
-    if len(string) < 4:
-        message = 'failed'
-        return jsonify(message)
-    #message = sample_fetch(input_string)
     print(string)
     try:
         message = Match.compute(string)
-        message =  [dict(item) for item in message]
-        
     except FloatingPointError:
-
         message = ''
-    return jsonify(message)
+    print('done')
+        
+    return jsonify(data=message)
 # @app.route('/api/data', methods=['POST'])
 # def post_data():
 #     # Handle POST request, you can access data using request.json
