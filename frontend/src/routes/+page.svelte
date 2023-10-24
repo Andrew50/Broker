@@ -3,8 +3,9 @@
 
 <div class="index">
     <h2>Welcome</h2>
-    <a href="/match">Match</a>>
-    <a href="/Test">Test</a>>
+    <a href="/match">Match</a>
+    <a href="/screener">Screener</a>
+    <a href="/Test">Test</a>
 </div>
 
 
