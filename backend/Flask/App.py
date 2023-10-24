@@ -6,7 +6,8 @@ import sys
 import os
 
 # Add the path to the directory containing the 'Match' script
-match_script_path = r'C:\dev\Broker\backend\scripts'
+match_script_path = r'C:\Users\owens\Documents\Broker2\backend\scripts'
+# match_script_path = r'C:\dev\Broker\backend\scripts'
 sys.path.append(match_script_path)
 
 # Import the 'Match' script
@@ -16,6 +17,26 @@ from flask import Flask
 app = Flask(__name__)
 CORS(app)
 
+message = [
+  {
+    "ID": 1,
+    "Name": "Alice",
+    "Department": "HR",
+    "Salary": 50000
+  },
+  {
+    "ID": 2,
+    "Name": "Bob",
+    "Department": "Sales",
+    "Salary": 60000
+  },
+  {
+    "ID": 3,
+    "Name": "Charlie",
+    "Department": "Engineering",
+    "Salary": 75000
+  }
+]
 
 
 
