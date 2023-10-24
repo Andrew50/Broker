@@ -18,7 +18,7 @@
     <div id="message"></div>
 
 
-
+   
     
 </div>
 
@@ -58,17 +58,18 @@
       </tr>
     </thead>
     <tbody>
-      {#each data as row (row.column1)}
+      {#each [data] as data}
         <tr>
-          <td>{row.column1}</td>
-          <td>{row.column2}</td>
-          <td>{row.column3}</td>
+          <td>{data.Name}</td>
         </tr>
       {/each}
     </tbody>
   </table>
 </main>
 {/if}
+<h1>Employee Names:</h1>
+    <ul id="employeeList"></ul>
+
  
 <script>
   export let data = 'dog2';
@@ -80,8 +81,6 @@
   async function fetchData() {
     try {
       isLoading = true;
-      
-          
       userInput = ticker.concat('.',dt,'.',tf)
       console.log(userInput)
       const url = `http://127.0.0.1:5000/api/data?inputString=${userInput}`
@@ -96,6 +95,13 @@
       const responseData = await response.json();
       console.log('Response from the server:', responseData)
       data = responseData;
+      const employeeList = document.getElementById("employeeList");
+      data.forEach(data => {
+            // Create a new <li> element for each employee's name
+            const listItem = document.createElement("li");
+            listItem.textContent = employee.Name; // Set the text content to the employee's name
+            employeeList.appendChild(listItem); // Add the <li> element to the <ul> list
+        });
       
     } catch (error) {
       console.error('Error fetching data:', error);

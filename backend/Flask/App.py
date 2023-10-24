@@ -6,7 +6,8 @@ import sys
 import os
 
 # Add the path to the directory containing the 'Match' script
-match_script_path = r'C:\dev\Broker\backend\scripts'
+match_script_path = r'C:\Users\owens\Documents\Broker2\backend\scripts'
+# match_script_path = r'C:\dev\Broker\backend\scripts'
 sys.path.append(match_script_path)
 
 # Import the 'Match' script
@@ -14,21 +15,41 @@ from Match import Match
 app = Flask(__name__)
 CORS(app)
 
+message = [
+  {
+    "ID": 1,
+    "Name": "Alice",
+    "Department": "HR",
+    "Salary": 50000
+  },
+  {
+    "ID": 2,
+    "Name": "Bob",
+    "Department": "Sales",
+    "Salary": 60000
+  },
+  {
+    "ID": 3,
+    "Name": "Charlie",
+    "Department": "Engineering",
+    "Salary": 75000
+  }
+]
 
 
 @app.route('/api/data', methods=['GET'])
 def get_data():
-    print(request.args)
-    string = request.args.get('inputString')
+    #print(request.args)
+    #string = request.args.get('inputString')
     
     #message = sample_fetch(input_string)
-    print(string)
-    try:
-        message = Match.compute(string)
+    #print(string)
+    #try:
+       # message = Match.compute(string)
         
-    except FloatingPointError:
+   # except FloatingPointError:
 
-        message = ''
+    #    message = ''
     return jsonify(message)
 # @app.route('/api/data', methods=['POST'])
 # def post_data():
