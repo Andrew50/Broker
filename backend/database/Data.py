@@ -1,3 +1,3 @@
-import sqlite3
+import mysql.connector
 
 conn = sqlite3.connect('

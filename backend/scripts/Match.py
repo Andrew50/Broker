@@ -36,6 +36,7 @@ class Match:
 
     def run(ds, ticker, dt, tf):
         y = Data(ticker, tf, dt,bars = np_bars+1).load_np('dtw',np_bars,True)
+        print(y)
         y=y[0][0]
         arglist = [[x, y, tick, index] for x, tick, index in ds]
         scores = Main.pool(Match.worker, arglist)
@@ -62,7 +63,7 @@ if __name__ == '__main__':
     ticker = 'JBL'  # input('input ticker: ')
     dt = '2023-10-03'  # input('input date: ')
     tf = 'd'  # int(input('input tf: '))
-    top_scores = Match.compute([ticker,dt,tf])
+    top_scores = Match.compute(arg)
     for score,ticker,date in top_scores:
     #for score, ticker, index in top_scores:
         print(f'{ticker} {date} {score}')
