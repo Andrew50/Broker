@@ -10,7 +10,7 @@
             "port": 3306,
             "driver": "MySQL",
             "name": "test",
-            "database": "test",
+            "database": "broker",
             "username": "root",
             "password": "7+WCy76_2$%g"
         }
