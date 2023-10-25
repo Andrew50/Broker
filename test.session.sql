@@ -21,6 +21,7 @@ CREATE TABLE setups(
     setup_id INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     tf VARCHAR(3) NOT NULL,
+    FOREIGN KEY (setup_id) REFERENCES setup_data(id)
 );
 -- @block
 CREATE TABLE users(
