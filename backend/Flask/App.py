@@ -53,8 +53,10 @@ def get_ticker():
 
 @app.route('/api/match', methods=['GET'])
 def get_data():
-    string = request.args.get('inputString')
-    message = Match.compute(string)
+    ticker = request.args.get('ticker')
+    dt = request.args.get('dt')
+    tf = request.args.get('tf')
+    message = Match.compute(ticker,dt,tf)
     #message = 'working'
 
     message = jsonify(data=message)

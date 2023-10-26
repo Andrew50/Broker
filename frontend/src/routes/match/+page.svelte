@@ -59,8 +59,8 @@
   async function fetchData() {
   try {
     isLoading = true;
-    userInput = ticker.concat('_', dt, '_', tf);
-    const url = `http://127.0.0.1:5000/api/match?inputString=${userInput}`;
+    
+    const url = `http://127.0.0.1:5000/api/match?ticker=${ticker}&dt=${dt}&tf=${tf}`;
 
     const response = await fetch(url, {
       method: 'GET',

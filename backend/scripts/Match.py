@@ -51,8 +51,7 @@ class Match:
         distance = sfastdtw(x, y, 1, dist=euclidean)
         return [distance, ticker, index]
 
-    def compute(lis):
-        ticker,dt,tf = lis.split('_')
+    def compute(ticker,dt,tf):
         dt = Main.format_date(dt)
         #ticker,dt,tf = lis
         ds = Match.load(tf)
