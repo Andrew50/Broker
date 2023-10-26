@@ -41,6 +41,10 @@ DROP TABLE setup_data;
 DROP TABLE setups;
 DROP TABLE users;
 -- @block
+INSERT INTO dfs
+VALUES ('AAPL', 'd', 0, 10, 11, 9, 10, 100);
+-- @block
 select *
-from setups;
-x
+from dfs;
+-- @block
+DELETE FROM dfs;
