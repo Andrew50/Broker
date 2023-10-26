@@ -43,11 +43,14 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})
 # ]
 @app.route('/api/ticker', methods=['GET'])
 def get_ticker():
-    string = request.args.get('')
-    message = Match.compute(string)
-    #message = 'working'
-
-    message = jsonify(data=message)
+    ticker = request.args.get('ticker')
+    tf = request.args.get('tf')
+    #
+    dt = None#request.args.get('dt')
+    df = Data(ticker,tf,dt).df
+    df = df.to_dict()
+    print(df)
+    message = jsonify(data=df)
     print(f'message: {message}')
     return message
 
