@@ -10,10 +10,15 @@
         wickUpColor="rgba(255, 144, 0, 1)"
     />
 </Chart>
+<form on:submit={fetchData}>
+     <input type="text" id="ticker" bind:value ={getTicker} name="ticker" placeholder="Enter Ticker" required>
+     <input type="submit" value="FETCH">
+</form>
 
 <script>
     import {ColorType, CrosshairMode} from 'lightweight-charts';
     import {Chart, CandlestickSeries} from 'svelte-lightweight-charts';
+    let getTicker = "";
 
     const options = {
         width: 600,
