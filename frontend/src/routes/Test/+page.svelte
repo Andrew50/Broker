@@ -12,7 +12,7 @@
 </Chart>
 <form on:submit={fetchData}>
      <input type="text" id="ticker" bind:value ={tf} name="ticker" placeholder="Enter Ticker" required>
-      <input type="text" id="ticker" bind:value ={dt} name="ticker" placeholder="Enter Ticker" required>
+      <input type="text" id="ticker" bind:value ={dt} name="ticker" placeholder="Enter Date Time">
      <input type="submit" value="FETCH">
 </form>
 
@@ -67,7 +67,7 @@
         },
     }
 
-    const data = [
+    let data = [
         {time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85},
         {time: '2018-10-22', open: 180.82, high: 181.40, low: 177.56, close: 178.75},
         {time: '2018-10-23', open: 175.77, high: 179.49, low: 175.44, close: 178.53},
