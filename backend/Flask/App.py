@@ -51,7 +51,7 @@ def get_ticker():
     df = Data(ticker,tf,dt).df
     df = df.reset_index()
     
-    df['time'] = df['datetime'].dt.date
+    df['time'] = df['datetime']
     df['time'] = df['time'].astype(str)
     df = df[['time','open','high','low','close']]
     print(df)

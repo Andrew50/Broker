@@ -20,7 +20,7 @@
 	"type": "module",
 	"dependencies": {
 		"fusioncharts": "^3.21.1",
-		"lightweight-charts": "^4.1.0",
+		"lightweight-charts": "^4.1.1",
 		"svelte-fusioncharts": "^1.0.0",
 		"svelte-lightweight-charts": "^2.2.0"
 	}
