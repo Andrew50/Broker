@@ -1,4 +1,4 @@
-<h1>Candlestick Chart</h1>
+<!-- <h1>Candlestick Chart</h1> -->
 <Chart {...options}>
     <CandlestickSeries
         data={data}
@@ -11,19 +11,27 @@
     />
 </Chart>
 <form on:submit={fetchData}>
-     <input type="text" id="ticker" bind:value ={tf} name="ticker" placeholder="Enter Ticker" required>
-      <input type="text" id="ticker" bind:value ={dt} name="ticker" placeholder="Enter Date Time">
+     <input type="text" id="ticker" bind:value ={ticker} name="ticker" placeholder="Enter Ticker" required>
+     <input type="text" id="tf" bind:value ={tf} name="ticker" placeholder="Enter TF" required>
+      <input type="text" id="dt" bind:value ={dt} name="ticker" placeholder="Enter Date Time">
      <input type="submit" value="FETCH">
 </form>
 
 <script>
     import {ColorType, CrosshairMode} from 'lightweight-charts';
     import {Chart, CandlestickSeries} from 'svelte-lightweight-charts';
+    let ticker = "";
     let tf = "";
     let dt = "";
 
+    onMount(() => {
+  // When new data is fetched and the `data` variable is updated,
+  // force the chart to update by using $set
+  $set(data, data); // You can pass the same data to force an update
+});
+
     async function fetchData() {
-        const url = `http://127.0.0.1:5000/api/match?tf=${tf}&dt=${dt}`;
+        const url = `http://127.0.0.1:5000/api/get?ticker=${ticker}&tf=${tf}&dt=${dt}`;
 
         const response = await fetch(url, {
           method: 'GET',
@@ -33,8 +41,9 @@
         });
 
         const responseData = await response.json();
-        console.log('Response from the server:', responseData);
-        data = responseData.data;
+        //console.log('Response from the server:', responseData);
+        //data = responseData.data;
+        data = responseData //this works becuase the pandas dataframe is converted to a json using a builtin pandas function in the backend. u dont need to use .data becuase it is the data.
         console.log('Unpacked Response:', data);
     }
 

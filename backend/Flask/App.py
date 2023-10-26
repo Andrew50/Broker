@@ -3,9 +3,10 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS  # Import the CORS module
 import sys
 import os
+import collections
 
 # Add the path to the directory containing the 'Match' script
-aj = False
+aj = True
 if aj:
     match_script_path = r'C:\dev\Broker\backend\scripts'
 else:
@@ -41,17 +42,23 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})
 #     "Salary": 75000
 #   }
 # ]
-@app.route('/api/ticker', methods=['GET'])
+@app.route('/api/get', methods=['GET'])
 def get_ticker():
     ticker = request.args.get('ticker')
     tf = request.args.get('tf')
     #
     dt = None#request.args.get('dt')
     df = Data(ticker,tf,dt).df
-    df = df.to_dict()
+    df = df.reset_index()
+    
+    df['time'] = df['datetime'].dt.date
+    df['time'] = df['time'].astype(str)
+    df = df[['time','open','high','low','close']]
     print(df)
-    message = jsonify(data=df)
-    print(f'message: {message}')
+    #df = df.to_dict(orient='records')
+    #df = collections.OrderedDict(df.to_records(index=False))
+    #message = jsonify(data=df)
+    message =  df.to_json(orient='records')
     return message
 
 @app.route('/api/match', methods=['GET'])
