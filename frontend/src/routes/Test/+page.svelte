@@ -11,17 +11,19 @@
     />
 </Chart>
 <form on:submit={fetchData}>
-     <input type="text" id="ticker" bind:value ={getTicker} name="ticker" placeholder="Enter Ticker" required>
+     <input type="text" id="ticker" bind:value ={tf} name="ticker" placeholder="Enter Ticker" required>
+      <input type="text" id="ticker" bind:value ={dt} name="ticker" placeholder="Enter Ticker" required>
      <input type="submit" value="FETCH">
 </form>
 
 <script>
     import {ColorType, CrosshairMode} from 'lightweight-charts';
     import {Chart, CandlestickSeries} from 'svelte-lightweight-charts';
-    let getTicker = "";
+    let tf = "";
+    let dt = "";
 
     async function fetchData() {
-        const url = `http://127.0.0.1:5000/api/match?ticker=${ticker}&dt=${dt}&tf=${tf}`;
+        const url = `http://127.0.0.1:5000/api/match?tf=${tf}&dt=${dt}`;
 
         const response = await fetch(url, {
           method: 'GET',

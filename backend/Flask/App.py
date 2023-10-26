@@ -43,7 +43,7 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})
 # ]
 @app.route('/api/ticker', methods=['GET'])
 def get_ticker():
-    string = request.args.get('inputString')
+    string = request.args.get('')
     message = Match.compute(string)
     #message = 'working'
 
