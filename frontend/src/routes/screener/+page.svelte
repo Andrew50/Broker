@@ -12,12 +12,15 @@
             <input type="submit" value="Submit">
         </form>
     </body>
-    <div
+    </div>
+    
+    <script>
+        let ticker = "";
+        let dt = "";
+        let tf = "";
+        function fetchData() {
+
+        }
+    </script>
 
 
-<script>
-
-</script>
-
-
-<style></style>

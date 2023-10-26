@@ -5,7 +5,7 @@ import sys
 import os
 
 # Add the path to the directory containing the 'Match' script
-aj = True
+aj = False
 if aj:
     match_script_path = r'C:\dev\Broker\backend\scripts'
 else:
@@ -16,6 +16,7 @@ sys.path.append(match_script_path)
 # Import the 'Match' script
 from Match import Match
 from flask import Flask
+from Data import Data
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -40,10 +41,15 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})
 #     "Salary": 75000
 #   }
 # ]
+@app.route('/api/ticker', methods=['GET'])
+def get_ticker():
+    string = request.args.get('inputString')
+    message = Match.compute(string)
+    #message = 'working'
 
-
-
-
+    message = jsonify(data=message)
+    print(f'message: {message}')
+    return message
 
 @app.route('/api/match', methods=['GET'])
 def get_data():
