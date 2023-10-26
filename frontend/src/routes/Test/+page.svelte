@@ -20,6 +20,22 @@
     import {Chart, CandlestickSeries} from 'svelte-lightweight-charts';
     let getTicker = "";
 
+    async function fetchData() {
+        const url = `http://127.0.0.1:5000/api/match?ticker=${ticker}&dt=${dt}&tf=${tf}`;
+
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const responseData = await response.json();
+        console.log('Response from the server:', responseData);
+        data = responseData.data;
+        console.log('Unpacked Response:', data);
+    }
+
     const options = {
         width: 600,
         height: 300,
