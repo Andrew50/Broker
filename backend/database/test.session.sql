@@ -43,3 +43,4 @@ DROP TABLE users;
 -- @block
 select *
 from setups;
+x
