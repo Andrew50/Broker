@@ -5,8 +5,10 @@ db = mysql.connector.connect(
     user="root",
     passwd="7+WCy76_2$%g",
 )
-mycursor = db.cursor()
-mycursor.execute("CREATE DATABASE testdatabase")
+
+c = db.cursor()
+c.execute('SELECT * FROM 
+#mycursor.execute("CREATE DATABASE testdatabase")
 
 
 
