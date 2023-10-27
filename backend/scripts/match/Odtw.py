@@ -1,4 +1,4 @@
-
+import math
 
 
 # Optimized dynamic time warping for match
@@ -11,21 +11,24 @@ class Odtw:
             indexLowerBound = y-radius
             indexUpperBound = y+radius
             if indexLowerBound < 0: indexLowerBound = 0
-            if indexUpperBound > len(y)-1: indexUpperBound = len(y)-1
+            elif indexUpperBound > len(y)-1: indexUpperBound = len(y)-1
             u.append(max(y[indexLowerBound:indexUpperBound+1]))
             l.append(min(y[indexLowerBound:indexUpperBound+1]))
         return u, l
     
-    def lowerBound(x, upper, lower):
+    def calclowerBound(x, upper, lower):
         totalLowerBound = 0
-        if(len(x) != upper):
+        if(len(x) != len(upper)):
             raise AttributeError
         for i in range(len(x)):
             if (x[i] > upper[i]):
                 totalLowerBound += (x[i]-upper[i])^2
             elif(x[i] < lower[i]):
                 totalLowerBound += (x[i]-lower[i])^2
-        return totalLowerBound
+        return math.sqrt(totalLowerBound)
+
+    def dtw(x, y, radius):
+        pass
             
         
         
