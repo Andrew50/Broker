@@ -28,8 +28,6 @@ class Odtw:
                 totalLowerBound += pow((x[i]-lower[i]), 2)
         return pow(totalLowerBound, 1/2)
 
-    def dtwEqual(x, y, radius):
-        pass
     def dtwupd(a, b, r):
         """ Compute the DTW distance between 2 time series with a warping band constraint
         :param a: the time series array 1
