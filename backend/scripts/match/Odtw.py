@@ -81,7 +81,7 @@ if __name__ == "__main__":
     radius = 1
     for i in range(15):
         x.append(i)
-        y.append(i+500)
+        y.append(i+5)
     print(x)
     print(y)
     upper, lower = Odtw.calcBounds(y, radius)
