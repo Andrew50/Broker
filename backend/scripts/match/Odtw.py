@@ -27,7 +27,7 @@ class Odtw:
                 totalLowerBound += (x[i]-lower[i])^2
         return math.sqrt(totalLowerBound)
 
-    def dtw(x, y, radius):
+    def dtwx(x, y, radius):
         pass
             
         
