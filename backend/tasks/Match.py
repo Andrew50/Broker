@@ -1,23 +1,19 @@
 import os, sys
-src = os.path.dirname(os.path.abspath(__file__))
-parent = src.split('Stocks2')[0]
-sys.path.append(parent + (r'Stocks2/'))
 from locale import normalize
 from multiprocessing.pool import Pool
-from Data import Main, Data, Dataset
+from .Data import Main, Data, Dataset
 import numpy as np
 import pandas as pd
 import datetime
-from Study import Screener as screener
+from .Study import Screener as screener
 import time
 from discordwebhook import Discord
 import numpy as np
 from sklearn import preprocessing
-from sfastdtw import sfastdtw
+from .sfastdtw import sfastdtw
 import mplfinance as mpf
 import torch
 from tqdm import tqdm
-from sfastdtw import sfastdtw
 from scipy.spatial.distance import euclidean
 from multiprocessing import Pool
 

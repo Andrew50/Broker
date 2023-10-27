@@ -6,6 +6,7 @@
     <a href="/match">Match</a>
     <a href="/screener">Screener</a>
     <a href="/Test">Test</a>
+    <a href="/test2">Test_celery</a>
 </div>
 
 
