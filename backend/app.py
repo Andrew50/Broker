@@ -44,6 +44,7 @@ def get_match():
     ticker = request.args.get('ticker')
     dt = request.args.get('dt')
     tf = request.args.get('tf')
+    pool
     pool.apply_async(return_match)
     data = Match.compute(ticker,dt,tf)
     return jsonify(data=data)
