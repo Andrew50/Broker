@@ -4,9 +4,16 @@
 <div class="index">
     <h2>Welcome</h2>
     <a href="/match">Match</a>
+    <div></div>
     <a href="/screener">Screener</a>
-    <a href="/Test">Test</a>
-    <a href="/test2">Test_celery</a>
+    <div></div>
+
+    <a href="/Test">Test Chart</a>
+    <div></div>
+
+    <a href="/test2">Test Async</a>
+    <div></div>
+
 </div>
 
 

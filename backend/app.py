@@ -6,24 +6,41 @@ from tasks.Match import Match
 from tasks.test_task import background_task
 import redis
 from flask import Flask
-
+from flask import Flask, jsonify, request
+import redis
+from rq import Queue
 from multiprocessing import Pool
-
+import time
+from flask import Flask, jsonify, request
+from huey import RedisHuey
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app)
+huey = RedisHuey('my_app', host='localhost')
 
-#def return_match(val):
-    
-    
+@app.route('/api/enqueue', methods=['POST'])
+def enqueue():
+    data = request.json
+    task = async_task(data['value'])
+    return jsonify({"task_id": task.id}), 202
 
+@app.route('/result/<task_id>', methods=['GET'])
+def get_result(task_id):
+    result = async_task.result(task_id)
+    if result is None:
+        return jsonify({"status": "pending"})
+    if result:
+        if result.error:
+            return jsonify({"status": "error", "error": str(result.error)})
+        return jsonify({"status": "finished", "result": result.data})
+    return jsonify({"status": "not found"})
 
-@app.route('/api/test2')
-def start_task():
-    #return jsonify(message=f"Task started, job id: {job.id}")
-    return 'god'
-
-
+@huey.task()
+def async_task(value):
+    print("Processing:", value)
+    time.sleep(5)
+    print("Done processing:", value)
+    return {"processed_value": value}
 
 @app.route('/api/get', methods=['GET'])
 def get_ticker():
@@ -44,23 +61,9 @@ def get_match():
     ticker = request.args.get('ticker')
     dt = request.args.get('dt')
     tf = request.args.get('tf')
-    pool
-    pool.apply_async(return_match)
     data = Match.compute(ticker,dt,tf)
     return jsonify(data=data)
 
 if __name__ == '__main__':
     app.run(debug = True)
 
-
-
-# @app.route('/api/match', methods=['GET'])
-# def get_match():
-#     ticker = request.args.get('ticker')
-#     dt = request.args.get('dt')
-#     tf = request.args.get('tf')
-#     message = Match.compute(ticker,dt,tf)
-#     return jsonify(data=message)
-
-# if __name__ == '__main__':
-#     app.run(debug = True)
