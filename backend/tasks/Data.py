@@ -129,7 +129,7 @@ class Main:
 		else: 
 			path = '1min/'
 			raise Exception('line 131 in data')
-		return 'C:/dev/Broker/backend/scripts/d/' + ticker + '.feather'
+		return 'C:/dev/Broker/backend/tasks/d/' + ticker + '.feather'
 
 	def is_market_open():  # Change to a boolean at some point
 		if (datetime.datetime.now().weekday() >= 5):

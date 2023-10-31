@@ -16,7 +16,7 @@ import torch
 from tqdm import tqdm
 from scipy.spatial.distance import euclidean
 from multiprocessing import Pool
-
+from Odtw import Odtw
 np_bars = 10
 
 class Match:
@@ -34,9 +34,8 @@ class Match:
         y = Data(ticker, tf, dt,bars = np_bars+1)
         y = y.load_np('dtw',np_bars,True)
         print(y)
-        raise AttributeError
-        
-        arglist = [[x, y, tick, index] for x, tick, index in ds]
+        upper, lower = Odtw.calcBounds(y, 2)
+        arglist = [[x, y, tick, index, upper, lower] for x, tick, index in ds]
         start = datetime.datetime.now()
         scores = Pool().map(Match.worker, arglist)#Main.pool(Match.worker, arglist)
         print(f'completed in {datetime.datetime.now() - start}')
@@ -44,8 +43,11 @@ class Match:
         return scores[:20]
 
     def worker(bar):
-        x, y, ticker, index = bar
-        distance = sfastdtw(x, y, 1, dist=euclidean)
+        x, y, ticker, index, upper, lower = bar
+        dtwLowerBound = Odtw.calclowerBound(x, upper, lower)
+        
+        ''' old match with fastdtw
+        distance = sfastdtw(x, y, 1, dist=euclidean)'''
         return [distance, ticker, index]
 
     def compute(ticker,dt,tf):
