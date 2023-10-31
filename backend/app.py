@@ -1,10 +1,8 @@
-
+#app.py
 from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS
-from tasks.Data import Data
-from tasks.Match import Match
-from tasks.test_task import background_task
-import redis
+# from tasks.Data import Data
+# from tasks.Match import Match
 from flask import Flask
 from flask import Flask, jsonify, request
 import redis
@@ -13,34 +11,43 @@ from multiprocessing import Pool
 import time
 from flask import Flask, jsonify, request
 from huey import RedisHuey
+from tasks import add_numbers
+from database import Data
+
 
 app = Flask(__name__)
 CORS(app)
-huey = RedisHuey('my_app', host='localhost')
+huey = RedisHuey('app')
 
-@app.route('/api/enqueue', methods=['POST'])
-def enqueue():
+
+
+@app.route('/api/add', methods=['POST'])
+def add():
     data = request.json
-    task = async_task(data['value'])
-    return jsonify({"task_id": task.id}), 202
+    num1 = data.get('num1')
+    num2 = data.get('num2')
+    
+    # Dispatch the task to Huey
+    result = add_numbers((num1, num2), delay=5)
+    return jsonify({"message": "Task is in queue, will be processed in 5 seconds.", "id": result.id})
 
-@app.route('/result/<task_id>', methods=['GET'])
-def get_result(task_id):
-    result = async_task.result(task_id)
-    if result is None:
-        return jsonify({"status": "pending"})
-    if result:
-        if result.error:
-            return jsonify({"status": "error", "error": str(result.error)})
-        return jsonify({"status": "finished", "result": result.data})
-    return jsonify({"status": "not found"})
 
-@huey.task()
-def async_task(value):
-    print("Processing:", value)
-    time.sleep(5)
-    print("Done processing:", value)
-    return {"processed_value": value}
+@app.route('/api/get2', methods=['GET'])
+def get_ticker():
+    ticker = request.args.get('ticker')
+    tf = request.args.get('tf')
+    dt = None#request.args.get('dt')
+    df = Data(ticker,tf,dt).df
+    df = df.reset_index()
+    df['time'] = df['datetime']
+    df['time'] = df['time'].astype(str)
+    df = df[['time','open','high','low','close']]
+    message =  df.to_json(orient='records')
+    return message
+
+
+
+
 
 @app.route('/api/get', methods=['GET'])
 def get_ticker():

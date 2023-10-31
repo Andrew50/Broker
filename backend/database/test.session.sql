@@ -2,7 +2,7 @@
 CREATE TABLE dfs(
     ticker VARCHAR(5) NOT NULL,
     tf VARCHAR(3) NOT NULL,
-    dt INT NOT NULL,
+    dt DATETIME NOT NULL,
     open DECIMAL(10, 4),
     high DECIMAL(10, 4),
     low DECIMAL(10, 4),
@@ -10,14 +10,12 @@ CREATE TABLE dfs(
     volume FLOAT,
     PRIMARY KEY (ticker, tf, dt)
 );
--- @block
 CREATE TABLE setup_data(
     id INT NOT NULL,
     ticker VARCHAR(5) NOT NULL,
     dt INT NOT NULL
 );
 CREATE INDEX id_index ON setup_data (id);
--- @block
 CREATE TABLE setups(
     id INT NOT NULL,
     setup_id INT NOT NULL,
@@ -26,7 +24,6 @@ CREATE TABLE setups(
     FOREIGN KEY (setup_id) REFERENCES setup_data(id)
 );
 CREATE INDEX id_index ON setups (id);
--- @block
 CREATE TABLE users(
     id INT PRIMARY KEY,
     setups_id INT NOT NULL,
@@ -35,16 +32,14 @@ CREATE TABLE users(
     settings TEXT,
     FOREIGN KEY (setups_id) REFERENCES setups(id)
 );
+-- delete all tables
 -- @block
-DROP TABLE dfs;
-DROP TABLE setup_data;
-DROP TABLE setups;
-DROP TABLE users;
--- @block
-INSERT INTO dfs
-VALUES ('AAPL', 'd', 0, 10, 11, 9, 10, 100);
+-- Drop tables in correct order
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS setups;
+DROP TABLE IF EXISTS setup_data;
+DROP TABLE IF EXISTS dfs;
+-- print a table
 -- @block
 select *
 from dfs;
--- @block
-DELETE FROM dfs;
