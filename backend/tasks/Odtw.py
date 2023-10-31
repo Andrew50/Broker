@@ -9,15 +9,13 @@ class Odtw:
         u = []
         l = []
         for i in range(len(y)):
-            indexLowerBound = i-radius
-            indexUpperBound = i+radius
-            if indexLowerBound < 0: indexLowerBound = 0
-            elif indexUpperBound > len(y)-1: indexUpperBound = len(y)-1
+            indexLowerBound = max(0, i-radius)
+            indexUpperBound = min(len(y)-1, i+radius)
             u.append(max(y[indexLowerBound:indexUpperBound+1]))
             l.append(min(y[indexLowerBound:indexUpperBound+1]))
         return u, l
     
-    def calclowerBound(x, upper, lower):
+    def calclowerBound(x, upper, lower, cutoff):
         totalLowerBound = 0.0
         if(len(x) != len(upper)):
             raise AttributeError
