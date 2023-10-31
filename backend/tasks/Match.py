@@ -33,7 +33,8 @@ class Match:
     def run(ds, ticker, dt, tf):
         y = Data(ticker, tf, dt,bars = np_bars+1)
         y = y.load_np('dtw',np_bars,True)
-        y=y[0][0]
+        print(y)
+        raise AttributeError
         
         arglist = [[x, y, tick, index] for x, tick, index in ds]
         start = datetime.datetime.now()

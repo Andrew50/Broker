@@ -502,8 +502,9 @@ class Data: #object
 						if type != 'ml':
 							x = x[:, 3]
 							if type == 'dtw':
-								x = np.column_stack(
-									(x, numpy.arange(x.shape[0])))
+								pass
+								#x = np.column_stack(
+								#	(x, numpy.arange(x.shape[0])))
 						returns.append([x, self.ticker,i])
 						#returns.append(x)
 		except TimeoutError:
