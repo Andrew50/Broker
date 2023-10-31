@@ -359,7 +359,7 @@ class Dataset: #object
 		return Data(ticker, tf, dt, bars, offset, value, pm, np_bars)
 
 	def __init__(self, request=pd.DataFrame(), bars=0, offset=0, value=None, pm=True, np_bars=50):
-		from .Study import Screener as screener
+		from Study import Screener as screener
 		if request.empty:
 			tickers = screener.get('full')
 			request = pd.DataFrame({'ticker': tickers})

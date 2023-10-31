@@ -1,16 +1,16 @@
 import os, sys
 from locale import normalize
 from multiprocessing.pool import Pool
-from .Data import Main, Data, Dataset
+from Data import Main, Data, Dataset
 import numpy as np
 import pandas as pd
 import datetime
-from .Study import Screener as screener
+from Study import Screener as screener
 import time
 from discordwebhook import Discord
 import numpy as np
 from sklearn import preprocessing
-from .sfastdtw import sfastdtw
+from sfastdtw import sfastdtw
 import mplfinance as mpf
 import torch
 from tqdm import tqdm
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     dt = '2023-10-03'  # input('input date: ')
     tf = 'd'  # int(input('input tf: '))
     arg = f'{ticker}_{dt}_{tf}'
-    top_scores = Match.compute(arg)
+    top_scores = Match.compute(ticker,dt,tf)
     for score,ticker,date in top_scores:
     #for score, ticker, index in top_scores:
         print(f'{ticker} {date} {score}')

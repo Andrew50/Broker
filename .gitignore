@@ -35,6 +35,7 @@ bld/
 backend/scripts/d
 backend/tasks/d
 backend/tasks/local
+backend/tasks/1min
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
