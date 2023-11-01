@@ -43,12 +43,10 @@ class Match:
         print(f'completed in {datetime.datetime.now() - start}')
         scores.sort(key=lambda x: x[0])
         count = 0
-        total = 0
         for score in scores: 
-            total += 1
             if(score[0] == 999):
                 count += 1
-        print(f"Number of skipped: {count}, Total: {total}")
+        print(f"Number of skipped: {count}, Total: {len(scores)}")
         return scores[:20]
 
     def worker(bar):
