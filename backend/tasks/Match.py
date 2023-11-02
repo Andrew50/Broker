@@ -33,7 +33,8 @@ class Match:
 
     def run(ds, ticker, dt, tf):
         y = Data(ticker, tf, dt,bars = np_bars+1)
-        y = y.load_np('dtw',np_bars,True)[0][0]
+        y = y.load_np('dtw',np_bars,True)
+        y = y[0][0]
         radius = math.ceil(np_bars/10)
         upper, lower = Odtw.calcBounds(y, radius)
         cutoff = 0.02*100
@@ -41,17 +42,14 @@ class Match:
         start = datetime.datetime.now()
         scores = Pool().map(Match.worker, arglist)#Main.pool(Match.worker, arglist)
         print(f'completed in {datetime.datetime.now() - start}')
+        scores = list(filter(lambda x : x is not None, scores))
         scores.sort(key=lambda x: x[0])
-        count = 0
-        for score in scores: 
-            if(score[0] == 999):
-                count += 1
-        print(f"Number of skipped: {count}, Total: {len(scores)}")
+        print(f"Total: {len(scores)}")
         return scores[:20]
 
     def worker(bar):
         x, y, ticker, index, upper, lower, cutoff, radius = bar
-        if(Odtw.calclowerBound(x, upper, lower) > cutoff): return [999, ticker, index]
+        if(Odtw.calclowerBound(x, upper, lower) > cutoff): return None
         return [Odtw.dtwupd(x,y,radius), ticker, index]
 
     def compute(ticker,dt,tf):

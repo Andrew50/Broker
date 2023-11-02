@@ -485,7 +485,6 @@ class Data: #object
 				partitions = bars//2
 			x = df.to_numpy()
 			#x = np.flip(x, 0)
-
 			d = np.zeros((x.shape[0]-1, x.shape[1]))
 			for i in range(len(d)):  # add ohlc
 				d[i] = x[i+1]/x[i, 3] - 1
@@ -497,15 +496,12 @@ class Data: #object
 						# sequence2 = torch.tensor([1.0, 2.0, 2.5, 3.5], requires_grad=True).cuda()
 						print('nice gpu code')
 					else:
-						x = d[i-bars:i]
+						if x[i][3]*x[i][4] < 500000: continue
+						y = d[i-bars:i]
 						#x = preprocessing.normalize(x, axis=0)
 						if type != 'ml':
-							x = x[:, 3]
-							if type == 'dtw':
-								pass
-								#x = np.column_stack(
-								#	(x, numpy.arange(x.shape[0])))
-						returns.append([x, self.ticker,i])
+							y = y[:, 3]
+						returns.append([y, self.ticker,i])
 						#returns.append(x)
 		except TimeoutError:
 			pass
