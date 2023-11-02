@@ -1,0 +1,3 @@
+* Postgres / MySQL support
+* At least once delivery?
+* Redis streams as viable broker implementation?

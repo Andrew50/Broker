@@ -1,76 +1,58 @@
-#app.py
-from flask import Flask, jsonify, request, make_response
+from flask import Flask, jsonify, request
 from flask_cors import CORS
-# from tasks.Data import Data
-# from tasks.Match import Match
-from flask import Flask
-from flask import Flask, jsonify, request
-import redis
-from rq import Queue
 from multiprocessing import Pool
-import time
-from flask import Flask, jsonify, request
-from huey import RedisHuey
-from tasks import add_numbers
-from database import Data
+import uuid
+#from scripts import Match  # Ensure the scripts module is in your Python path
+from scripts import test_func
+class App:
+    def __init__(self):
+        self.app = Flask(__name__)
+        CORS(self.app)
+        self.pool = Pool()
+        self.tasks = {}
 
+    def start_task(self, script_name):
+        # try:
+        #     # Get the requested function from the scripts module
+        #     if not hasattr(scripts, script_name):
+        #         return jsonify({'error': f'Function {script_name} not found in scripts'}), 404
+        #     script_function = getattr(scripts, script_name)
+        # except Exception as e:
+        #     return jsonify({'error': str(e)}), 500
+        if script_name =='match':
+            func = test_func.god
+        data = request.json
+        args = data.get('args', [])
+        kwargs = data.get('kwargs', {})
+        task_id = str(uuid.uuid4())
+        def callback(result):
+            self.tasks[task_id] = {'status': 'done', 'result': result}
+        task = self.pool.apply_async(func, args=args, kwds=kwargs, callback=callback)
+        self.tasks[task_id] = {'status': 'pending', 'task': task}
+        return jsonify({'task_id': task_id})
 
-app = Flask(__name__)
-CORS(app)
-huey = RedisHuey('app')
+    def get_status(self, task_id):
+        task_info = self.tasks.get(task_id)
+        if task_info is None:
+            return jsonify({'status': 'not found'}), 404
 
+        if task_info['status'] == 'pending' and task_info['task'].ready():
+            result = task_info['task'].get()
+            task_info.update({'status': 'done', 'result': result})
 
+        return jsonify(task_info)
 
-@app.route('/api/add', methods=['POST'])
-def add():
-    data = request.json
-    num1 = data.get('num1')
-    num2 = data.get('num2')
-    
-    # Dispatch the task to Huey
-    result = add_numbers((num1, num2), delay=5)
-    return jsonify({"message": "Task is in queue, will be processed in 5 seconds.", "id": result.id})
+    def run(self):
+        @self.app.route('/api/<script_name>', methods=['POST'])
+        def route_start_task(script_name):
+            return self.start_task(script_name)
 
+        @self.app.route('/api/status/<task_id>', methods=['GET'])
+        def route_get_status(task_id):
+            return self.get_status(task_id)
 
-@app.route('/api/get2', methods=['GET'])
-def get_ticker():
-    ticker = request.args.get('ticker')
-    tf = request.args.get('tf')
-    dt = None#request.args.get('dt')
-    df = Data(ticker,tf,dt).df
-    df = df.reset_index()
-    df['time'] = df['datetime']
-    df['time'] = df['time'].astype(str)
-    df = df[['time','open','high','low','close']]
-    message =  df.to_json(orient='records')
-    return message
-
-
-
-
-
-@app.route('/api/get', methods=['GET'])
-def get_ticker():
-    ticker = request.args.get('ticker')
-    tf = request.args.get('tf')
-    dt = None#request.args.get('dt')
-    df = Data(ticker,tf,dt).df
-    df = df.reset_index()
-    df['time'] = df['datetime']
-    df['time'] = df['time'].astype(str)
-    df = df[['time','open','high','low','close']]
-    message =  df.to_json(orient='records')
-    return message
-
-
-@app.route('/api/match', methods=['GET'])
-def get_match():
-    ticker = request.args.get('ticker')
-    dt = request.args.get('dt')
-    tf = request.args.get('tf')
-    data = Match.compute(ticker,dt,tf)
-    return jsonify(data=data)
+        self.app.run(debug=True, port=5000)
 
 if __name__ == '__main__':
-    app.run(debug = True)
-
+    app = App()
+    app.run()
