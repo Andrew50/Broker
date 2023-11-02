@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from multiprocessing import Pool
 import uuid
+from scripts import Data
 #from scripts import Match  # Ensure the scripts module is in your Python path
 from scripts import test_func
 class App:
@@ -12,13 +13,9 @@ class App:
         self.tasks = {}
 
     def start_task(self, script_name):
-        # try:
-        #     # Get the requested function from the scripts module
-        #     if not hasattr(scripts, script_name):
-        #         return jsonify({'error': f'Function {script_name} not found in scripts'}), 404
-        #     script_function = getattr(scripts, script_name)
-        # except Exception as e:
-        #     return jsonify({'error': str(e)}), 500
+      
+        if script_name == 'get':
+            func = Data.Data
         if script_name =='match':
             func = test_func.god
         data = request.json
