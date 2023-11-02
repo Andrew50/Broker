@@ -34,6 +34,8 @@ CREATE TABLE users(
 );
 -- delete all tables
 -- @block
+CREATE TABLE full_ticker_list(ticker VARCHAR(5) NOT NULL,);
+-- @block
 -- Drop tables in correct order
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS setups;
@@ -41,5 +43,6 @@ DROP TABLE IF EXISTS setup_data;
 DROP TABLE IF EXISTS dfs;
 -- print a table
 -- @block
-select *
-from dfs;
+SELECT *
+FROM dfs
+WHERE ticker = "AAPL"
