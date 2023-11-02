@@ -13,6 +13,9 @@
 
     <a href="/test2">Test Async</a>
     <div></div>
+    
+<a href="/test3">sidebar</a>
+    <div></div>
 
 </div>
 

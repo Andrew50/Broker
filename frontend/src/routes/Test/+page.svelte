@@ -11,7 +11,7 @@
         wickUpColor="rgba(0,255, 0, 1)"
     />
 </Chart>
-<form on:submit={fetchData}>
+<form on:submit={startTask1}>
      <input type="text" id="ticker" bind:value ={ticker} name="ticker" placeholder="Enter Ticker" required>
      <input type="text" id="tf" bind:value ={tf} name="ticker" placeholder="Enter TF" required>
       <input type="text" id="dt" bind:value ={dt} name="ticker" placeholder="Enter Date Time">
@@ -26,46 +26,73 @@
     // Output the width and height
     console.log("Window Width: " + windowWidth + " pixels");
     console.log("Window Height: " + windowHeight + " pixels");
-
+    import { writable } from 'svelte/store';
     import {onMount} from 'svelte';
     import {ColorType, CrosshairMode} from 'lightweight-charts';
     import {Chart, CandlestickSeries,TimeScale} from 'svelte-lightweight-charts';
+    export let data1 = 'None';
+    export let taskId1 = null;
+    export let taskStatus1 = writable('Not started');
+    export let taskResult1 = writable(null);
     let ticker = "";
     let tf = "";
     let dt = "";
     let timeScale;
     var data = [
-    { time: 1635528600000, open: 100, high: 110, low: 90, close: 105 },
-    { time: 1635528660000, open: 105, high: 115, low: 95, close: 100 },
-    // Add more candlestick data points for each minute
+    {time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85},
+    {time: '2018-10-22', open: 180.82, high: 181.40, low: 177.56, close: 178.75},
+    {time: '2018-10-23', open: 175.77, high: 179.49, low: 175.44, close: 178.53},
+    {time: '2018-10-24', open: 178.58, high: 182.37, low: 176.31, close: 176.97},
     ];
-
-    async function fetchData() {
-        const url = `http://127.0.0.1:5000/api/get?ticker=${ticker}&tf=${tf}&dt=${dt}`;
-
+    async function startTask1() {
+        const url = "http://127.0.0.1:5000/api/get";
+        const requestData = {
+            ticker: ticker,
+            dt: dt,
+            tf: tf
+        };
         const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          }
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
         });
+        if (response.ok) {
+            const responseData = await response.json();
+            taskId1 = responseData.task_id;
+            taskStatus1.set('Pending');
+            waitForResult(taskId1, taskStatus1, taskResult1);
+        } else {
+            console.error('Request failed for Task 1:', response.statusText);
+            data1 = 'Failed to start task 1';
+        }
+    }
+    
 
-        const responseData = await response.json();
-        data = responseData;
-        data.forEach(function(dataPoint) {
-            // Parse the date-time string and convert it to milliseconds
-            var dateTimeInMilliseconds = new Date(dataPoint.time).getTime();
+    async function waitForResult(taskId, statusStore, resultStore) {
+        const checkStatus = async () => {
+            const response = await fetch(`http://127.0.0.1:5000/api/status/${taskId}`);
+            if (response.ok) {
+            const responseData = await response.json();
+            if (responseData.status === 'done') {
+                clearInterval(intervalId);
+                statusStore.set('Done');
+                CandlestickSeries.setData(responseData.result);
+                console.log('Unpacked Response:', responeData.result);
+            }
+            } else {
+            clearInterval(intervalId);
+            console.error(`Failed to get task status for Task ID ${taskId}`);
+            }
+        };
 
-            // Update the 'time' property with milliseconds
-            dataPoint.time = dateTimeInMilliseconds;
-        });
-        CandlestickSeries.setData(data);
-        console.log('Unpacked Response:', data);
+        const intervalId = setInterval(checkStatus, 2000); // Check every 2 seconds
     }
 
     const options = {
         width: windowWidth - 300,
-        height: windowHeight,
+        height: windowHeight -40,
         layout: {
             background: {
                 type: ColorType.Solid,
