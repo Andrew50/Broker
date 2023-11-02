@@ -4,11 +4,9 @@ from multiprocessing.pool import Pool
 try:
     from .Data import Main, Data, Dataset
     from .Study import Screener as screener
-    from .sfastdtw import sfastdtw
 except:
     from Data import Main, Data, Dataset
     from Study import Screener as screener
-    from sfastdtw import sfastdtw
 import numpy as np
 import pandas as pd
 import datetime
