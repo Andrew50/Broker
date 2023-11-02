@@ -92,7 +92,7 @@
 
     const options = {
         width: windowWidth - 300,
-        height: windowHeight -40,
+        height: windowHeight - 40,
         layout: {
             background: {
                 type: ColorType.Solid,
