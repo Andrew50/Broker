@@ -487,7 +487,6 @@ class Data: #object
 			else:
 				partitions = bars//2
 			x = df.to_numpy()
-			#x = np.flip(x, 0)
 			d = np.zeros((x.shape[0]-1, x.shape[1]))
 			for i in range(len(d)):  # add ohlc
 				d[i] = x[i+1]/x[i, 3] - 1
