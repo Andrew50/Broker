@@ -1,7 +1,6 @@
 import math
-from sfastdtw import sfastdtw
 from scipy.spatial.distance import euclidean
-
+sqrt = math.sqrt
 # Optimized dynamic time warping for match
 # Let y denote the timeseries we want to find similarities of
 class Odtw: 
@@ -22,7 +21,7 @@ class Odtw:
                 totalLowerBound += pow((x[i]-upper[i]), 2)
             elif(x[i] < lower[i]):
                 totalLowerBound += pow((x[i]-lower[i]), 2)
-        return pow(totalLowerBound, 1/2)*100
+        return sqrt(totalLowerBound)*100
 
     def dtwupd(a, b, r):
         """ Compute the DTW distance between 2 time series with a warping band constraint
@@ -65,25 +64,8 @@ class Odtw:
 
         # The DTW distance is in the last cell in the matrix of size O(m^2) or at the middle of our array
         k -= 1
-        return pow(cost_prev[k], 1/2)*100
+        return sqrt(cost_prev[k])*100
             
         
-        
-
-
-if __name__ == "__main__":
-    x = []
-    y = []
-    radius = 1
-    for i in range(15):
-        x.append(i)
-        y.append(i+5)
-    print(x)
-    print(y)
-    upper, lower = Odtw.calcBounds(y, radius)
-    dtwLowerBound = Odtw.calclowerBound(x, upper, lower)
-    actualDtw = Odtw.dtwupd(x, y, radius)
-    print(dtwLowerBound)
-    print(actualDtw)
-    #print(sfastdtw(x, y, 1, dist=euclidean))
+       
     
