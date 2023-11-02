@@ -335,7 +335,7 @@ class Dataset: #object
 		# print(f'{datetime.datetime.now() - start}')
 		# return returns
 
-	def train(self, st, percent_yes, epochs):
+	def train(self, st, percent_yes, epochs): 
 		df = pd.read_feather('local/data/' + st + '.feather')
 		ones = len(df[df['value'] == 1])
 		if ones < 150:
@@ -368,7 +368,6 @@ class Dataset: #object
 			from Study import Screener as screener
 		if request.empty:
 			tickers = screener.get('full')
-			print(
 			request = pd.DataFrame({'ticker': tickers})
 			request['dt'] = None
 			request['tf'] = 'd'
