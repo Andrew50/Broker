@@ -15,16 +15,14 @@ class Odtw:
             l.append(min(y[indexLowerBound:indexUpperBound+1]))
         return u, l
     
-    def calclowerBound(x, upper, lower, cutoff):
+    def calclowerBound(x, upper, lower):
         totalLowerBound = 0.0
-        if(len(x) != len(upper)):
-            raise AttributeError
         for i in range(len(x)):
             if (x[i] > upper[i]):
                 totalLowerBound += pow((x[i]-upper[i]), 2)
             elif(x[i] < lower[i]):
                 totalLowerBound += pow((x[i]-lower[i]), 2)
-        return pow(totalLowerBound, 1/2)
+        return pow(totalLowerBound, 1/2)*100
 
     def dtwupd(a, b, r):
         """ Compute the DTW distance between 2 time series with a warping band constraint
@@ -67,7 +65,7 @@ class Odtw:
 
         # The DTW distance is in the last cell in the matrix of size O(m^2) or at the middle of our array
         k -= 1
-        return pow(cost_prev[k], 1/2)
+        return pow(cost_prev[k], 1/2)*100
             
         
         

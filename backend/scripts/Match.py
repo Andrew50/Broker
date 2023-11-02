@@ -23,13 +23,14 @@ import torch
 from tqdm import tqdm
 from scipy.spatial.distance import euclidean
 from multiprocessing import Pool
-
+from Odtw import Odtw
+import math
 np_bars = 10
 
 class Match:
 
     def load(tf):
-        ticker_list = screener.get('full')[:100]
+        ticker_list = screener.get('full')[:5000]
         df = pd.DataFrame({'ticker': ticker_list})
         df['dt'] = None
         df['tf'] = tf
@@ -39,20 +40,26 @@ class Match:
 
     def run(ds, ticker, dt, tf):
         y = Data(ticker, tf, dt,bars = np_bars+1)
-        y = y.load_np('dtw',np_bars,True)
-        y=y[0][0]
-        
-        arglist = [[x, y, tick, index] for x, tick, index in ds]
+        y = y.load_np('dtw',np_bars,True)[0][0]
+        radius = math.ceil(np_bars/10)
+        upper, lower = Odtw.calcBounds(y, radius)
+        cutoff = 0.02*100
+        arglist = [[x, y, tick, index, upper, lower, cutoff, radius] for x, tick, index in ds]
         start = datetime.datetime.now()
         scores = Pool().map(Match.worker, arglist)#Main.pool(Match.worker, arglist)
         print(f'completed in {datetime.datetime.now() - start}')
         scores.sort(key=lambda x: x[0])
+        count = 0
+        for score in scores: 
+            if(score[0] == 999):
+                count += 1
+        print(f"Number of skipped: {count}, Total: {len(scores)}")
         return scores[:20]
 
     def worker(bar):
-        x, y, ticker, index = bar
-        distance = sfastdtw(x, y, 1, dist=euclidean)
-        return [distance, ticker, index]
+        x, y, ticker, index, upper, lower, cutoff, radius = bar
+        if(Odtw.calclowerBound(x, upper, lower) > cutoff): return [999, ticker, index]
+        return [Odtw.dtwupd(x,y,radius), ticker, index]
 
     def compute(ticker,dt,tf):
         dt = Main.format_date(dt)
