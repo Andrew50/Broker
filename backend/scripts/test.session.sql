@@ -1,4 +1,9 @@
 -- @block 
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS setups;
+DROP TABLE IF EXISTS setup_data;
+DROP TABLE IF EXISTS dfs;
+-- print a table
 CREATE TABLE dfs(
     ticker VARCHAR(5) NOT NULL,
     tf VARCHAR(3) NOT NULL,
@@ -32,16 +37,7 @@ CREATE TABLE users(
     settings TEXT,
     FOREIGN KEY (setups_id) REFERENCES setups(id)
 );
--- delete all tables
--- @block
-CREATE TABLE full_ticker_list(ticker VARCHAR(5) NOT NULL,);
--- @block
--- Drop tables in correct order
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS setups;
-DROP TABLE IF EXISTS setup_data;
-DROP TABLE IF EXISTS dfs;
--- print a table
+CREATE TABLE full_ticker_list(ticker VARCHAR(5) NOT NULL);
 -- @block
 SELECT *
 FROM dfs
