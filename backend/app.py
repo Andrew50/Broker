@@ -14,10 +14,14 @@ class App:
 
     def start_task(self, script_name):
       
+
+##--------DEFINE SCRIPTS------------
         if script_name == 'get':
             func = Data.Data
         if script_name =='match':
             func = test_func.god
+
+
         data = request.json
         args = data.get('args', [])
         kwargs = data.get('kwargs', {})
