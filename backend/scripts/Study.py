@@ -314,7 +314,8 @@ class Screener:
 
 		def get_full(refresh):
 			df1 = pd.read_feather("C:/dev/Broker/backend/scripts/sync/files/full_scan.feather")
-			if not refresh: return df1['ticker'].tolist()
+			#if not refresh: return df1['ticker'].tolist()
+			return df1['ticker'].tolist()
 			df2 = pd.read_feather("C:/dev/Broker/backend/scripts/sync/files/current_scan.feather")
 			df3 = pd.concat([df1,df2]).drop_duplicates(subset = ['ticker'])		
 			not_in_current = (pd.concat([df3,df2]).drop_duplicates(subset = ['ticker'],keep = False))['ticker'].tolist()
