@@ -4,7 +4,10 @@ try:
     from Data import Data, Database
 except:
     from .Data import Data, Database
-def get():
+    
+
+
+def get(ticker,tf,dt):
     conn = Database()
     df = Data(conn,'AAPL').df
     list_of_lists = df.tolist()

@@ -1,4 +1,15 @@
 <script>
+
+    import { writable } from 'svelte/store';
+    import {onMount} from 'svelte';
+    import {ColorType, CrosshairMode} from 'lightweight-charts';
+    import {Chart, CandlestickSeries,TimeScale} from 'svelte-lightweight-charts';
+    export let match_data = writable([])
+    export let data1 = 'None';
+    export let taskId1 = null;
+    export let taskStatus1 = writable('Not started');
+    //export let taskResult1 = writable(null);
+
   var windowWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
   var windowHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
   
@@ -15,43 +26,31 @@
   }
   console.log("Window Width: " + windowWidth + " pixels");
     console.log("Window Height: " + windowHeight + " pixels");
-    import { writable } from 'svelte/store';
-    import {onMount} from 'svelte';
-    import {ColorType, CrosshairMode} from 'lightweight-charts';
-    import {Chart, CandlestickSeries,TimeScale} from 'svelte-lightweight-charts';
-    export let data1 = 'None';
-    export let taskId1 = null;
-    export let taskStatus1 = writable('Not started');
-    export let taskResult1 = writable(null);
-    let ticker = "";
-    let tf = "";
-    let dt = "";
+    
+    let ticker = "JBL";
+    let tf = "d";
+    let dt = "2023-10-03";
     let timeScale;
     var data = [
-    {time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85},
-    {time: '2018-10-22', open: 180.82, high: 181.40, low: 177.56, close: 178.75},
-    {time: '2018-10-23', open: 175.77, high: 179.49, low: 175.44, close: 178.53},
-    {time: '2018-10-24', open: 178.58, high: 182.37, low: 176.31, close: 176.97},
-    ];
-    async function startTask1() {
-        const url = "http://127.0.0.1:5000/api/get";
-        const requestData = {
-            ticker: ticker,
-            dt: dt,
-            tf: tf
-        };
+    {time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85}]
+
+    // task list: chart-get match-get trainer-get trainer-set screener-get study-get study-set settings-set
+    async function startTask(task,bind_variable) {
+        const queryParams = new URLSearchParams({ ticker, dt, tf }).toString();
+      const url = `http://127.0.0.1:5000/api/${task}?${queryParams}`;
+      console.log(url);
         const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(requestData)
+          
         });
         if (response.ok) {
             const responseData = await response.json();
             taskId1 = responseData.task_id;
             taskStatus1.set('Pending');
-            waitForResult(taskId1, taskStatus1, taskResult1);
+            waitForResult(taskId1, taskStatus1, bind_variable);
         } else {
             console.error('Request failed for Task 1:', response.statusText);
             data1 = 'Failed to start task 1';
@@ -59,7 +58,7 @@
     }
     
 
-    async function waitForResult(taskId, statusStore, resultStore) {
+    async function waitForResult(taskId, statusStore, bind_variable) {
         const checkStatus = async () => {
             const response = await fetch(`http://127.0.0.1:5000/api/status/${taskId}`);
             if (response.ok) {
@@ -67,8 +66,11 @@
             if (responseData.status === 'done') {
                 clearInterval(intervalId);
                 statusStore.set('Done');
-                CandlestickSeries.setData(responseData.result);
-                console.log('Unpacked Response:', responeData.result);
+                //bind_variable = responseData.result
+                bind_variable.set(responseData.result);
+                //CandlestickSeries.setData(responseData.result);
+                console.log('Unpacked Response:', responseData.result);
+                
             }
             } else {
             clearInterval(intervalId);
@@ -135,6 +137,10 @@
   .container {
     margin-right: 20px;
   }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
 
   .popout-menu {
   display: none;
@@ -182,6 +188,36 @@
     <div class="popout-menu"  style="min-height: {windowHeight}px;" class:visible={isMatch}>
       {#if isMatch}
         THIS IS MATCH
+     <form on:submit|preventDefault={() => startTask('Match-get',match_data)}>
+  <div class="form-group">
+    <input type="text" id="ticker" bind:value="{ticker}" name="ticker" placeholder="Enter Ticker" required>
+  </div>
+  <div class="form-group">
+    <input type="text" id="tf" bind:value="{tf}" name="tf" placeholder="Enter TF" required>
+  </div>
+  <div class="form-group">
+    <input type="text" id="dt" bind:value="{dt}" name="dt" placeholder="Enter Date Time">
+  </div>
+  <div class="form-group">
+    <input type="submit" value="FETCH">
+  </div>
+</form>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+    </tr>
+  </thead>
+  <tbody>
+    {#each $match_data as item}
+      <tr>
+        <td>{item.id}</td>
+        <td>{item.name}</td>
+      </tr>
+    {/each}
+  </tbody>
+</table>
       {/if}
     </div>
     <div class="popout-menu"  style="min-height: {windowHeight}px;" class:visible={isScreener}>
@@ -203,12 +239,12 @@
         wickUpColor="rgba(0,255, 0, 1)"
     />
 </Chart>
-<form on:submit={startTask1}>
+<!-- <form on:submit={startTask('get')}>
      <input type="text" id="ticker" bind:value ={ticker} name="ticker" placeholder="Enter Ticker" required>
      <input type="text" id="tf" bind:value ={tf} name="ticker" placeholder="Enter TF" required>
       <input type="text" id="dt" bind:value ={dt} name="ticker" placeholder="Enter Date Time">
      <input type="submit" value="FETCH">
-</form>
+</form> -->
 
 
 

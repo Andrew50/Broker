@@ -1,4 +1,4 @@
-
+<!-- 
 
 <script>
   import { writable } from 'svelte/store';
@@ -13,7 +13,11 @@
   export let taskStatus1 = writable('Not started');
   export let taskResult1 = writable(null);
 
-  async function startTask1() {
+
+
+
+
+  async function startTask(result_var) {
       // Encode the query parameters
       //taskResult = null
       const queryParams = new URLSearchParams({ ticker, dt, tf }).toString();
@@ -34,7 +38,7 @@
           const responseData = await response.json();
           taskId1 = responseData.task_id;
           taskStatus1.set('Pending');
-          waitForResult(taskId1, taskStatus1, taskResult1);
+          waitForResult(taskId1, taskStatus1, result_var);
       } else {
           console.error('Request failed for Task 1:', response.statusText);
       }
@@ -58,9 +62,10 @@
 
     const intervalId = setInterval(checkStatus, 2000); 
   }
+ 
 </script>
 
-<form on:submit|preventDefault={startTask1}>
+<form on:submit|preventDefault={startTask(data)}>
   <label for="ticker">Ticker:</label>
   <input id="ticker" type="text" bind:value={ticker}>
   
@@ -71,11 +76,15 @@
   <input id="tf" type="text" bind:value={tf}>
   
   <input type="submit" value="Start Async Task 1">
-</form>
+</form
+
 
 <p>Task 1 ID: {taskId1}</p>
-<p>Task 1 Status: {$taskStatus1}</p>
-<p>Task 1 Result: {JSON.stringify($taskResult1)}</p>
+<p>Task 1 Status: {$data}</p>
+<p>Task 1 Result: {JSON.stringify($data)}</p>
+
+
+"Running"
 
 
 
@@ -148,4 +157,4 @@
 <p>Task 1 ID: {taskId1}</p>
 <p>Task 1 Status: {$taskStatus1}</p>
 <p>Task 1 Result: {JSON.stringify($taskResult1)}</p>
- -->
+ --> -->

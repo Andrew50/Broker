@@ -1,9 +1,9 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from scripts import Data
 from multiprocessing import Pool
 import uuid
-from scripts import Data, Chart, test_func
+#import Chart, Data, Match, Screener, Settings, Study, Trainer
+import importlib
 
 class App:
     def __init__(self):
@@ -18,21 +18,16 @@ class App:
 
     def start_task(self, script_name):
 
-##--------LINK SCRIPTS------------
-        if script_name == 'get':
-            func = Chart.get
-            cores = 1
-        elif script_name =='match':
-            func = test_func.god
-            cores = 3
-        else:
-            return jsonify({'task_id': 'failed'})
-        data = request.json
+        module_name, function_name = script_name.split('-')
+        module = importlib.import_module(module_name)
+        func = getattr(module, function_name, None)
+        args = request.args.to_dict()
         task_id = str(uuid.uuid4())
         def callback(result):
             self.tasks[task_id] = {'status': 'done', 'result': result}
         #for _ in range(cores):
-        task = self.pool.apply_async(func, args=data.get('args', []), kwds=data.get('kwargs', {}), callback=callback)
+        task = self.pool.apply_async(func, args=args, callback=callback)
+        #task = self.pool.apply(func, args=args)
         self.tasks[task_id] = {'status': 'pending', 'result': task}
         return jsonify({'task_id': task_id})
 
@@ -40,7 +35,8 @@ class App:
         task_info = self.tasks.get(task_id)
         try: 
             return jsonify(task_info)
-        except:
+        except Exception as e:
+            print(e)
             return jsonify('loading')
             
 
