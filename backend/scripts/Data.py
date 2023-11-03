@@ -156,7 +156,7 @@ class Database:
 		);
 		"""
 		
-		create_database_command = "CREATE DATABASE IF NOT EXISTS broker;"
+		create_database_command = "CREATE DATABASE IF NOT EXISTS Broker;"
 		
 		commands = [cmd.strip() for cmd in sql_commands.split(';') if cmd.strip()]
 		cursor = self._conn.cursor()
@@ -307,3 +307,8 @@ class Data:
 		while df.index[i].to_pydatetime() > dt:
 			i -= 1
 		return i
+	
+
+if __name__ == '__main__':
+	db = Database()
+	db.load_from_legacy()
