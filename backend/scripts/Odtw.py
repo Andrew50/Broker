@@ -1,32 +1,34 @@
 import math
 from scipy.spatial.distance import euclidean
+import numpy as np
 sqrt = math.sqrt
 # Optimized dynamic time warping for match
 # Let y denote the timeseries we want to find similarities of
 class Odtw: 
     def calcBounds(y, radius):
-        u = []
-        l = []
+        u = np.empty([len(y)])
+        l = np.empty([len(y)])
         for i in range(len(y)):
             indexLowerBound = max(0, i-radius)
             indexUpperBound = min(len(y)-1, i+radius)
-            u.append(max(y[indexLowerBound:indexUpperBound+1]))
-            l.append(min(y[indexLowerBound:indexUpperBound+1]))
+            u[i] = max(y[indexLowerBound:indexUpperBound+1])
+            l[i] = min(y[indexLowerBound:indexUpperBound+1])
         return u, l
     
     def calclowerBound(x, upper, lower, bars):
+        for i in range(bars-(bars//4), bars):
+            if (x[i] > upper[i]):
+                return 99
+            elif(x[i] < lower[i]):
+                return 99
         totalLowerBound = 0.0
-        for i in range(bars-(bars//5), bars):
+        for i in range(0, bars-(bars//4)):
             if (x[i] > upper[i]):
-                return 999
+                totalLowerBound += (x[i]-upper[i])*(x[i]-upper[i])#pow((x[i]-upper[i]), 2)
+                continue
             elif(x[i] < lower[i]):
-                return 999
-        
-        for i in range(0, bars-(bars//5)):
-            if (x[i] > upper[i]):
-                totalLowerBound += pow((x[i]-upper[i]), 2)
-            elif(x[i] < lower[i]):
-                totalLowerBound += pow((x[i]-lower[i]), 2)
+                totalLowerBound += (x[i]-lower[i])*(x[i]-lower[i])#pow((x[i]-lower[i]), 2)
+                continue
         return sqrt(totalLowerBound)*100
 
     def dtwupd(a, b, r):
