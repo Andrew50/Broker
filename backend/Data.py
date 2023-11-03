@@ -13,6 +13,18 @@ class Database:
 #set settings
 #auth
 
+	def get_model(user_id,st):
+		
+		pass
+	
+	def get_sample(user_id,st):
+		pass
+	def set_sampe(user_id,st,ticker,tf,dt):
+		pass
+	def set_settings(user_id,setting_string):
+		
+
+
 	def get_ticker_list(self, type='full'):
 		cursor = self._conn.cursor(dictionary=True)
 		if type == 'full':
@@ -161,11 +173,7 @@ class Database:
 		commands = [cmd.strip() for cmd in sql_commands.split(';') if cmd.strip()]
 		cursor = self._conn.cursor()
 		cursor.execute(create_database_command)
-		for command in commands:
-			cursor.execute(command)
-		#try: cursor.execute("TRUNCATE TABLE dfs")
-		#except:pass
-		#for tf in ('d','1min'):
+		for command in commands:cursor.execute(command)
 		df = pd.read_feather("C:/dev/Broker/backend/scripts/sync/files/full_scan.feather")
 		df = df['ticker'].tolist()
 		df = [[x] for x in df]
@@ -189,8 +197,7 @@ class Database:
 		cursor.close()
 
 
-class Dataset: #object
-	
+class Dataset:
 
 	def train(self, st, use, epochs): 
 		db.consolidate_database()
@@ -245,15 +252,6 @@ class Dataset: #object
 		model.save('sync/models/model_' + st)
 		tensorflow.keras.backend.clear_session()
 
-	def init_worker(pack):
-		bar, other = pack
-		ticker = bar['ticker']
-		dt = bar['dt']
-		tf = bar['tf']
-		bars, offset, value, pm, np_bars = other
-		# needs to be fixed becaujse m
-		return Data(ticker, tf, dt, bars, offset, value, pm, np_bars)
-
 	def __init__(self, request='full',tf='d', bars=0, offset=0, value=None, pm=True):
 		
 		if request == 'full':
@@ -307,7 +305,6 @@ class Data:
 		while df.index[i].to_pydatetime() > dt:
 			i -= 1
 		return i
-	
 
 if __name__ == '__main__':
 	db = Database()

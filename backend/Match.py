@@ -158,6 +158,8 @@ class Odtw:
             
         
 def get(ticker,tf,dt):
+    db = Database()
+    Match.run(db,ticker,tf,dt)
     val = table_data = [
     {'id': 1, 'name': 'Alice'},
     {'id': 2, 'name': 'Bob'},

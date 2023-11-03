@@ -36,7 +36,7 @@ class App:
         try: 
             return jsonify(task_info)
         except Exception as e:
-            print(e)
+            #print(e)
             return jsonify('loading')
             
 
