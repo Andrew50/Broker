@@ -27,8 +27,8 @@ np_bars = 10
 
 class Match:
 
-    def load(tf):
-        ticker_list = screener.get('full')[:5000]
+    def load(tf, positiveDirection):
+        ticker_list = screener.get('full')[:5500]
         df = pd.DataFrame({'ticker': ticker_list})
         df['dt'] = None
         df['tf'] = tf
@@ -36,10 +36,7 @@ class Match:
         df = ds.load_np('dtw',np_bars)
         return df
 
-    def run(ds, ticker, dt, tf):
-        y = Data(ticker, tf, dt,bars = np_bars+1)
-        y = y.load_np('dtw',np_bars,True)
-        y = y[0][0]
+    def run(ds, ticker, dt, tf, y):
         radius = math.ceil(np_bars/10)
         upper, lower = Odtw.calcBounds(y, radius)
         cutoff = 0.02*100
@@ -60,7 +57,12 @@ class Match:
     def compute(ticker,dt,tf):
         dt = Main.format_date(dt)
         #ticker,dt,tf = lis
-        ds = Match.load(tf)
+        y = Data(ticker, tf, dt,bars = np_bars+1)
+        y = y.load_np('dtw',np_bars,True)[0][0]
+        positiveDirection = True
+        if y[len(y)-1] < y[0]:
+            positiveDirection = False
+        ds = Match.load(tf, positiveDirection)
         top_scores = Match.run(ds, ticker, dt, tf)
         formatted_top_scores = []
         for score, ticker, index in top_scores:
