@@ -156,8 +156,11 @@ class Database:
 		);
 		"""
 		
+		create_database_command = "CREATE DATABASE IF NOT EXISTS broker;"
+		
 		commands = [cmd.strip() for cmd in sql_commands.split(';') if cmd.strip()]
 		cursor = self._conn.cursor()
+		cursor.execute(create_database_command)
 		for command in commands:
 			cursor.execute(command)
 		#try: cursor.execute("TRUNCATE TABLE dfs")

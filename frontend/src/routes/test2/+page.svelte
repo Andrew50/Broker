@@ -15,6 +15,7 @@
 
   async function startTask1() {
       // Encode the query parameters
+      //taskResult = null
       const queryParams = new URLSearchParams({ ticker, dt, tf }).toString();
       const url = `http://127.0.0.1:5000/api/get?${queryParams}`;
       const requestData = {
