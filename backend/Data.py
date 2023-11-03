@@ -22,7 +22,7 @@ class Database:
 	def set_sampe(user_id,st,ticker,tf,dt):
 		pass
 	def set_settings(user_id,setting_string):
-		
+		pass
 
 
 	def get_ticker_list(self, type='full'):

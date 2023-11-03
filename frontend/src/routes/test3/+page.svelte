@@ -44,7 +44,6 @@
             headers: {
                 'Content-Type': 'application/json'
             },
-          
         });
         if (response.ok) {
             const responseData = await response.json();
@@ -56,7 +55,6 @@
             data1 = 'Failed to start task 1';
         }
     }
-    
 
     async function waitForResult(taskId, statusStore, bind_variable) {
         const checkStatus = async () => {
@@ -84,31 +82,10 @@
     const options = {
         width: windowWidth - 400,
         height: windowHeight -40,
-        layout: {
-            background: {
-                type: ColorType.Solid,
-                color: '#000000',
-            },
-            textColor: 'rgba(255, 255, 255, 0.9)',
-        },
-        grid: {
-            vertLines: {
-                color: 'rgba(197, 203, 206, 0.5)',
-            },
-            horzLines: {
-                color: 'rgba(197, 203, 206, 0.5)',
-            },
-        },
-        crosshair: {
-            mode: CrosshairMode.Magnet,
-        },
-        rightPriceScale: {
-            borderColor: 'rgba(197, 203, 206, 0.8)',
-        },
-        timeScale: {
-            borderColor: 'rgba(197, 203, 206, 0.8)',
-
-        },
+        layout: {background: {type: ColorType.Solid,color: '#000000',},textColor: 'rgba(255, 255, 255, 0.9)',},
+        grid: {vertLines: {color: 'rgba(197, 203, 206, 0.5)',},horzLines: {color: 'rgba(197, 203, 206, 0.5)',},},
+        crosshair: {mode: CrosshairMode.Magnet,},
+        rightPriceScale: {borderColor: 'rgba(197, 203, 206, 0.8)',},timeScale: {borderColor: 'rgba(197, 203, 206, 0.8)',},
     }
 </script>
 
@@ -133,7 +110,6 @@
     padding: 10px 20px;
     cursor: pointer;
   }
-
   .container {
     margin-right: 20px;
   }
@@ -141,7 +117,6 @@
     width: 100%;
     border-collapse: collapse;
   }
-
   .popout-menu {
   display: none;
   position: fixed;
@@ -151,24 +126,20 @@
   min-width: 320px;
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
 }
-
   .popout-menu button {
     width: 100%;
     padding: 10px;
     border: none;
     text-align: left;
   }
-
   .popout-menu button:hover {
     background-color: #ddd;
   }
-
   .popout-menu.visible {
     display: block;
   }
 
 </style>
-
 <div class="container">
   <div class="button-container">
     <button class="match-button" on:click={toggleMatch}>
@@ -187,9 +158,6 @@
     </button>
     <div class="popout-menu"  style="min-height: {windowHeight}px;" class:visible={isMatch}>
       {#if isMatch}
-
-
-
         THIS IS MATCH
      <form on:submit|preventDefault={() => startTask('Match-get',match_data)}>
   <div class="form-group">
@@ -222,21 +190,12 @@
   </tbody>
 </table>
       {/if}
-
-
-
-
-
-
     </div>
     <div class="popout-menu"  style="min-height: {windowHeight}px;" class:visible={isScreener}>
 
       {#if isScreener}
         THIS IS SCREENER
       {/if}
-
-
-
     </div>
   </div>
 </div>
