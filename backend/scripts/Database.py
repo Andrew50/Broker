@@ -31,6 +31,80 @@ class Database:
 		data = cursor.fetchall()
 		data = np.array([[str(entry['dt']), float(entry['open']), float(entry['high']), float(entry['low']), float(entry['close']), float(entry['volume'])] for entry in data])
 		return data
+	
+	def update(self):
+		
+		ticker = self.ticker
+		
+		tf = self.tf
+		path = self.path
+		exists = True
+		try:
+			df = self.df
+			last_day = self.df.index[-1] 
+		except: exists = False
+		print(tf)
+		if tf == '1d' or tf == 'd':
+			ytf = '1d'
+			period = '25y'
+		elif tf == '1min':
+			ytf = '1m'
+			period = '5d'
+		ydf = yf.download(tickers = ticker, period = period, group_by='ticker', interval = ytf, ignore_tz = True, progress=False, show_errors = False, threads = False, prepost = True) 
+		ydf.drop(axis=1, labels="Adj Close",inplace = True)
+		ydf.rename(columns={'Open':'open','High':'high','Low':'low','Close':'close','Volume':'volume'}, inplace = True)
+		ydf.dropna(inplace = True)
+		if Main.is_market_open() == 1: ydf.drop(ydf.tail(1).index,inplace=True)
+		if not exists: df = ydf
+		else:
+			try: index = Data.findex(ydf, last_day) 
+			except: return
+			ydf = ydf[index + 1:]
+			df = pd.concat([df, ydf])
+		df.index.rename('datetime', inplace = True)
+		if not df.empty: 
+			if tf == '1min': pass
+			elif tf == 'd': df.index = df.index.normalize() + pd.Timedelta(minutes = 570)
+			df = df.reset_index()
+			feather.write_feather(df,path)
+		pass
+		#update full_ticker_list
+		#update data
+		#retrain
+		#calc account
+		#backup
+	
+	def __init__(self):
+		dbconfig = {
+			"host": "localhost",
+			"port": 3306,
+			"user": "root",
+			"password": "7+WCy76_2$%g",#TODO
+			"database": 'Broker',
+			"autocommit": True
+		}
+		self._conn = mysql.connector.connect(**dbconfig)
+
+	def close_pool(self):
+		self._conn.close()
+	
+	def format_datetime(dt,reverse=False):
+		if dt is None: return None
+		if dt == 'current': return datetime.datetime.now(pytz.timezone('EST'))
+		if isinstance(dt, str):
+			try: dt = datetime.datetime.strptime(dt, '%Y-%m-%d')
+			except: dt = datetime.datetime.strptime(dt, '%Y-%m-%d %H:%M:%S')
+		time = datetime.time(dt.hour, dt.minute, 0)
+		dt = datetime.datetime.combine(dt.date(), time)
+		if dt.hour == 0 and dt.minute == 0:
+			time = datetime.time(9, 30, 0)
+			dt = datetime.datetime.combine(dt.date(), time)
+		return dt
+		if not reverse:
+			dt = dt.timestamp()
+		else:
+			dt = datetime.datetime.fromtimestamp(dt)
+		return dt
 
 	def load_from_legacy(self):
 		sql_commands = """
@@ -41,7 +115,7 @@ class Database:
 		CREATE TABLE dfs(
 			ticker VARCHAR(5) NOT NULL,
 			tf VARCHAR(3) NOT NULL,
-			dt DATETIME NOT NULL,
+			dt BIGINT NOT NULL,
 			open DECIMAL(10, 4),
 			high DECIMAL(10, 4),
 			low DECIMAL(10, 4),
