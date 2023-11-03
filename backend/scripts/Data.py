@@ -51,239 +51,6 @@ class Dataset: #object
 		df = df[['ticker', 'dt', 'tf']]
 		
 		return df
-
-	def pool(deff, arg):
-		return list(tqdm(Pool().imap_unordered(deff, arg), total=len(arg)))
-	
-	def is_pre_market(dt):
-		if dt != None and ((((dt.hour*60)+dt.minute) - 570) < 0): return True
-		return False
-
-	def format_date(dt):
-		if dt is None: return None
-		if dt == 'current': return datetime.datetime.now(pytz.timezone('EST'))
-		if isinstance(dt, str):
-			try: dt = datetime.datetime.strptime(dt, '%Y-%m-%d')
-			except: dt = datetime.datetime.strptime(dt, '%Y-%m-%d %H:%M:%S')
-		time = datetime.time(dt.hour, dt.minute, 0)
-		dt = datetime.datetime.combine(dt.date(), time)
-		if dt.hour == 0 and dt.minute == 0:
-			time = datetime.time(9, 30, 0)
-			dt = datetime.datetime.combine(dt.date(), time)
-		return dt
-
-	def data_path(ticker, tf):
-		return 'C:/dev/Broker/backend/scripts/' + tf + '/' + ticker + '.feather'
-
-	def is_market_open():  # Change to a boolean at some point
-		if (datetime.datetime.now().weekday() >= 5):
-			return False  # If saturday or sunday
-		dt = datetime.datetime.now(pytz.timezone('US/Eastern'))
-		hour = dt.hour
-		minute = dt.minute
-		if hour >= 10 and hour <= 16:
-			return True
-		elif hour == 9 and minute >= 30:
-			return True
-		return False
-
-	def load_model(st):
-		start = datetime.datetime.now()
-		model = models.load_model('sync/models/model_' + st)
-		print(f'{st} model loaded in {datetime.datetime.now() - start}')
-		return model
-
-	def get_config(name):
-		s = open("config.txt", "r").read()
-		trait = name.split(' ')[1]
-		script = name.split(' ')[0]
-		trait.replace(' ', '')
-		bars = s.split('-')
-		found = False
-		for bar in bars:
-			if script in bar:
-				found = True
-				break
-		if not found:
-			raise Exception(str(f'{script} not found in config'))
-		lines = bar.splitlines()
-		found = False
-		for line in lines:
-			if trait in line.split('=')[0]:
-				found = True
-				break
-		if not found:
-			raise Exception(str(f'{trait} not found in config'))
-		value = line.split('=')[1].replace(' ', '')
-		try: value = float(value)
-		except: pass
-		return value
-
-	def run():
-		Main.check_directories()
-		from Study import Screener as screener
-		df = pd.DataFrame({'ticker':screener.get('full', True)})
-		df['tf'] = 'd'
-		df['dt'] = None
-		ds = Dataset(df)
-		ds.update()
-		#df['tf'] = '1min'
-		#ds = Dataset(df)
-		#ds.update()
-		ident =  Main.get_config("Data identity")
-		if ident == 'desktop' or ident == 'laptop':
-			weekday = datetime.datetime.now().weekday()
-			if weekday == 4:
-				Data.backup()
-				use = .08
-				epochs = 200
-				for st in Main.get_setups_list():
-					df = Main.sample(st, use)
-					sample = Dataset(df)
-					sample.load_np('ml',80)
-					sample.train(st,use,epochs) 
-		Main.refill_backtest()
-
-	def check_directories():
-		#dirs = ['local', 'local/data', 'local/account', 'local/study','local/trainer', 'local/data/1min', 'local/data/d']
-		folder = 'C:/dev/broker/backend/scripts/'
-		dirs = ['local', 'local/data', 'local/account', 'local/study','local/trainer', 'local/data/1min', 'local/data/d','d']
-		for d in dirs: 
-			d = folder + d
-			if not os.path.exists(d): 
-				os.mkdir(d)
-		if not os.path.exists("config.txt"): shutil.copyfile('C:/dev/broker/backend/scripts/sync/files/default_config.txt', 'config.txt')
-
-	def refill_backtest():
-		from Screener import Screener as screener
-		try:historical_setups = pd.read_feather(r"local\study\historical_setups.feather")
-		except:historical_setups = pd.DataFrame()
-		if not os.path.exists("local\study\full_list_minus_annotated.feather"):
-			shutil.copy(r"sync\files\full_scan.feather",r"local\study\full_list_minus_annotated.feather")
-		while historical_setups.empty or (len(historical_setups[historical_setups["pre_annotation"] == ""]) < 2500):
-			full_list_minus_annotation = pd.read_feather(r"local\study\full_list_minus_annotated.feather").sample(frac=1)
-			screener.run(ticker=full_list_minus_annotation[:20]['ticker'].tolist(), fpath=0)
-			full_list_minus_annotation = full_list_minus_annotation[20:].reset_index(drop=True)
-			full_list_minus_annotation.to_feather(r"local\study\full_list_minus_annotated.feather")
-			historical_setups = pd.read_feather(r"local\study\historical_setups.feather")
-
-	def backup():
-		date = datetime.date.today()
-		path = 'C:/Backups/'
-		dst = path + str(date)
-		shutil.copytree(_parent, dst,ignore=shutil.ignore_patterns("local"))
-		dir_list = os.listdir(path)
-		for b in dir_list:
-			dt = datetime.datetime.strptime(b, '%Y-%m-%d')
-			if (datetime.datetime.now() - dt).days > 30:
-				shutil.rmtree((path + b))
-
-	def add_setup(ticker, date, setup, val, req, ident=None):
-		date = Data.format_date(date)
-		add = pd.DataFrame({'ticker': [ticker], 'dt': [date], 'value': [val], 'required': [req]})
-		if ident == None:ident = Data.get_config('Data identity') + '_'
-		path = 'sync/database/' + ident + setup + '.feather'
-		try:df = pd.read_feather(path)
-		except FileNotFoundError:df = pd.DataFrame()
-		df = pd.concat([df, add]).drop_duplicates(subset=['ticker', 'dt'], keep='last').reset_index(drop=True)
-		df.to_feather(path)
-
-	def consolidate_database():
-		setups = Main.get_setups_list()
-		for setup in setups:
-			df = pd.DataFrame()
-			# for ident in ['ben_','desktop_','laptop_', 'ben_laptop_']:
-			for ident in ['desktop_', 'laptop_']:
-				try:
-					df1 = pd.read_feather(f"sync/database/{ident}{setup}.feather").dropna()
-					df1['sindex'] = df1.index
-					df1['source'] = ident
-					df = pd.concat([df, df1]).reset_index(drop=True)
-				except FileNotFoundError:pass
-			df.to_feather(f"local/data/{setup}.feather")
-
-	def get_setups_list():
-		setups = []
-		path = "sync/database/"
-		dir_list = os.listdir(path)
-		for p in dir_list:
-			s = p.split('_')
-			s = s[1] + '_' + s[2].split('.')[0]
-			use = True
-			for h in setups:
-				if s == h:
-					use = False
-					break
-			if use:
-				setups.append(s)
-		return setups
-
-
-class Dataset: #object
-	
-	def update_worker(df):
-		df.update()
-
-	def update(self):
-		Dataset.try_pool(Dataset.update_worker,self.dfs)
-		
-	def plot_worker(bar):
-		df, hidden = bar
-		return df.load_plot(hidden = hidden)
-	
-	def load_plot(self,i=None,hidden = False):
-		dfs = self.dfs
-		if i == None:
-			Dataset.try_pool(Dataset.plot_worker,[[df, hidden] for df in dfs])
-		return dfs[i].load_plot(hidden)
-
-	def np_worker(bar):
-		df, type, bars = bar
-		ds = df.load_np(type, bars)
-		return [df, ds]
-
-	def load_np(self, type, bars):
-		self.np_type = type
-		self.np_bars = bars
-		arglist = [[df, type, bars] for df in self.dfs]
-		lis = Dataset.try_pool(Dataset.np_worker, arglist)
-		dfs = []
-		returns = []
-		for bar in lis:
-			arrays = bar[1]
-			df = bar[0]
-			dfs.append(df)
-			for df, ticker, index in arrays:
-				returns.append([df,ticker,index])
-		self.dfs = dfs
-		self.np = returns
-		if type == 'ml':
-			self.raw_np = []
-			for df,ds in returns:
-				ds = np.aarray(ds)
-				self.raw_np.append(ds)
-			self.raw_np = np.array(self.raw_np)
-			#self.raw_np =   np.array([ds for df,ds in returns])
-			self.y_np = np.array([df.value for df in self.dfs])
-			return self.raw_np, self.y_np
-		return returns
-
-	def try_pool(func, args):
-		for arg in args:
-			func(arg)
-		# start = datetime.datetime.now()
-		# if current_process().name == 'MainProcess':
-		# 	returns = Main.pool(func,args)
-		# 	#with Pool() as pool:
-		# 		#returns = pool.imap_unordered(func, args)
-		# 		#pool.close()
-		# 		#pool.join()
-		# else:
-		# 	returns = [func(**arg) for arg in args]
-		# print(f'{datetime.datetime.now() - start}')
-		# return returns
-
-	def train(self, st, percent_yes, epochs): 
 		df = pd.read_feather('local/data/' + st + '.feather')
 		ones = len(df[df['value'] == 1])
 		if ones < 150:
@@ -309,105 +76,28 @@ class Dataset: #object
 		# needs to be fixed becaujse m
 		return Data(ticker, tf, dt, bars, offset, value, pm, np_bars)
 
-	def __init__(self, request=pd.DataFrame(), bars=0, offset=0, value=None, pm=True, np_bars=50):
-		try: 
-			from .Study import Screener as screener
-		except:
-			from Study import Screener as screener
-		if request.empty:
-			tickers = screener.get('full')
-			request = pd.DataFrame({'ticker': tickers})
-			request['dt'] = None
-			request['tf'] = 'd'
-		other = (bars, offset, value, pm, np_bars)
-		arglist = [[request.iloc[i], other] for i in range(len(request))]
-		self.dfs = Dataset.try_pool(Dataset.init_worker, arglist)
-		self.num_cores = 12
-		self.request = request
-		self.value = value
+	def __init__(self, request='full',tf='d', bars=0, offset=0, value=None, pm=True):
+		
+		if request == 'full':
+			request = [[ticker,None] for ticker in db.get_ticker_list('full')]
+		for ticker, dt in request:
+			self.dfs = Data(ticker, tf, dt, bars, offset, value, pm)
 		self.bars = bars
 		self.offset = offset
-		self.np_bars = np_bars
-		#self.dfs = Dataset.data_generator(self)
 		self.len = len(self.dfs)
 		
 class Data:
 
-	def __init__(self, db, ticker='QQQ', tf='d', dt=None, bars=0,value=None, pm=True):
+	def __init__(self, ticker='QQQ', tf='d', dt=None, bars=0,value=None, pm=True):
 		try:
 			self.df = db.get_df(ticker,tf,dt,bars,pm)
-		except TimeoutError:
+		except:
 			self.df = []
 		self.len = len(self.df)
 		self.ticker = ticker
 		self.tf = tf
 		self.dt = dt
 		self.value = value
-		self.bars = bars
-		self.offset = offset
-		self.np_bars = np_bars
-
-	def requirements(self):
-		pass
-
-	def load_np(self, type, bars,debug = False):
-		if type not in ('dtw','ml','gpu'):
-			raise ArgumentTypeError
-		returns = []
-		#bars = self.np_bars
-		try:
-
-			df = self.df
-			if len(df) < 5:
-				return returns
-			if type == 'ml':
-				partitions = 1
-			else:
-				partitions = bars//2
-			x = df.to_numpy()
-			d = np.zeros((x.shape[0]-1, x.shape[1]))
-			for i in range(len(d)):  # add ohlc
-				d[i] = x[i+1]/x[i, 3] - 1
-			if partitions != 0:
-				for i in list(range(bars, d.shape[0]+1, partitions)):
-					if type == 'gpu':
-						# x = x.reshape(1, 2, bars)
-						# x = torch.tensor(list(x), requires_grad=True).cuda()
-						# sequence2 = torch.tensor([1.0, 2.0, 2.5, 3.5], requires_grad=True).cuda()
-						print('nice gpu code')
-					else:
-						if x[i][3]*x[i][4] < 500000: continue
-						y = d[i-bars:i]
-						#x = preprocessing.normalize(x, axis=0)
-						if type != 'ml':
-							y = y[:, 3]
-						returns.append([y, self.ticker,i])
-						#returns.append(x)
-		except TimeoutError:
-			pass
-		self.np = returns
-		return returns
-
-	def load_plot(self, hidden=False):
-		buffer = io.BytesIO()
-		s = mpf.make_mpf_style(base_mpf_style='nightclouds', marketcolors=mpf.make_marketcolors(
-			up='g', down='r', wick='inherit', edge='inherit', volume='inherit'))
-		if hidden:
-			title = ''
-		else:
-			title = f'{self.ticker}  {self.dt}  {self.tf}  {self.score}'
-		if self.offset == 0:
-			_, axlist = mpf.plot(self.df, type='candle', axisoff=True, volume=True, style=s, returnfig=True, title=title, figratio=(Main.get_config(
-				'Study chart_aspect_ratio'), 1), figscale=Main.get_config('Study chart_size'), panel_ratios=(5, 1),  tight_layout=True, vlines=dict(vlines=[self.dt], alpha=.25))
-		else:
-			_, axlist = mpf.plot(df, type='candle', volume=True, axisoff=True, style=s, returnfig=True, title=title, figratio=(Main.get_config(
-				'Study chart_aspect_ratio'), 1), figscale=Main.get_config('Study chart_size'), panel_ratios=(5, 1),  tight_layout=True)
-		ax = axlist[0]
-		ax.set_yscale('log')
-		ax.yaxis.set_minor_formatter(mticker.ScalarFormatter())
-		plt.savefig(buffer, format='png')
-		self.plot = buffer.getvalue()
-		return self.plot
 
 	def load_score(self, st, model=None):
 		if model == None:
@@ -439,8 +129,3 @@ class Data:
 		while df.index[i].to_pydatetime() > dt:
 			i -= 1
 		return i
-
-if __name__ == '__main__':
-	#Main.backup()
-	Main.run()
-
