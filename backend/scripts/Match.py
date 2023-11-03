@@ -24,7 +24,7 @@ from multiprocessing import Pool
 from Odtw import Odtw
 import math
 np_bars = 10
-
+sqrt = math.sqrt
 class Match:
 
     def load(tf):
@@ -55,7 +55,8 @@ class Match:
 
     def worker(bar):
         x, y, ticker, index, upper, lower, cutoff, radius, num_bars = bar
-        if(Odtw.calclowerBound(x, upper, lower, num_bars) > cutoff): return None
+        
+        if (sqrt(pow(y[0]-x[0], 2) + pow(y[num_bars-1]-x[num_bars-1], 2))*100 > cutoff)or (Odtw.calclowerBound(x, upper, lower, num_bars) > cutoff): return None
         return [Odtw.dtwupd(x,y,radius), ticker, index]
 
     def compute(ticker,dt,tf):
