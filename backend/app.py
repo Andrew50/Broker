@@ -5,6 +5,7 @@ import uuid
 from scripts import Data
 #from scripts import Match  # Ensure the scripts module is in your Python path
 from scripts import test_func
+from scripts import Chart
 class App:
     def __init__(self):
         self.app = Flask(__name__)
@@ -13,22 +14,18 @@ class App:
         self.tasks = {}
 
     def start_task(self, script_name):
-      
 
-##--------DEFINE SCRIPTS------------
+##--------LINK SCRIPTS------------
         if script_name == 'get':
-            func = Data.Data
+            func = Chart.get
         if script_name =='match':
             func = test_func.god
 
-
         data = request.json
-        args = data.get('args', [])
-        kwargs = data.get('kwargs', {})
         task_id = str(uuid.uuid4())
         def callback(result):
             self.tasks[task_id] = {'status': 'done', 'result': result}
-        task = self.pool.apply_async(func, args=args, kwds=kwargs, callback=callback)
+        task = self.pool.apply_async(func, args=data.get('args', []), kwds=data.get('kwargs', {}), callback=callback)
         self.tasks[task_id] = {'status': 'pending', 'task': task}
         return jsonify({'task_id': task_id})
 

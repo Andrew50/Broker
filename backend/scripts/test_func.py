@@ -1,6 +1,6 @@
 
 import time
 
-def god():
+def god(task_id):
 	time.sleep(2)
-	return 'working'
+	return 'working', task_id
