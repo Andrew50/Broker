@@ -27,8 +27,8 @@ np_bars = 10
 
 class Match:
 
-    def load(tf, positiveDirection):
-        ticker_list = screener.get('full')[:5500]
+    def load(tf):
+        ticker_list = screener.get('full')[:5000]
         df = pd.DataFrame({'ticker': ticker_list})
         df['dt'] = None
         df['tf'] = tf
@@ -38,7 +38,8 @@ class Match:
 
     def run(ds, ticker, dt, tf):
         y = Data(ticker, tf, dt,bars = np_bars+1)
-        y = y.load_np('dtw',np_bars,True)[0][0]
+        y = y.load_np('dtw',np_bars,True)
+        y = y[0][0]
         radius = math.ceil(np_bars/10)
         upper, lower = Odtw.calcBounds(y, radius)
         cutoff = 0.02*100
@@ -46,6 +47,7 @@ class Match:
         start = datetime.datetime.now()
         scores = Pool().map(Match.worker, arglist)#Main.pool(Match.worker, arglist)
         print(f'completed in {datetime.datetime.now() - start}')
+        print(f'average time is {(datetime.datetime.now()-start)/len(scores)}')
         scores = list(filter(lambda x : x is not None, scores))
         scores.sort(key=lambda x: x[0])
         print(f"Total: {len(scores)}")
@@ -59,7 +61,6 @@ class Match:
     def compute(ticker,dt,tf):
         dt = Main.format_date(dt)
         #ticker,dt,tf = lis
-       
         ds = Match.load(tf)
         top_scores = Match.run(ds, ticker, dt, tf)
         formatted_top_scores = []
