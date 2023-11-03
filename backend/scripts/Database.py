@@ -1,18 +1,12 @@
 import array, os, pandas as pd, numpy as np, datetime, mysql.connector
 
 class Database:
-	_conn = None
-
-	def __init__(self):
-		dbconfig = {
-			"host": "localhost",
-			"port": 3306,
-			"user": "root",
-			"password": "7+WCy76_2$%g",
-			"database": 'Broker',
-			"autocommit": True
-		}
-		self._conn = mysql.connector.connect(**dbconfig)
+	
+#get model
+#get sample
+#set sample
+#set settings
+#auth
 
 	def close_pool(self):
 		self._conn.close()

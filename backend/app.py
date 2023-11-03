@@ -3,9 +3,8 @@ from flask_cors import CORS
 from scripts import Data
 from multiprocessing import Pool
 import uuid
-from scripts import Data
-#from scripts import Match  # Ensure the scripts module is in your Python path
-from scripts import test_func
+from scripts import Data, Chart, test_func
+
 class App:
     def __init__(self):
         self.app = Flask(__name__)
@@ -30,9 +29,9 @@ class App:
         kwargs = data.get('kwargs', {})
         task_id = str(uuid.uuid4())
         def callback(result):
-            self.tasks[task_id] = {'status': 'done', 'result': result}
-        task = self.pool.apply_async(func, args=args, kwds=kwargs, callback=callback)
-        self.tasks[task_id] = {'status': 'pending', 'task': task}
+            self.tasks[task_id] = {'status': 'done', 'result': result.get()}
+        task = self.pool.apply_async(func, args=data.get('args', []), kwds=data.get('kwargs', {}), callback=callback)
+        self.tasks[task_id] = {'status': 'pending', 'result': task}
         return jsonify({'task_id': task_id})
 
     def get_status(self, task_id):
@@ -40,10 +39,12 @@ class App:
         if task_info is None:
             return jsonify({'status': 'not found'}), 404
 
-        if task_info['status'] == 'pending' and task_info['task'].ready():
-            result = task_info['task'].get()
-            task_info.update({'status': 'done', 'result': result})
-
+       # elif task_info['status'] == 'done':# and task_info['result'].ready():
+          #  #result = task_info['result'].get()
+           # result = task_info['result']
+           # task_info.update({'status': 'done', 'result': result})
+        #3else:
+        print(task_info)
         return jsonify(task_info)
 
     def run(self):
