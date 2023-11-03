@@ -21,7 +21,6 @@ class Odtw:
                 return 999
             elif(x[i] < lower[i]):
                 return 999
-        
         for i in range(0, bars-(bars//5)):
             if (x[i] > upper[i]):
                 totalLowerBound += pow((x[i]-upper[i]), 2)
