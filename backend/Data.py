@@ -285,27 +285,6 @@ class Data:
 		self.score = returns
 		return returns
 
-	def findex(self, dt):
-		dt = Main.format_date(dt)
-		if not isinstance(self, pd.DataFrame):
-			df = self.df
-		else:
-			df = self
-		i = int(len(df)/2)		
-		k = int(i/2)
-		while k != 0:
-			date = df.index[i].to_pydatetime()
-			if date > dt:
-				i -= k
-			elif date < dt:
-				i += k
-			k = int(k/2)
-		while df.index[i].to_pydatetime() < dt:
-			i += 1
-		while df.index[i].to_pydatetime() > dt:
-			i -= 1
-		return i
-
 if __name__ == '__main__':
 	db = Database()
 	db.load_from_legacy()
