@@ -1,5 +1,5 @@
 import array, os, pandas as pd, numpy as np, datetime, mysql.connector
-
+from tqdm import tqdm
 class Database:
 	
 #get model
@@ -8,9 +8,6 @@ class Database:
 #set settings
 #auth
 
-	def close_pool(self):
-		self._conn.close()
-
 	def get_ticker_list(self, type='full'):
 		cursor = self._conn.cursor(dictionary=True)
 		if type == 'full':
@@ -18,18 +15,21 @@ class Database:
 			cursor.execute(query)
 			data = cursor.fetchall()
 			cursor.close()
+			data = [item['ticker'] for item in data]
 			return data
-
-	def get_df(self, ticker, tf='d', dt=None, bars=0, offset=0):
+		elif type == 'current':
+			raise Exception('need current func. has to pull from tv or something god')
+	
+	def get_df(self, ticker, tf='d', dt=None, bars=0, pm=True):
 		cursor = self._conn.cursor(dictionary=True)
-		if dt:
+		if dt != None:
 			query = "SELECT * FROM dfs WHERE ticker = %s AND tf = %s AND dt = %s"
 			cursor.execute(query, (ticker, tf, dt))
 		else:
 			query = "SELECT * FROM dfs WHERE ticker = %s AND tf = %s"
 			cursor.execute(query, (ticker, tf))
 		data = cursor.fetchall()
-		data = np.array([[str(entry['dt']), float(entry['open']), float(entry['high']), float(entry['low']), float(entry['close']), float(entry['volume'])] for entry in data])
+		data = np.array([[float(entry['dt']), float(entry['open']), float(entry['high']), float(entry['low']), float(entry['close']), float(entry['volume'])] for entry in data])
 		return data
 	
 	def update(self):
@@ -112,6 +112,7 @@ class Database:
 		DROP TABLE IF EXISTS setups;
 		DROP TABLE IF EXISTS setup_data;
 		DROP TABLE IF EXISTS dfs;
+		DROP TABLE IF EXISTS full_ticker_list;
 		CREATE TABLE dfs(
 			ticker VARCHAR(5) NOT NULL,
 			tf VARCHAR(3) NOT NULL,
@@ -154,26 +155,35 @@ class Database:
 		cursor = self._conn.cursor()
 		for command in commands:
 			cursor.execute(command)
-		try: cursor.execute("TRUNCATE TABLE dfs")
-		except:pass
-		for tf in ('d','1min'):
+		#try: cursor.execute("TRUNCATE TABLE dfs")
+		#except:pass
+		#for tf in ('d','1min'):
+		df = pd.read_feather("C:/dev/Broker/backend/scripts/sync/files/full_scan.feather")
+		df = df['ticker'].tolist()
+		df = [[x] for x in df]
+		insert_query = "INSERT INTO full_ticker_list VALUES (%s)"
+		cursor = self._conn.cursor()
+		cursor.executemany(insert_query, df)
+		self._conn.commit()
+		for tf in ('d'):
 			args = [[ticker, tf, 'C:/dev/broker/backend/scripts/' + tf + '/' + ticker + '.feather'] for ticker in self.get_ticker_list()]
-			for ticker, tf, path in args:
-				df = pd.read_feather(path)
-				df['datetime'] = df['datetime'].astype(str)
-				df = df.values.tolist()
-				rows = [[ticker, tf] + list(row) for row in df]
-		
-				cursor = self._conn.cursor()
-				insert_query = "INSERT IGNORE INTO dfs VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-				cursor.executemany(insert_query, rows)
-				self._conn.commit()
-				cursor.close()
+			
+			for ticker, tf, path in tqdm(args,desc='Transfering Dataframes'):
+				try:
+					df = pd.read_feather(path)
+					df = df.values.tolist()
+					rows = [[ticker, tf,Database.format_datetime(row[0])] + list(row)[1:] for row in df]
+					insert_query = "INSERT INTO dfs VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+					cursor.executemany(insert_query, rows)
+					self._conn.commit()
+				except:
+					pass
+		cursor.close()
 
 if __name__ == '__main__':
 	db = Database()
 	ticker_list = db.get_ticker_list('full')
-	df = db.get_df('AAPL')
-	print(df)
+	for ticker in tqdm(ticker_list):
+		db.get_df(ticker)
 	db.close_pool()
 

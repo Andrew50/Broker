@@ -13,20 +13,14 @@ class App:
         self.tasks = {}
 
     def start_task(self, script_name):
-        # try:
-        #     # Get the requested function from the scripts module
-        #     if not hasattr(scripts, script_name):
-        #         return jsonify({'error': f'Function {script_name} not found in scripts'}), 404
-        #     script_function = getattr(scripts, script_name)
-        # except Exception as e:
-        #     return jsonify({'error': str(e)}), 500
+
+##--------LINK SCRIPTS------------
+        if script_name == 'get':
+            func = Chart.get
         if script_name =='match':
             func = test_func.god
 
-
         data = request.json
-        args = data.get('args', [])
-        kwargs = data.get('kwargs', {})
         task_id = str(uuid.uuid4())
         def callback(result):
             self.tasks[task_id] = {'status': 'done', 'result': result.get()}
