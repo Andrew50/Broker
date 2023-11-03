@@ -1,9 +1,7 @@
 try:
-    from Data import Data
-    from Database import Database
+    from Data import Data, Database
 except:
-    from .Data import Data
-    from .Database import Database
+    from .Data import Data, Database
 def get(ticker,tf,dt):
     conn = Database()
     return Data(conn,ticker).df

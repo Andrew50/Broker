@@ -23,6 +23,7 @@ class App:
         data = request.json
         task_id = str(uuid.uuid4())
         def callback(result):
+            print(result.get())
             self.tasks[task_id] = {'status': 'done', 'result': result.get()}
         task = self.pool.apply_async(func, args=data.get('args', []), kwds=data.get('kwargs', {}), callback=callback)
         self.tasks[task_id] = {'status': 'pending', 'result': task}
