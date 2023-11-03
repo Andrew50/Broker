@@ -7,11 +7,12 @@ except:
     
 
 
-def get(ticker,tf,dt):
+def get(ticker,tf,dt=None):
     conn = Database()
-    df = Data(conn,'AAPL').df
+    df = Data(conn,ticker,tf,dt).df
     list_of_lists = df.tolist()
-    return json.dumps(list_of_lists)
-
+    print('worked')
+    r = json.dumps(list_of_lists)
+    return r
 if __name__ == '__main__':
-    print(get('AMZN','d',None))
+    print(get('AAPL','1d'))

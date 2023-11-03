@@ -22,15 +22,12 @@ class Database:
 	def get_model(user_id,st):
 		
 		pass
-	
 	def get_sample(user_id,st):
 		pass
 	def set_sampe(user_id,st,ticker,tf,dt):
 		pass
 	def set_settings(user_id,setting_string):
 		pass
-
-
 	def get_ticker_list(self, type='full'):
 		cursor = self._conn.cursor(dictionary=True)
 		if type == 'full':
@@ -107,22 +104,45 @@ class Database:
 					insert_query = "INSERT INTO dfs VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
 					cursor.executemany(insert_query, ydf)
 					self._conn.commit()
+					
 				except TimeoutError:
 					pass
 		cursor.close()
-	
-	def __init__(self):
-		dbconfig = {
-			"host": "localhost",
-			"port": 3306,
-			"user": "root",
-			"password": "7+WCy76_2$%g",#TODO
-			"database": 'broker',
-			"autocommit": True
-		}
-		self._conn = mysql.connector.connect(**dbconfig)
+		
 
-	def close_pool(self):
+	
+	
+	def __init__(self,startup_check=False):
+		if startup_check:
+			dbconfig = {
+				"host": "localhost",
+				"port": 3306,
+				"user": "root",
+				"password": "7+WCy76_2$%g",#TODO
+				"database":'broker',
+			}
+			self._conn = mysql.connector.connect(**dbconfig)
+			cursor = self._conn.cursor()
+			try:
+				cursor.execute("USE broker;")
+				self._conn.commit()
+				cursor.execute("SELECT COUNT(*) FROM dfs;")
+				count = cursor.fetchall()
+				assert count[0][0] > 5000*300
+			except Exception as e:
+				print(e)
+				self.load_from_legacy()
+		else:
+			dbconfig = {
+				"host": "localhost",
+				"port": 3306,
+				"user": "root",
+				"password": "7+WCy76_2$%g",#TODO
+				"database": 'broker',
+			}
+			self._conn = mysql.connector.connect(**dbconfig)
+
+	def close_connection(self):
 		self._conn.close()
 		
 	def print_all(self):
@@ -153,6 +173,12 @@ class Database:
 		return dt
 
 	def load_from_legacy(self):
+		cursor = self._conn.cursor()
+		
+		cursor.execute("CREATE DATABASE IF NOT EXISTS broker DEFAULT CHARACTER SET 'utf8';")
+		self._conn.commit()
+		cursor.execute("USE broker;")
+		self._conn.commit()
 		sql_commands = """
 		DROP TABLE IF EXISTS users;
 		DROP TABLE IF EXISTS setups;
@@ -196,12 +222,7 @@ class Database:
 			ticker VARCHAR(5) NOT NULL
 		);
 		"""
-		
-		create_database_command = "CREATE DATABASE IF NOT EXISTS Broker;"
-		
 		commands = [cmd.strip() for cmd in sql_commands.split(';') if cmd.strip()]
-		cursor = self._conn.cursor()
-		cursor.execute(create_database_command)
 		for command in commands:cursor.execute(command)
 		df = pd.read_feather("C:/dev/Broker/backend/sync/files/full_scan.feather")
 		df = df['ticker'].tolist()
@@ -216,13 +237,13 @@ class Database:
 			for ticker, tf, path in tqdm(args,desc='Transfering Dataframes'):
 				try:
 					df = pd.read_feather(path)
-					df.index = (df.index.astype(np.int64) // 10**9)
+					df['datetime']= (df['datetime'].astype(np.int64) // 10**9)
 					df = df.values.tolist()
 					rows = [[ticker, tf] + row for row in df]
-					insert_query = "INSERT INTO dfs VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+					insert_query = "INSERT IGNORE INTO dfs VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
 					cursor.executemany(insert_query, rows)
 					self._conn.commit()
-				except: #if d doesnt exist or theres no data then this gets hit every loop
+				except TimeoutError: #if d doesnt exist or theres no data then this gets hit every loop
 					pass
 		query = "SELECT * FROM dfs"
 		cursor.execute(query)
@@ -320,6 +341,4 @@ class Data:
 		return returns
 
 if __name__ == '__main__':
-	db = Database()
-	db.load_from_legacy()
-	#db.print_all()
+	db = Database(True)

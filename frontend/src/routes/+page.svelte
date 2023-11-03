@@ -16,6 +16,12 @@
     let isMatch = false;
     let isScreener = false;
 
+     // $: {
+     //    if (chart_data.length > 0 && CandlestickSeries) {
+     //      CandlestickSeries.setData($chart_data);
+     //        }
+     //      }
+
     function toggleMatch() {
     isMatch = !isMatch;
     isScreener = false; 
@@ -29,9 +35,14 @@
     let tf = "d";
     let dt = "2023-10-03";
     let timeScale;
-    var data = [
-    {time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85}]
 
+    export let chart_data = writable([
+  {time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85}
+]);
+
+    export let sample_data = [
+  {time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85}
+]
     // task list: chart-get match-get trainer-get trainer-set screener-get study-get study-set settings-set
     async function startTask(task,bind_variable) {
         const queryParams = new URLSearchParams({ ticker, dt, tf }).toString();
@@ -202,7 +213,7 @@
 </div>
 <Chart width={innerWidth - 300}  height={innerHeight - 40} {...options}>
     <CandlestickSeries
-        data={data}
+        data={sample_data}
         reactive={true}
         upColor="rgba(0,255, 0, 1)"
         downColor="rgba(255, 0, 0, 1)"
@@ -212,12 +223,12 @@
         wickUpColor="rgba(0,255, 0, 1)"
     />
 </Chart>
-<!-- <form on:submit={startTask('get')}>
+<form on:submit={startTask('Chart-get',chart_data)}>
      <input type="text" id="ticker" bind:value ={ticker} name="ticker" placeholder="Enter Ticker" required>
      <input type="text" id="tf" bind:value ={tf} name="ticker" placeholder="Enter TF" required>
       <input type="text" id="dt" bind:value ={dt} name="ticker" placeholder="Enter Date Time">
      <input type="submit" value="FETCH">
-</form> --> 
+</form> 
 
 to
 <a href="/test2">test2</a>
