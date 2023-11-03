@@ -26,8 +26,8 @@ class App:
         def callback(result):
             self.tasks[task_id] = {'status': 'done', 'result': result}
         #for _ in range(cores):
-        task = self.pool.apply_async(func, args=args, callback=callback)
-        #task = self.pool.apply(func, args=args)
+        task = self.pool.apply_async(func, args=args, callback=callback)   
+        #task = self.pool.apply(func, args=args)        #####<----  Use if you think backend task throws
         self.tasks[task_id] = {'status': 'pending', 'result': task}
         return jsonify({'task_id': task_id})
 

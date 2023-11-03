@@ -57,7 +57,7 @@ class Match:
         return [Odtw.dtwupd(x,y,radius), ticker, index]
 
     def compute(ticker,dt,tf):
-        dt = Main.format_date(dt)
+        dt = Database.format_date(dt)
         #ticker,dt,tf = lis
         ds = Match.load(tf)
         top_scores = Match.run(ds, ticker, dt, tf)
@@ -158,13 +158,13 @@ class Odtw:
             
         
 def get(ticker,tf,dt):
-    db = Database()
-    Match.run(db,ticker,tf,dt)
+    #db = Database()
+    #Match.run(db,ticker,tf,dt)
     val = table_data = [
     {'id': 1, 'name': 'Alice'},
     {'id': 2, 'name': 'Bob'},
     {'id': 3, 'name': 'Carol'}
-]
+    ]
     #return 'god'
     return json.dumps(val)
     
