@@ -499,6 +499,7 @@ class Data: #object
 						print('nice gpu code')
 					else:
 						if x[i][3]*x[i][4] < 500000: continue
+						#if x[i][3]-x[i-bars][3]
 						y = d[i-bars:i]
 						#x = preprocessing.normalize(x, axis=0)
 						if type != 'ml':

@@ -16,19 +16,18 @@ class Odtw:
         return u, l
     
     def calclowerBound(x, upper, lower, bars):
-        totalLowerBound = 0.0
         for i in range(bars-(bars//4), bars):
             if (x[i] > upper[i]):
-                return 999
+                return 99
             elif(x[i] < lower[i]):
-                return 999
-        
+                return 99
+        totalLowerBound = 0.0
         for i in range(0, bars-(bars//4)):
             if (x[i] > upper[i]):
-                totalLowerBound += pow((x[i]-upper[i]), 2)
+                totalLowerBound += (x[i]-upper[i])*(x[i]-upper[i])#pow((x[i]-upper[i]), 2)
                 continue
             elif(x[i] < lower[i]):
-                totalLowerBound += pow((x[i]-lower[i]), 2)
+                totalLowerBound += (x[i]-lower[i])*(x[i]-lower[i])#pow((x[i]-lower[i]), 2)
                 continue
         return sqrt(totalLowerBound)*100
 
