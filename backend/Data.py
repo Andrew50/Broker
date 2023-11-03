@@ -1,17 +1,23 @@
 
+from turtle import update
 import numpy as np
-import array, os, pandas as pd, numpy as np, datetime, mysql.connector
+import array, os, pandas as pd, numpy as np, datetime, mysql.connector, pytz
 from tqdm import tqdm
-
-
+import yfinance as yf
 
 class Database:
 	
-#get model
-#get sample
-#set sample
-#set settings
-#auth
+	def is_market_open():  # Change to a boolean at some point
+		if (datetime.datetime.now().weekday() >= 5):
+			return False  # If saturday or sunday
+		dt = datetime.datetime.now(pytz.timezone('US/Eastern'))
+		hour = dt.hour
+		minute = dt.minute
+		if hour >= 10 and hour <= 16:
+			return True
+		elif hour == 9 and minute >= 30:
+			return True
+		return False
 
 	def get_model(user_id,st):
 		
@@ -50,46 +56,60 @@ class Database:
 		return data
 	
 	def update(self):
-		
-		ticker = self.ticker
-		
-		tf = self.tf
-		path = self.path
-		exists = True
-		try:
-			df = self.df
-			last_day = self.df.index[-1] 
-		except: exists = False
-		print(tf)
-		if tf == '1d' or tf == 'd':
-			ytf = '1d'
-			period = '25y'
-		elif tf == '1min':
-			ytf = '1m'
-			period = '5d'
-		ydf = yf.download(tickers = ticker, period = period, group_by='ticker', interval = ytf, ignore_tz = True, progress=False, show_errors = False, threads = False, prepost = True) 
-		ydf.drop(axis=1, labels="Adj Close",inplace = True)
-		ydf.rename(columns={'Open':'open','High':'high','Low':'low','Close':'close','Volume':'volume'}, inplace = True)
-		ydf.dropna(inplace = True)
-		if Main.is_market_open() == 1: ydf.drop(ydf.tail(1).index,inplace=True)
-		if not exists: df = ydf
-		else:
-			try: index = Data.findex(ydf, last_day) 
-			except: return
-			ydf = ydf[index + 1:]
-			df = pd.concat([df, ydf])
-		df.index.rename('datetime', inplace = True)
-		if not df.empty: 
-			if tf == '1min': pass
-			elif tf == 'd': df.index = df.index.normalize() + pd.Timedelta(minutes = 570)
-			df = df.reset_index()
-			feather.write_feather(df,path)
-		pass
-		#update full_ticker_list
+		#update full ticker list
 		#update data
-		#retrain
-		#calc account
+		#update models
 		#backup
+		def findex(df, dt):
+			dt = Database.format_datetime(dt)
+			i = int(len(df)/2)		
+			k = int(i/2)
+			while k != 0:
+				date = df.index[i]
+				if date > dt:
+					i -= k
+				elif date < dt:
+					i += k
+				k = int(k/2)
+			while df.index[i] < dt:
+				i += 1
+			while df.index[i] > dt:
+				i -= 1
+			return i
+		ticker_list = self.get_ticker_list('full')
+		cursor = self._conn.cursor()
+		for ticker in tqdm(ticker_list):
+			for tf in ['1d']:
+				try:
+					df = self.get_df(ticker,tf)
+					last_day = df[-1:0]
+					
+					if tf == '1d':
+						ytf = '1d'
+						period = '25y'
+					elif tf == '1min':
+						ytf = '1m'
+						period = '5d'
+					else:
+						raise Exception('invalid timeframe to update')
+					ydf = yf.download(tickers = ticker, period = period, group_by='ticker', interval = ytf, ignore_tz = True, progress=False, show_errors = False, threads = True, prepost = True) 
+					ydf.drop(axis=1, labels="Adj Close",inplace = True)
+					ydf.dropna(inplace = True)
+					if Database.is_market_open() == 1: ydf.drop(ydf.tail(1).index,inplace=True)
+					ydf.index = ydf.index.normalize() + pd.Timedelta(minutes = 570)
+					ydf.index = (ydf.index.astype(np.int64) // 10**9)
+					ydf.reset_index(inplace = True)
+					if type(last_day) == int:
+						index = findex(ydf, last_day) 
+						ydf = ydf[index + 1:]
+					ydf = ydf.values.tolist()
+					ydf = [[ticker, tf] + row for row in ydf]
+					insert_query = "INSERT INTO dfs VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+					cursor.executemany(insert_query, ydf)
+					self._conn.commit()
+				except TimeoutError:
+					pass
+		cursor.close()
 	
 	def __init__(self):
 		dbconfig = {
@@ -97,15 +117,24 @@ class Database:
 			"port": 3306,
 			"user": "root",
 			"password": "7+WCy76_2$%g",#TODO
-			"database": 'Broker',
+			"database": 'broker',
 			"autocommit": True
 		}
 		self._conn = mysql.connector.connect(**dbconfig)
 
 	def close_pool(self):
 		self._conn.close()
+		
+	def print_all(self):
+		query = "SELECT * FROM dfs"
+		cursor = self._conn.cursor()
+		cursor.execute(query)
+		data = cursor.fetchall()
+		print(data)
 	
 	def format_datetime(dt,reverse=False):
+		if type(dt) == int:
+			return dt
 		if dt is None: return None
 		if dt == 'current': return datetime.datetime.now(pytz.timezone('EST'))
 		if isinstance(dt, str):
@@ -174,27 +203,32 @@ class Database:
 		cursor = self._conn.cursor()
 		cursor.execute(create_database_command)
 		for command in commands:cursor.execute(command)
-		df = pd.read_feather("C:/dev/Broker/backend/scripts/sync/files/full_scan.feather")
+		df = pd.read_feather("C:/dev/Broker/backend/sync/files/full_scan.feather")
 		df = df['ticker'].tolist()
 		df = [[x] for x in df]
 		insert_query = "INSERT INTO full_ticker_list VALUES (%s)"
 		cursor = self._conn.cursor()
 		cursor.executemany(insert_query, df)
 		self._conn.commit()
-		for tf in ('d'):
-			args = [[ticker, tf, 'C:/dev/broker/backend/scripts/' + tf + '/' + ticker + '.feather'] for ticker in self.get_ticker_list()]
+		for tf in ['1d']:
+			args = [[ticker, tf, 'C:/dev/broker/backend/' + tf + '/' + ticker + '.feather'] for ticker in self.get_ticker_list()]
 			
 			for ticker, tf, path in tqdm(args,desc='Transfering Dataframes'):
 				try:
 					df = pd.read_feather(path)
+					df.index = (df.index.astype(np.int64) // 10**9)
 					df = df.values.tolist()
-					rows = [[ticker, tf,Database.format_datetime(row[0])] + list(row)[1:] for row in df]
+					rows = [[ticker, tf] + row for row in df]
 					insert_query = "INSERT INTO dfs VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
 					cursor.executemany(insert_query, rows)
 					self._conn.commit()
-				except:
+				except: #if d doesnt exist or theres no data then this gets hit every loop
 					pass
+		query = "SELECT * FROM dfs"
+		cursor.execute(query)
+		data = cursor.fetchall()
 		cursor.close()
+		self.update()
 
 
 class Dataset:
@@ -255,7 +289,7 @@ class Dataset:
 	def __init__(self, request='full',tf='d', bars=0, offset=0, value=None, pm=True):
 		
 		if request == 'full':
-			request = [[ticker,None] for ticker in db.get_ticker_list('full')]
+			request = [[ticker,None] for ticker in self.get_ticker_list('full')]
 		for ticker, dt in request:
 			self.dfs = Data(ticker, tf, dt, bars, offset, value, pm)
 		self.bars = bars
@@ -288,3 +322,4 @@ class Data:
 if __name__ == '__main__':
 	db = Database()
 	db.load_from_legacy()
+	#db.print_all()
