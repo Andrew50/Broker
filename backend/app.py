@@ -34,8 +34,8 @@ class App:
         if task_info is None:
             return jsonify({'status': 'not found'}), 404
 
-        if task_info['status'] == 'pending' and task_info['task'].ready():
-            result = task_info['task'].get()
+        if task_info['status'] == 'pending' and task_info['result'].ready():
+            result = task_info['result'].get()
             task_info.update({'status': 'done', 'result': result})
 
         return jsonify(task_info)
