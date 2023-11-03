@@ -1,4 +1,8 @@
-import os, sys
+try:
+	from Database import Database
+except:
+	from .Database import Database
+import numpy as np
 
 from argparse import ArgumentTypeError
 from tensorflow.keras.models import Sequential
@@ -7,67 +11,11 @@ from tensorflow.keras import models
 #sys.path.append(Stocks2/backend')
 # Now, you can import the Match module
 
-import io
-import PIL
-import pathlib
-import concurrent.futures
-from multiprocessing.pool import Pool
-from bisect import insort_right
-import numpy as np
-import websocket
-import datetime
-import os
-import pyarrow
-import shutil
-import statistics
-import warnings
-import math
-import time
-import pytz
-import tensorflow
-import random
-from pyarrow import feather
-import asyncio
-from multiprocessing import Pool, current_process
-import pandas as pd
-import os
-import time
-from concurrent.futures import ThreadPoolExecutor
-from tqdm import tqdm
-import numpy
-from sklearn import preprocessing
-import pandas as pd
-import mplfinance as mpf
-import PySimpleGUI as sg
-import matplotlib.ticker as mticker
-from matplotlib import pyplot as plt
-import numpy as np
-import pandas as pd
-import yfinance as yf
-from tqdm import tqdm
-from pyarrow import feather
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.models import Sequential, load_model
-from multiprocessing import Pool, current_process
-from tensorflow.keras.layers import Dense, LSTM, Bidirectional, Dropout
-import websocket
-import datetime
-import os
-import pyarrow
-import shutil
-import statistics
-import warnings
-import math
-import time
-import pytz
-import tensorflow
-import random
-warnings.filterwarnings("ignore")
+class Dataset: #object
 	
-class Main:
 
-	def sample(st, use):
-		Main.consolidate_database()
+	def train(self, st, use, epochs): 
+		db.consolidate_database()
 		allsetups = pd.read_feather('local/data/' + st + '.feather').sort_values(
 			by='dt', ascending=False).reset_index(drop=True)
 		yes = []
@@ -335,7 +283,7 @@ class Dataset: #object
 		# print(f'{datetime.datetime.now() - start}')
 		# return returns
 
-	def train(self, st, percent_yes, epochs):
+	def train(self, st, percent_yes, epochs): 
 		df = pd.read_feather('local/data/' + st + '.feather')
 		ones = len(df[df['value'] == 1])
 		if ones < 150:
@@ -368,7 +316,6 @@ class Dataset: #object
 			from Study import Screener as screener
 		if request.empty:
 			tickers = screener.get('full')
-			print(
 			request = pd.DataFrame({'ticker': tickers})
 			request['dt'] = None
 			request['tf'] = 'd'
@@ -384,90 +331,14 @@ class Dataset: #object
 		#self.dfs = Dataset.data_generator(self)
 		self.len = len(self.dfs)
 		
-		
+class Data:
 
-
-class Data: #object
-
-	def update(self):
-		ticker = self.ticker
-		
-		tf = self.tf
-		path = self.path
-		exists = True
+	def __init__(self, db, ticker='QQQ', tf='d', dt=None, bars=0,value=None, pm=True):
 		try:
-			df = self.df
-			last_day = self.df.index[-1] 
-		except: exists = False
-		print(tf)
-		if tf == '1d' or tf == 'd':
-			ytf = '1d'
-			period = '25y'
-		elif tf == '1min':
-			ytf = '1m'
-			period = '5d'
-		ydf = yf.download(tickers = ticker, period = period, group_by='ticker', interval = ytf, ignore_tz = True, progress=False, show_errors = False, threads = False, prepost = True) 
-		ydf.drop(axis=1, labels="Adj Close",inplace = True)
-		ydf.rename(columns={'Open':'open','High':'high','Low':'low','Close':'close','Volume':'volume'}, inplace = True)
-		ydf.dropna(inplace = True)
-		if Main.is_market_open() == 1: ydf.drop(ydf.tail(1).index,inplace=True)
-		if not exists: df = ydf
-		else:
-			try: index = Data.findex(ydf, last_day) 
-			except: return
-			ydf = ydf[index + 1:]
-			df = pd.concat([df, ydf])
-		df.index.rename('datetime', inplace = True)
-		if not df.empty: 
-			if tf == '1min': pass
-			elif tf == 'd': df.index = df.index.normalize() + pd.Timedelta(minutes = 570)
-			df = df.reset_index()
-			feather.write_feather(df,path)
-
-	def __init__(self, ticker='QQQ', tf='d', dt=None, bars=0, offset=0, value=None, pm=True, np_bars=50):
-		try:
-			
-			dt = Main.format_date(dt)
-			self.path = Main.data_path(ticker, tf)
-			if 'd' in tf or 'w' in tf:
-				base_tf = '1d'
-			else:
-				base_tf = '1min'
-			try:
-				df = feather.read_feather(self.path).set_index('datetime', drop=True)
-			except TimeoutError:
-				raise TimeoutError
-			if df.empty:
-				raise TimeoutError
-			if len(tf) == 1:
-				tf = '1' + tf
-			if pm and Main.is_pre_market(dt):
-				pm_bar = pd.read_feather(
-					'sync/files/current_scan.feather').set_index('ticker').loc[ticker]
-				pm_price = pm_bar['pm change'] + df.iat[-1, 3]
-				df = pd.concat([df, pd.DataFrame({'datetime': [datetime.datetime.now()], 'open': [pm_price], 'high': [pm_price], 'low': [
-					pm_price], 'close': [pm_price], 'volume': [pm_bar['pm volume']]}).set_index("datetime", drop=True)])
-			if dt != None:
-				try:
-					df = df[:Data.findex(
-							df, dt) + 1 + int(offset*(pd.Timedelta(tf) / pd.Timedelta(base_tf)))]
-				except IndexError:
-					raise TimeoutError
-			if tf != '1min' or not pm:
-				df = df.between_time('09:30', '15:59')
-			if 'w' in tf:
-				last_bar = df.tail(1)
-				df = df[:-1]
-			df = df.resample(tf, closed='left', label='left', origin=pd.Timestamp(
-				'2008-01-07 09:30:00')).apply({'open': 'first', 'high': 'max', 'low': 'min', 'close': 'last', 'volume': 'sum'})
-			if 'w' in tf:
-				df = pd.concat([df, last_bar])
-			df = df.dropna()[-bars:]
-		except:
-			
-			df = pd.DataFrame()
-		self.df = df
-		self.len = len(df)
+			self.df = db.get_df(ticker,tf,dt,bars,pm)
+		except TimeoutError:
+			self.df = []
+		self.len = len(self.df)
 		self.ticker = ticker
 		self.tf = tf
 		self.dt = dt

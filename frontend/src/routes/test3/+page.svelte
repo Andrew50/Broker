@@ -1,30 +1,19 @@
-<!-- <h1>Candlestick Chart</h1> -->
-<Chart {...options}>
-    <CandlestickSeries
-        data={data}
-        reactive={true}
-        upColor="rgba(0,255, 0, 1)"
-        downColor="rgba(255, 0, 0, 1)"
-        borderDownColor="rgba(255, 0, 0, 1)"
-        borderUpColor="rgba(0,255, 0, 1)"
-        wickDownColor="rgba(255, 0, 0, 1)"
-        wickUpColor="rgba(0,255, 0, 1)"
-    />
-</Chart>
-<form on:submit={startTask1}>
-     <input type="text" id="ticker" bind:value ={ticker} name="ticker" placeholder="Enter Ticker" required>
-     <input type="text" id="tf" bind:value ={tf} name="ticker" placeholder="Enter TF" required>
-      <input type="text" id="dt" bind:value ={dt} name="ticker" placeholder="Enter Date Time">
-     <input type="submit" value="FETCH">
-</form>
-
 <script>
+  var windowWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+  var windowHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+  
+  let isMatch = false;
+  let isScreener = false;
 
-    var windowWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-    var windowHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-
-    // Output the width and height
-    console.log("Window Width: " + windowWidth + " pixels");
+  function toggleMatch() {
+    isMatch = !isMatch;
+    isScreener = false; 
+  }
+  function toggleScreener() {
+    isScreener = !isScreener;
+    isMatch = false; 
+  }
+  console.log("Window Width: " + windowWidth + " pixels");
     console.log("Window Height: " + windowHeight + " pixels");
     import { writable } from 'svelte/store';
     import {onMount} from 'svelte';
@@ -91,8 +80,8 @@
     }
 
     const options = {
-        width: windowWidth - 300,
-        height: windowHeight - 40,
+        width: windowWidth - 400,
+        height: windowHeight -40,
         layout: {
             background: {
                 type: ColorType.Solid,
@@ -119,5 +108,107 @@
 
         },
     }
-    
 </script>
+
+<style>
+  .match-button {
+    position: fixed;
+    right: 20px;
+    top: 20px; /* You can adjust the top position as needed */
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+  }
+  .screener-button {
+    position: fixed;
+    right: 20px;
+    top: 120px; /* You can adjust the top position as needed */
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+  }
+
+  .container {
+    margin-right: 20px;
+  }
+
+  .popout-menu {
+  display: none;
+  position: fixed;
+  right: 70px; /* Offset from the right side */
+  top: 0; /* You can adjust the top position as needed */
+  background-color: #f9f9f9;
+  min-width: 320px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+}
+
+  .popout-menu button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    text-align: left;
+  }
+
+  .popout-menu button:hover {
+    background-color: #ddd;
+  }
+
+  .popout-menu.visible {
+    display: block;
+  }
+
+</style>
+
+<div class="container">
+  <div class="button-container">
+    <button class="match-button" on:click={toggleMatch}>
+        <div>M</div>
+        <div>A</div>
+        <div>T</div>
+        <div>C</div>
+        <div>H</div>
+    </button>
+    <button class="screener-button" on:click={toggleScreener}>
+        <div>S</div>
+        <div>C</div>
+        <div>R</div>
+        <div>E</div>
+        <div>E</div>
+    </button>
+    <div class="popout-menu"  style="min-height: {windowHeight}px;" class:visible={isMatch}>
+      {#if isMatch}
+        THIS IS MATCH
+      {/if}
+    </div>
+    <div class="popout-menu"  style="min-height: {windowHeight}px;" class:visible={isScreener}>
+      {#if isScreener}
+        THIS IS SCREENER
+      {/if}
+    </div>
+  </div>
+</div>
+<Chart {...options}>
+    <CandlestickSeries
+        data={data}
+        reactive={true}
+        upColor="rgba(0,255, 0, 1)"
+        downColor="rgba(255, 0, 0, 1)"
+        borderDownColor="rgba(255, 0, 0, 1)"
+        borderUpColor="rgba(0,255, 0, 1)"
+        wickDownColor="rgba(255, 0, 0, 1)"
+        wickUpColor="rgba(0,255, 0, 1)"
+    />
+</Chart>
+<form on:submit={startTask1}>
+     <input type="text" id="ticker" bind:value ={ticker} name="ticker" placeholder="Enter Ticker" required>
+     <input type="text" id="tf" bind:value ={tf} name="ticker" placeholder="Enter TF" required>
+      <input type="text" id="dt" bind:value ={dt} name="ticker" placeholder="Enter Date Time">
+     <input type="submit" value="FETCH">
+</form>
+
+
+
