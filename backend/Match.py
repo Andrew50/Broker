@@ -5,6 +5,10 @@ from Data import Database, Data, Dataset
 #from Study import Screener as screener
 import numpy as np
 import json
+import math
+from scipy.spatial.distance import euclidean
+import numpy as np
+sqrt = math.sqrt
 import pandas as pd
 import datetime
 
@@ -24,14 +28,14 @@ np_bars = 10
 sqrt = math.sqrt
 class Match:
 
-    def load(tf):
-        ticker_list = screener.get('full')[:5000]
-        df = pd.DataFrame({'ticker': ticker_list})
-        df['dt'] = None
-        df['tf'] = tf
-        ds = Dataset(df)
-        df = ds.load_np('dtw',np_bars)
-        return df
+    # def load(tf):
+    #     ticker_list = screener.get('full')[:5000]
+    #     df = pd.DataFrame({'ticker': ticker_list})
+    #     df['dt'] = None
+    #     df['tf'] = tf
+    #     ds = Dataset(df)
+    #     df = ds.load_np('dtw',np_bars)
+    #     return df
 
     def run(ds, ticker, dt, tf):
         y = Data(ticker, tf, dt,bars = np_bars+1)
@@ -56,10 +60,11 @@ class Match:
         if (Odtw.calclowerBound(x, upper, lower, num_bars) > cutoff): return None
         return [Odtw.dtwupd(x,y,radius), ticker, index]
 
-    def compute(ticker,dt,tf):
+    def compute(db,ticker,dt,tf):
         dt = Database.format_date(dt)
         #ticker,dt,tf = lis
-        ds = Match.load(tf)
+        #ds = Match.load(tf)
+        ds = Dataset(db,'full')
         top_scores = Match.run(ds, ticker, dt, tf)
         formatted_top_scores = []
         for score, ticker, index in top_scores:
@@ -67,16 +72,16 @@ class Match:
         return formatted_top_scores
 
 if __name__ == '__main__':
-
+    db = Database()
     ticker = 'JBL'  # input('input ticker: ')
     dt = '2023-10-03'  # input('input date: ')
     tf = 'd'  # int(input('input tf: '))
-    top_scores = Match.compute(ticker,dt,tf)
+    
+    top_scores = Match.compute(db,ticker,dt,tf)
     for score,ticker,date in top_scores:
     #for score, ticker, index in top_scores:
         print(f'{ticker} {date} {score}')
-        
-            
+         
         
 def get(ticker,tf,dt):
     db = Database()
