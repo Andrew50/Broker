@@ -86,12 +86,5 @@ if __name__ == '__main__':
         
 def get(ticker,tf,dt):
     db = Database()
-    Match.run(db,ticker,tf,dt)
-    val = table_data = [
-    {'id': 1, 'name': 'Alice'},
-    {'id': 2, 'name': 'Bob'},
-    {'id': 3, 'name': 'Carol'}
-    ]
-    #return 'god'
-    return json.dumps(val)
+    return json.dumps(Match.run(db,ticker,tf,dt))
     
