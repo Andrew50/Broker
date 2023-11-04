@@ -8,7 +8,7 @@ import yfinance as yf
 class Database:
 	
 	def get_user(self,email,password):
-		with self._conn.cursor() as cursor:
+		with self._conn.cursor(buffered=True) as cursor:
 			cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
 			user_data = cursor.fetchone()
 			if len(user_data) > 0:
@@ -16,7 +16,7 @@ class Database:
 					return user_data[0]
 	
 	def set_user(self, user_id = None, email=None, password=None, settings_string=None,delete = False):
-		with self._conn.cursor() as cursor:
+		with self._conn.cursor(buffered=True) as cursor:
 			if user_id is not None:
 				if not delete:
 					fields = []
@@ -44,30 +44,30 @@ class Database:
 				self._conn.commit()
 				
 	def get_settings(self,user_id):
-		with self._conn.cursor() as cursor:
+		with self._conn.cursor(buffered=True) as cursor:
 			cursor.execute("SELECT settings FROM users WHERE id = %s", (user_id,))
 			return cursor.fetchone()[0]
 
 
 	def get_model(self,user_id,st):
-		with self._conn.cursor() as cursor:
+		with self._conn.cursor(buffered=True) as cursor:
 			cursor.execute('SELECT model from setups WHERE user_id = %s AND name = %s',(user_id,st))
 			return cursor.fetchone()[0]
 
 	def set_setup(self,user_id,st,tf):
-		with self._conn.cursor() as cursor:
+		with self._conn.cursor(buffered=True) as cursor:
 			insert_query = "INSERT INTO setups (user_id, name, tf, model) VALUES (%s, %s, %s, %s)"
 			cursor.execute(insert_query, (user_id,st,tf,''))
 		self._conn.commit()
 	def get_sample(self,user_id,st):
-		with self._conn.cursor() as cursor:
+		with self._conn.cursor(buffered=True) as cursor:
 			cursor.execute('SELECT setup_id from setups WHERE user_id = %s AND name = %s',(user_id,st))
 			setup_id = cursor.fetchone()[0]
 			cursor.execute('SELECT * from setup_data WHERE setup_id = %s',(setup_id,))
 			return cursor.fetchall()
 		
 	def set_sample(self,user_id,st,ticker,dt):
-		with self._conn.cursor() as cursor:
+		with self._conn.cursor(buffered=True) as cursor:
 			
 			cursor.execute('SELECT setup_id from setups WHERE user_id = %s AND name = %s',(user_id,st))
 			setup_id = cursor.fetchone()[0]
@@ -75,9 +75,9 @@ class Database:
 			
 		self._conn.commit()
 	def get_ticker_list(self, type='full'):
-		cursor = self._conn.cursor(dictionary=True)
+		cursor = self._conn.cursor(buffered=True)
 		if type == 'full':
-			query = "SELECT * FROM full_ticker_list"
+			query = "SELECT ticker FROM full_ticker_list"
 			cursor.execute(query)
 			data = cursor.fetchall()
 			cursor.close()
@@ -87,23 +87,23 @@ class Database:
 			raise Exception('need current func. has to pull from tv or something god')###################################################################################################################################
 	
 	def get_df(self, ticker, tf='1d', dt=None, bars=0, pm=True):
-		cursor = self._conn.cursor(dictionary=True)
+		cursor = self._conn.cursor(buffered=True)
 		if dt != None:
 			query = "SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s AND tf = %s AND dt = %s ORDER BY dt ASC"
 			cursor.execute(query, (ticker, tf, dt))
 		else:
-			query = "SELECT * FROM dfs WHERE ticker = %s AND tf = %s ORDER BY dt ASC"
+			query = "SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s AND tf = %s ORDER BY dt ASC"
 			cursor.execute(query, (ticker, tf))
 		data = cursor.fetchall()
-		data = np.array([
-        [entry['dt'],  float(entry['open']), float(entry['high']),float(entry['low']),float(entry['close']),float(entry['volume'])]
-        for entry in data
-		])
+		#data = np.array([
+        #[entry['dt'],  float(entry['open']), float(entry['high']),float(entry['low']),float(entry['close']),float(entry['volume'])]
+        #for entry in data
+		#])
 		return data
 	
 	def update(self,force_retrain=False):
 
-		with self._conn.cursor() as cursor:
+		with self._conn.cursor(buffered=True) as cursor:
 			
 			# #update full ticker list
 			# current_ticker_list = self.get_ticker_list('current')
@@ -185,8 +185,10 @@ class Database:
 			if datetime.datetime.now().day == 4 or force_retrain:
 				
 				cursor.execute('SELECT * from setups')
-				setups = cursor.fetchall
-				print(setups)
+				setups = cursor.fetchall()
+				for setup_id, st, tf, model in setups:
+					cursor.execute('SELECT * from')
+					print("I HAVE A HUGE DICK 6969696969696969 8======================D")
 
 
 
@@ -196,14 +198,14 @@ class Database:
 	
 	def __init__(self):
 		try:
-			dbconfig = {"host": "localhost","port": 3306,"user": "root","password": "7+WCy76_2$%g","database": 'broker',}
+			dbconfig = {"host": "localhost","port": 3306,"user": "root","password": "7+WCy76_2$%g","database": 'broker'}
 			self._conn = mysql.connector.connect(**dbconfig)
-			with self._conn.cursor() as cursor:
-				cursor.execute("SELECT COUNT(*) FROM dfs;")
-				count = cursor.fetchall()[0][0]
-				assert count > 0
-				if count < 8000*300:
-					print(f'WARNING: DATA ISNT COMPLETE! ONLY {count} DAILY DATAPOINTS!')
+			# with self._conn.cursor(buffered=True) as cursor:
+			# 	cursor.execute("SELECT COUNT(*) FROM dfs;")
+			# 	count = cursor.fetchall()[0][0]
+			# 	assert count > 0
+			# 	if count < 8000*300:
+			# 		print(f'WARNING: DATA ISNT COMPLETE! ONLY {count} DAILY DATAPOINTS!')
 			
 		except:
 			dbconfig = {
@@ -229,7 +231,7 @@ class Database:
 	
 
 	def load_from_legacy(self):
-		with self._conn.cursor() as cursor:
+		with self._conn.cursor(buffered=True) as cursor:
 			##configure tables
 			cursor.execute("CREATE DATABASE IF NOT EXISTS broker DEFAULT CHARACTER SET 'utf8';")
 			self._conn.commit()
@@ -295,7 +297,7 @@ CREATE TABLE current_ticker_list(ticker VARCHAR(5) NOT NULL);
 			cursor.executemany(insert_query, df)
 			self._conn.commit()
 			##transfer data from backend/d/
-			if False:
+			if True:
 				
 				for tf in ['1d']:
 					args = [[ticker, tf, 'C:/dev/broker/backend/' + tf + '/' + ticker + '.feather'] for ticker in self.get_ticker_list()]
@@ -328,7 +330,7 @@ CREATE TABLE current_ticker_list(ticker VARCHAR(5) NOT NULL);
 
 	def print_all(self):
 		query = "SELECT * FROM dfs"
-		cursor = self._conn.cursor()
+		cursor = self._conn.cursor(buffered=True)
 		cursor.execute(query)
 		data = cursor.fetchall()
 		print(data)
@@ -444,13 +446,13 @@ class Data:
 
 if __name__ == '__main__':
 	db = Database()
-	db.update(True)
-	# try: db.set_user(email = 'billingsandrewjohn@gmail.com',password = 'password')
-	# except:
-	# 	pass
-	# #except: pass
+	db.update()
+	# db.set_user(email = 'billingsandrewjohn@gmail.com',password = 'password')
+	# # except:
+	# # 	pass
+	# # #except: pass
 	# user_id = db.get_user('billingsandrewjohn@gmail.com','password')
-	# #db.set_setup(user_id,'EP','1d')
+	# db.set_setup(user_id,'EP','1d')
 	# db.set_sample(user_id,'EP','AAPL',10)
 	# print(db.get_sample(user_id,'EP'))
 	# #db.set_user(user_id,delete=True)
