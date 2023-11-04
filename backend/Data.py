@@ -156,6 +156,9 @@ class Database:
 				"database": 'broker',
 			}
 			self._conn = mysql.connector.connect(**dbconfig)
+			cursor.execute("SELECT COUNT(*) FROM dfs;")
+			count = cursor.fetchall()
+			assert count[0][0] > 5000*300
 			
 		except:
 			dbconfig = {
@@ -166,15 +169,14 @@ class Database:
 			}
 			self._conn = mysql.connector.connect(**dbconfig)
 			cursor = self._conn.cursor()
-			try:
-				cursor.execute("USE broker;")
-				self._conn.commit()
-				cursor.execute("SELECT COUNT(*) FROM dfs;")
-				count = cursor.fetchall()
-				assert count[0][0] > 5000*300
-			except Exception as e:
-				print(e)
-				self.load_from_legacy()
+			# try:
+			# 	cursor.execute("USE broker;")
+			# 	self._conn.commit()
+				
+				
+			# except Exception as e:
+			# 	print(e)
+			self.load_from_legacy()
 
 	def close_connection(self):
 		self._conn.close()
