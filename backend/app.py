@@ -12,8 +12,8 @@ class App:
 		self.pool = Pool()
 		self.tasks = {}
 		self.cores = 6
-		df = Database(True)
-		df.close_connection()
+		#df = Database(True)
+		#df.close_connection()
 
 	def start_task(self, script_name):
 

@@ -134,7 +134,19 @@ class Database:
 	
 	
 	def __init__(self,startup_check=False):
-		if startup_check:
+		try:
+			if startup_check: raise IndexError
+	
+			dbconfig = {
+				"host": "localhost",
+				"port": 3306,
+				"user": "root",
+				"password": "7+WCy76_2$%g",#TODO
+				"database": 'broker',
+			}
+			self._conn = mysql.connector.connect(**dbconfig)
+			
+		except:
 			dbconfig = {
 				"host": "localhost",
 				"port": 3306,
@@ -153,15 +165,6 @@ class Database:
 			except Exception as e:
 				print(e)
 				self.load_from_legacy()
-		else:
-			dbconfig = {
-				"host": "localhost",
-				"port": 3306,
-				"user": "root",
-				"password": "7+WCy76_2$%g",#TODO
-				"database": 'broker',
-			}
-			self._conn = mysql.connector.connect(**dbconfig)
 
 	def close_connection(self):
 		self._conn.close()
