@@ -20,12 +20,7 @@ class Database:
 		return False
 
 	def get_model(user_id,st):
-		
 		pass
-	
-
-
-	
 
 	def get_sample(self,user_id,st):
 		with self._conn.cursor() as cursor:
@@ -36,14 +31,29 @@ class Database:
 			JOIN users u ON s.setup_id = u.setups_id
 			WHERE u.id = %s AND s.name = %s
 			"""
-
 			cursor.execute(query, (user_id, st))
-
 			rows = cursor.fetchall()
 
 		
-	def set_sample(user_id,st,ticker,tf,dt):
-		pass
+	def set_sample(self,user_id,st,ticker,tf,dt):
+		with self._conn.cursor() as cursor:
+			query = """
+			SELECT sd.*
+			FROM setup_data sd
+			JOIN setups s ON sd.id = s.id
+			JOIN users u ON s.setup_id = u.setups_id
+			WHERE u.id = %s AND s.name = %s
+			"""
+			cursor.execute(query, (user_id, st))
+			rows = cursor.fetchall()
+			
+
+			setup_id = cursor.fetchone()
+
+
+			cursor.execute("INSERT IGNORE INTO setup_data VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", (setup_id,ticker,dt))
+			#setup = cursor.fetchone()
+
 	def set_settings(user_id,setting_string):
 		pass
 	def get_ticker_list(self, type='full'):
