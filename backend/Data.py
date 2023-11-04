@@ -251,7 +251,7 @@ class Database:
 						insert_query = "INSERT IGNORE INTO dfs VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
 						cursor.executemany(insert_query, rows)
 						self._conn.commit()
-					except TimeoutError: #if d doesnt exist or theres no data then this gets hit every loop
+					except : #if d doesnt exist or theres no data then this gets hit every loop
 						pass
 			self.update()
 

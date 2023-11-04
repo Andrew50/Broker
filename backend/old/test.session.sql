@@ -23,20 +23,20 @@ CREATE TABLE setup_data(
 CREATE INDEX id_index ON setup_data (id);
 CREATE TABLE setups(
     id INT NOT NULL,
-    setup_id INT NOT NULL,
+    --setup_id INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     tf VARCHAR(3) NOT NULL,
     model BINARY,
-    FOREIGN KEY (setup_id) REFERENCES setup_data(id)
+    FOREIGN KEY (id) REFERENCES users(id)
 );
 CREATE INDEX id_index ON setups (id);
 CREATE TABLE users(
     id INT PRIMARY KEY,
-    setups_id INT NOT NULL,
+    -- setups_id INT NOT NULL,
     email VARCHAR(255),
     password VARCHAR(255),
     settings TEXT,
-    FOREIGN KEY (setups_id) REFERENCES setups(id)
+    --FOREIGN KEY (id) REFERENCES setups(id)
 );
 CREATE TABLE full_ticker_list(ticker VARCHAR(5) NOT NULL);
 CREATE TABLE current_ticker_list(ticker VARCHAR(5) NOT NULL);
