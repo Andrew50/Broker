@@ -40,5 +40,4 @@ CREATE TABLE users(
 CREATE TABLE full_ticker_list(ticker VARCHAR(5) NOT NULL);
 -- @block
 SELECT *
-FROM dfs
-WHERE ticker = "AAPL"
+FROM dfs WHERE ticker = "AAPL"

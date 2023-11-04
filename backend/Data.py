@@ -41,6 +41,9 @@ class Database:
 			raise Exception('need current func. has to pull from tv or something god')
 	
 	def get_df(self, ticker, tf='d', dt=None, bars=0, pm=True):
+		print(ticker)
+		print(tf)
+		print(dt)
 		cursor = self._conn.cursor(dictionary=True)
 		if dt != None:
 			query = "SELECT * FROM dfs WHERE ticker = %s AND tf = %s AND dt = %s"

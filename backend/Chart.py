@@ -8,10 +8,12 @@ except:
 
 
 def get(ticker,tf,dt=None):
+    dt = None
+    print(f'ticker {ticker} tf {tf} dt {dt}')
     conn = Database()
     df = Data(conn,ticker,tf,dt).df
+    print(df)
     list_of_lists = df.tolist()
-    print('worked')
     r = json.dumps(list_of_lists)
     return r
 if __name__ == '__main__':

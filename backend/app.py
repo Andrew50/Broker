@@ -22,7 +22,7 @@ class App:
 		module_name, function_name = script_name.split('-')
 		module = importlib.import_module(module_name)
 		func = getattr(module, function_name, None)
-		args = request.args.to_dict()
+		args = list(request.args.values())
 		task_id = str(uuid.uuid4())
 		def callback(result):
 			self.tasks[task_id] = {'status': 'done', 'result': result}
@@ -36,8 +36,8 @@ class App:
 		task_info = self.tasks.get(task_id)
 		try: 
 			return jsonify(task_info)
-		except Exception as e:
-			#print(e)
+		except TimeoutError as e:
+			print(e)
 			return jsonify({'status':'pending'})
 			
 

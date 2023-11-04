@@ -31,9 +31,12 @@
     isMatch = false; 
     }
     
-    let ticker = "JBL";
+    let ticker = "AAPL";
     let tf = "d";
     let dt = "2023-10-03";
+    let chart_ticker = "AAPL";
+    let chart_tf = "1d";
+    let chart_dt = "";
     let timeScale;
 
     export let chart_data = writable([
@@ -45,7 +48,7 @@
 ]
     // task list: chart-get match-get trainer-get trainer-set screener-get study-get study-set settings-set
     async function startTask(task,bind_variable) {
-        const queryParams = new URLSearchParams({ ticker, dt, tf }).toString();
+        const queryParams = new URLSearchParams({ ticker, tf, dt }).toString();
       const url = `http://127.0.0.1:5000/api/${task}?${queryParams}`;
       console.log(url);
         const response = await fetch(url, {
@@ -73,21 +76,17 @@
             if (responseData.status === 'done') {
                 clearInterval(intervalId);
                 statusStore.set('Done');
-                //bind_variable = responseData.result
                 bind_variable.set(responseData.result);
-                //CandlestickSeries.setData(responseData.result);
+                console.log('Unpacked Response:', responseData);
                 console.log('Unpacked Response:', responseData.result);
-                
             }
             } else {
             clearInterval(intervalId);
             console.error(`Failed to get task status for Task ID ${taskId}`);
             }
         };
-
         const intervalId = setInterval(checkStatus, 2000); // Check every 2 seconds
     }
-
     const options = {
         layout: {background: {type: ColorType.Solid,color: '#000000',},textColor: 'rgba(255, 255, 255, 0.9)',},
         grid: {vertLines: {color: 'rgba(197, 203, 206, 0.5)',},horzLines: {color: 'rgba(197, 203, 206, 0.5)',},},
@@ -224,13 +223,13 @@
     />
 </Chart>
 <form on:submit={startTask('Chart-get',chart_data)}>
-     <input type="text" id="ticker" bind:value ={ticker} name="ticker" placeholder="Enter Ticker" required>
-     <input type="text" id="tf" bind:value ={tf} name="ticker" placeholder="Enter TF" required>
-      <input type="text" id="dt" bind:value ={dt} name="ticker" placeholder="Enter Date Time">
+     <input type="text" id="ticker" bind:value ={chart_ticker} name="ticker" placeholder="Enter Ticker" required>
+     <input type="text" id="tf" bind:value ={chart_tf} name="tf" placeholder="Enter TF" required>
+      <input type="text" id="dt" bind:value ={chart_dt} name="dt" placeholder="Enter Date Time">
      <input type="submit" value="FETCH">
 </form> 
 
-to
+
 <a href="/test2">test2</a>
 
 
