@@ -37,10 +37,8 @@ class Match:
     #     df = ds.load_np('dtw',np_bars)
     #     return df
 
-    def run(ds, ticker, dt, tf):
-        y = Data(ticker, tf, dt,bars = np_bars+1)
-        y = y.load_np('dtw',np_bars,True)
-        y = y[0][0]
+    def run(ds,y):
+        
         radius = math.ceil(np_bars/10)
         upper, lower = Odtw.calcBounds(y, radius)
         cutoff = 0.02*100
@@ -65,7 +63,10 @@ class Match:
         #ticker,dt,tf = lis
         #ds = Match.load(tf)
         ds = Dataset(db,'full')
-        top_scores = Match.run(ds, ticker, dt, tf)
+        y = Data(db,ticker, tf, dt,bars = np_bars+1)
+        y = y.load_np('dtw',np_bars,True)
+        y = y[0][0]
+        top_scores = Match.run(ds, y)
         formatted_top_scores = []
         for score, ticker, index in top_scores:
             formatted_top_scores.append([ticker,str(Data(ticker).df.index[index]),round(score,2)])
