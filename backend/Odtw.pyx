@@ -5,6 +5,22 @@ cimport cython
 class Odtw:
     @cython.boundscheck(False)
     @cython.wraparound(False)
+    def calcBounds(np.ndarray[double, ndim=1] y, int radius):
+        cdef int n = len(y)
+        cdef np.ndarray[double, ndim=1] u = np.empty(n, dtype=np.float64)
+        cdef np.ndarray[double, ndim=1] l = np.empty(n, dtype=np.float64)
+        cdef Py_ssize_t i
+
+        for i in range(n):
+            indexLowerBound = max(0, i - radius)
+            indexUpperBound = min(n - 1, i + radius)
+            u[i] = max(y[indexLowerBound:indexUpperBound + 1])
+            l[i] = min(y[indexLowerBound:indexUpperBound + 1])
+
+        return u, l
+
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
     def calclowerBound(np.ndarray[double, ndim=1] x, np.ndarray[double, ndim=1] upper, np.ndarray[double, ndim=1] lower):
         cdef int bars = x.shape[0]
         cdef int i 
