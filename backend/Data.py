@@ -144,8 +144,9 @@ class Database:
 	
 	
 	def __init__(self,startup_check=False):
+	#def __init__(self,startup_check=False):
 		try:
-			if startup_check: raise IndexError
+			#if startup_check: raise IndexError
 	
 			dbconfig = {
 				"host": "localhost",
@@ -162,7 +163,6 @@ class Database:
 				"port": 3306,
 				"user": "root",
 				"password": "7+WCy76_2$%g",#TODO
-				"database":'broker',
 			}
 			self._conn = mysql.connector.connect(**dbconfig)
 			cursor = self._conn.cursor()
