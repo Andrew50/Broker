@@ -22,9 +22,27 @@ class Database:
 	def get_model(user_id,st):
 		
 		pass
-	def get_sample(user_id,st):
-		pass
-	def set_sampe(user_id,st,ticker,tf,dt):
+	
+
+
+	
+
+	def get_sample(self,user_id,st):
+		with self._conn.cursor() as cursor:
+			query = """
+			SELECT sd.*
+			FROM setup_data sd
+			JOIN setups s ON sd.id = s.id
+			JOIN users u ON s.setup_id = u.setups_id
+			WHERE u.id = %s AND s.name = %s
+			"""
+
+			cursor.execute(query, (user_id, st))
+
+			rows = cursor.fetchall()
+
+		
+	def set_sample(user_id,st,ticker,tf,dt):
 		pass
 	def set_settings(user_id,setting_string):
 		pass
@@ -176,86 +194,67 @@ class Database:
 		return dt
 
 	def load_from_legacy(self):
-		cursor = self._conn.cursor()
-		
-		cursor.execute("CREATE DATABASE IF NOT EXISTS broker DEFAULT CHARACTER SET 'utf8';")
-		self._conn.commit()
-		cursor.execute("USE broker;")
-		self._conn.commit()
-		sql_commands = """
-		DROP TABLE IF EXISTS users;
-		DROP TABLE IF EXISTS setups;
-		DROP TABLE IF EXISTS setup_data;
-		DROP TABLE IF EXISTS dfs;
-		DROP TABLE IF EXISTS full_ticker_list;
-		CREATE TABLE dfs(
-			ticker VARCHAR(5) NOT NULL,
-			tf VARCHAR(3) NOT NULL,
-			dt BIGINT NOT NULL,
-			open DECIMAL(10, 4),
-			high DECIMAL(10, 4),
-			low DECIMAL(10, 4),
-			close DECIMAL(10, 4),
-			volume FLOAT,
-			PRIMARY KEY (ticker, tf, dt)
-		);
-		CREATE TABLE setup_data(
-			id INT NOT NULL,
-			ticker VARCHAR(5) NOT NULL,
-			dt INT NOT NULL
-		);
-		CREATE INDEX id_index ON setup_data (id);
-		CREATE TABLE setups(
-			id INT NOT NULL,
-			setup_id INT NOT NULL,
-			name VARCHAR(255) NOT NULL,
-			tf VARCHAR(3) NOT NULL,
-			FOREIGN KEY (setup_id) REFERENCES setup_data(id)
-		);
-		CREATE INDEX id_index ON setups (id);
-		CREATE TABLE users(
-			id INT PRIMARY KEY,
-			setups_id INT NOT NULL,
-			email VARCHAR(255),
-			password VARCHAR(255),
-			settings TEXT,
-			FOREIGN KEY (setups_id) REFERENCES setups(id)
-		);
-		CREATE TABLE full_ticker_list(
-			ticker VARCHAR(5) NOT NULL
-		);
-		"""
-		commands = [cmd.strip() for cmd in sql_commands.split(';') if cmd.strip()]
-		for command in commands:cursor.execute(command)
-		df = pd.read_feather("C:/dev/Broker/backend/sync/files/full_scan.feather")
-		df = df['ticker'].tolist()
-		df = [[x] for x in df]
-		insert_query = "INSERT INTO full_ticker_list VALUES (%s)"
-		cursor = self._conn.cursor()
-		cursor.executemany(insert_query, df)
-		self._conn.commit()
-		for tf in ['1d']:
-			args = [[ticker, tf, 'C:/dev/broker/backend/' + tf + '/' + ticker + '.feather'] for ticker in self.get_ticker_list()]
+		with self._conn.cursor() as cursor:
+			##configure tables
+			cursor.execute("CREATE DATABASE IF NOT EXISTS broker DEFAULT CHARACTER SET 'utf8';")
+			self._conn.commit()
+			cursor.execute("USE broker;")
+			self._conn.commit()
+			sql_commands = """
+			DROP TABLE IF EXISTS users;
+			DROP TABLE IF EXISTS setups;
+			DROP TABLE IF EXISTS setup_data;
+			DROP TABLE IF EXISTS dfs;
+			DROP TABLE IF EXISTS full_ticker_list;
+			CREATE TABLE dfs(ticker VARCHAR(5) NOT NULL,tf VARCHAR(3) NOT NULL,dt BIGINT NOT NULL,open DECIMAL(10, 4),high DECIMAL(10, 4),low DECIMAL(10, 4),close DECIMAL(10, 4),volume FLOAT,PRIMARY KEY (ticker, tf, dt));
+			CREATE TABLE setup_data(id INT NOT NULL,ticker VARCHAR(5) NOT NULL,dt BIGINT NOT NULL);
+			CREATE INDEX id_index ON setup_data (id);
+			CREATE TABLE setups(id INT NOT NULL,setup_id INT NOT NULL,name VARCHAR(255) NOT NULL,tf VARCHAR(3) NOT NULL,FOREIGN KEY (setup_id) REFERENCES setup_data(id));
+			CREATE INDEX id_index ON setups (id);
+			CREATE TABLE users(id INT PRIMARY KEY,setups_id INT NOT NULL,email VARCHAR(255),password VARCHAR(255),settings TEXT,FOREIGN KEY (setups_id) REFERENCES setups(id));
+			CREATE TABLE full_ticker_list(ticker VARCHAR(5) NOT NULL);
+			CREATE TABLE current_ticker_list(ticker VARCHAR(5) NOT NULL);
+			"""
+			commands = [cmd.strip() for cmd in sql_commands.split(';') if cmd.strip()]
+			for command in commands:cursor.execute(command)
+			df = pd.read_feather("C:/dev/Broker/backend/sync/files/full_scan.feather")
+			df = df['ticker'].tolist()
+			df = [[x] for x in df]
+			insert_query = "INSERT INTO full_ticker_list VALUES (%s)"
+			cursor = self._conn.cursor()
+			cursor.executemany(insert_query, df)
+			self._conn.commit()
+			#try to transfer data from backend/d/
+			for tf in ['1d']:
+				args = [[ticker, tf, 'C:/dev/broker/backend/' + tf + '/' + ticker + '.feather'] for ticker in self.get_ticker_list()]
 			
-			for ticker, tf, path in tqdm(args,desc='Transfering Dataframes'):
-				try:
-					df = pd.read_feather(path)
-					df['datetime']= (df['datetime'].astype(np.int64) // 10**9)
-					df = df.values.tolist()
-					rows = [[ticker, tf] + row for row in df]
-					insert_query = "INSERT IGNORE INTO dfs VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-					cursor.executemany(insert_query, rows)
-					self._conn.commit()
-				except TimeoutError: #if d doesnt exist or theres no data then this gets hit every loop
-					pass
-		query = "SELECT * FROM dfs"
-		cursor.execute(query)
-		data = cursor.fetchall()
-		cursor.close()
-		self.update()
+				for ticker, tf, path in tqdm(args,desc='Transfering Dataframes'):
+					try:
+						df = pd.read_feather(path)
+						df['datetime']= (df['datetime'].astype(np.int64) // 10**9)
+						df = df.values.tolist()
+						rows = [[ticker, tf] + row for row in df]
+						insert_query = "INSERT IGNORE INTO dfs VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+						cursor.executemany(insert_query, rows)
+						self._conn.commit()
+					except TimeoutError: #if d doesnt exist or theres no data then this gets hit every loop
+						pass
+			
+			self.update()
 
 
 class Dataset:
+	
+	def __init__(self, db, request='full',tf='d', bars=0, offset=0, value=None, pm=True):
+		
+		if request == 'full':
+			request = [[ticker,None] for ticker in self.get_ticker_list('full')]
+		for ticker, dt in request:
+			self.dfs.append(Data(db,ticker, tf, dt, bars, offset, value, pm))
+		self.bars = bars
+		self.offset = offset
+		self.len = len(self.dfs)
+		
 
 	def train(self, st, use, epochs): 
 		db.consolidate_database()
@@ -310,16 +309,7 @@ class Dataset:
 		model.save('sync/models/model_' + st)
 		tensorflow.keras.backend.clear_session()
 
-	def __init__(self, request='full',tf='d', bars=0, offset=0, value=None, pm=True):
-		
-		if request == 'full':
-			request = [[ticker,None] for ticker in self.get_ticker_list('full')]
-		for ticker, dt in request:
-			self.dfs = Data(ticker, tf, dt, bars, offset, value, pm)
-		self.bars = bars
-		self.offset = offset
-		self.len = len(self.dfs)
-		
+	
 class Data:
 
 	def __init__(self, db, ticker='QQQ', tf='d', dt=None, bars=0,value=None, pm=True):

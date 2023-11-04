@@ -47,6 +47,9 @@
   {time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85}
 ]
     // task list: chart-get match-get trainer-get trainer-set screener-get study-get study-set settings-set
+
+
+
     async function startTask(task,bind_variable) {
         const queryParams = new URLSearchParams({ ticker, tf, dt }).toString();
       const url = `http://127.0.0.1:5000/api/${task}?${queryParams}`;

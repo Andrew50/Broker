@@ -7,7 +7,7 @@ DROP TABLE IF EXISTS dfs;
 CREATE TABLE dfs(
     ticker VARCHAR(5) NOT NULL,
     tf VARCHAR(3) NOT NULL,
-    dt DATETIME NOT NULL,
+    dt INT NOT NULL,
     open DECIMAL(10, 4),
     high DECIMAL(10, 4),
     low DECIMAL(10, 4),
@@ -26,6 +26,7 @@ CREATE TABLE setups(
     setup_id INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     tf VARCHAR(3) NOT NULL,
+    model BINARY,
     FOREIGN KEY (setup_id) REFERENCES setup_data(id)
 );
 CREATE INDEX id_index ON setups (id);
@@ -38,6 +39,8 @@ CREATE TABLE users(
     FOREIGN KEY (setups_id) REFERENCES setups(id)
 );
 CREATE TABLE full_ticker_list(ticker VARCHAR(5) NOT NULL);
+CREATE TABLE current_ticker_list(ticker VARCHAR(5) NOT NULL);
 -- @block
 SELECT *
-FROM dfs WHERE ticker = "AAPL"
+FROM dfs
+WHERE ticker = "AAPL"
