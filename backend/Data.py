@@ -217,17 +217,16 @@ class Database:
 			"""
 			commands = [cmd.strip() for cmd in sql_commands.split(';') if cmd.strip()]
 			for command in commands:cursor.execute(command)
+			##transfer full_ticker_list
 			df = pd.read_feather("C:/dev/Broker/backend/sync/files/full_scan.feather")
 			df = df['ticker'].tolist()
 			df = [[x] for x in df]
 			insert_query = "INSERT INTO full_ticker_list VALUES (%s)"
-			cursor = self._conn.cursor()
 			cursor.executemany(insert_query, df)
 			self._conn.commit()
-			#try to transfer data from backend/d/
+			##transfer data from backend/d/
 			for tf in ['1d']:
 				args = [[ticker, tf, 'C:/dev/broker/backend/' + tf + '/' + ticker + '.feather'] for ticker in self.get_ticker_list()]
-			
 				for ticker, tf, path in tqdm(args,desc='Transfering Dataframes'):
 					try:
 						df = pd.read_feather(path)
@@ -239,9 +238,7 @@ class Database:
 						self._conn.commit()
 					except TimeoutError: #if d doesnt exist or theres no data then this gets hit every loop
 						pass
-			
 			self.update()
-
 
 class Dataset:
 	
