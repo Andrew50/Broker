@@ -1,3 +1,9 @@
+import math
+from scipy.spatial.distance import euclidean
+import numpy as np
+sqrt = math.sqrt
+# Optimized dynamic time warping for match
+# Let y denote the timeseries we want to find similarities of
 class Odtw: 
     def calcBounds(y, radius):
         u = np.empty([len(y)])

@@ -5,7 +5,7 @@ cimport cython
 class Odtw:
     @cython.boundscheck(False)
     @cython.wraparound(False)
-    def calcBounds(np.ndarray[double, ndim=1] x, np.ndarray[double, ndim=1] upper, np.ndarray[double, ndim=1] lower):
+    def calclowerBound(np.ndarray[double, ndim=1] x, np.ndarray[double, ndim=1] upper, np.ndarray[double, ndim=1] lower):
         cdef int bars = x.shape[0]
         cdef int i 
         cdef double totalLowerBound = 0.0

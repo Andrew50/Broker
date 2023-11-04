@@ -53,7 +53,7 @@ class Match:
     def worker(bar):
         x, y, ticker, index, upper, lower, cutoff, radius, num_bars = bar
         
-        if (sqrt(pow(y[0]-x[0], 2) + pow(y[num_bars-1]-x[num_bars-1], 2))*100 > cutoff)or (Odtw.calclowerBound(x, upper, lower, num_bars) > cutoff): return None
+        if (Odtw.calclowerBound(x, upper, lower, num_bars) > cutoff): return None
         return [Odtw.dtwupd(x,y,radius), ticker, index]
 
     def compute(ticker,dt,tf):
@@ -76,16 +76,6 @@ if __name__ == '__main__':
     #for score, ticker, index in top_scores:
         print(f'{ticker} {date} {score}')
         
-
-
-
-
-import math
-from scipy.spatial.distance import euclidean
-import numpy as np
-sqrt = math.sqrt
-# Optimized dynamic time warping for match
-# Let y denote the timeseries we want to find similarities of
             
         
 def get(ticker,tf,dt):
