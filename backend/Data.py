@@ -221,6 +221,7 @@ class Database:
 			DROP TABLE IF EXISTS setup_data;
 			DROP TABLE IF EXISTS dfs;
 			DROP TABLE IF EXISTS full_ticker_list;
+			DROP TABLE IF EXISTS current_ticker_list;
 			CREATE TABLE dfs(ticker VARCHAR(5) NOT NULL,tf VARCHAR(3) NOT NULL,dt BIGINT NOT NULL,open DECIMAL(10, 4),high DECIMAL(10, 4),low DECIMAL(10, 4),close DECIMAL(10, 4),volume FLOAT,PRIMARY KEY (ticker, tf, dt));
 			CREATE TABLE setup_data(id INT NOT NULL,ticker VARCHAR(5) NOT NULL,dt BIGINT NOT NULL);
 			CREATE INDEX id_index ON setup_data (id);
