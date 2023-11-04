@@ -23,6 +23,9 @@ class Database:
 		
 		pass
 	def get_sample(user_id,st):
+
+
+
 		pass
 	def set_sampe(user_id,st,ticker,tf,dt):
 		pass
