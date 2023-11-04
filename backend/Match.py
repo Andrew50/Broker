@@ -22,7 +22,7 @@ import torch
 from tqdm import tqdm
 from scipy.spatial.distance import euclidean
 from multiprocessing import Pool
-from Odtw import Odtw
+import Odtw
 import math
 np_bars = 10
 sqrt = math.sqrt
