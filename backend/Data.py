@@ -216,7 +216,7 @@ class Database:
 			cursor.execute("USE broker;")
 			self._conn.commit()
 			sql_commands = """
-DROP TABLE IF EXISTS setup_data;
+			DROP TABLE IF EXISTS setup_data;
 DROP TABLE IF EXISTS setups;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS dfs;
