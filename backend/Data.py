@@ -64,7 +64,7 @@ class Database:
 			data = cursor.fetchall()
 			cursor.close()
 			data = [item['ticker'] for item in data]
-			return data
+			return data[:100]#############################################fix god
 		elif type == 'current':
 			raise Exception('need current func. has to pull from tv or something god')
 	
