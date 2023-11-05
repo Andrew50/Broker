@@ -42,6 +42,9 @@ class Match:
         
         radius = math.ceil(np_bars/10)
         upper, lower = Odtw.calcBounds(y, radius)
+        print(upper)
+        print(lower)
+        raise AttributeError
         cutoff = 0.02*100
         arglist = [[x, y, tick, index, upper, lower, cutoff, radius] for x, tick, index in ds]
         start = datetime.datetime.now()
@@ -66,9 +69,7 @@ class Match:
         y = Data(db,ticker, tf, dt,bars = np_bars+1).df
         ds = Dataset(db,'full').dfs
         y = y[len(y)-1-np_bars:len(y)-1]
-        print(y)
-        print(len(y))
-        raise AttributeError
+        y = Match.formatArray(y);
         #y = y.load_np('dtw',np_bars,True)
         #y = y[0][0]
         top_scores = Match.run(ds, y)
@@ -78,9 +79,17 @@ class Match:
         return formatted_top_scores
 
     def formatArray(data):
-        d = np.zeros((data.shape[0]-1, data.shape[1]))
-        for i in range(len(d)):
-            d[i] = float(data[i+1]/data[i, 3] - 1)
+        d = np.zeros((len(data), 6))
+        data = np.array(data)
+        print(data)
+        for i in range(len(d)-1):
+            d[i][0] = data[i][0]
+            d[i][1] = float(data[i+1][1]/data[i][4] - 1)
+            d[i][2] = float(data[i+1][2]/data[i][4] - 1)
+            d[i][3] = float(data[i+1][3]/data[i][4] - 1)
+            d[i][4] = float(data[i+1][4]/data[i][4] - 1)
+            d[i][5] = data[i][5]
+            
         return d
 
         
