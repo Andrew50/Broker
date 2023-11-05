@@ -4,7 +4,7 @@ from libc.math cimport sqrt
 cimport cython
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def calcBounds(np.ndarray[double, ndim=1] y, int radius):
+def calcBounds(double[:] y, int radius):
     cdef int n = len(y)
     cdef np.ndarray[double, ndim=1] u = np.empty(n, dtype=np.float64)
     cdef np.ndarray[double, ndim=1] l = np.empty(n, dtype=np.float64)

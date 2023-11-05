@@ -1,6 +1,7 @@
 import os, sys
 from locale import normalize
 from multiprocessing.pool import Pool
+from unittest import defaultTestLoader
 from Data import Database, Data, Dataset
 #from Study import Screener as screener
 import numpy as np
@@ -64,8 +65,10 @@ class Match:
         #ds = Match.load(tf)
         y = Data(db,ticker, tf, dt,bars = np_bars+1).df
         ds = Dataset(db,'full').dfs
-        
-        #print(y)
+        y = y[len(y)-1-np_bars:len(y)-1]
+        print(y)
+        print(len(y))
+        raise AttributeError
         #y = y.load_np('dtw',np_bars,True)
         #y = y[0][0]
         top_scores = Match.run(ds, y)
@@ -74,6 +77,15 @@ class Match:
             formatted_top_scores.append([ticker,str(Data(ticker).df.index[index]),round(score,2)])
         return formatted_top_scores
 
+
+    def formatArray(data):
+        d = np.zeros((data.shape[0]-1, data.shape[1]))
+        for i in range(len(d)):  # add ohlc
+	        d[i] = float(data[i+1]/data[i, 3] - 1)
+                
+
+        return d
+        
 if __name__ == '__main__':
     db = Database()
     ticker = 'AAPL'  # input('input ticker: ')
