@@ -81,7 +81,7 @@ class Database:
 			cursor.execute(query)
 			data = cursor.fetchall()
 			cursor.close()
-			data = [item['ticker'] for item in data]
+			data = [item[0] for item in data]
 			return data
 		elif type == 'current':
 			raise Exception('need current func. has to pull from tv or something god')###################################################################################################################################
@@ -89,12 +89,14 @@ class Database:
 	def get_df(self, ticker, tf='1d', dt=None, bars=0, pm=True):
 		cursor = self._conn.cursor(buffered=True)
 		if dt != None:
-			query = "SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s AND tf = %s AND dt = %s ORDER BY dt ASC"
+			query = "SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s AND tf = %s AND dt <= %s ORDER BY dt ASC"
 			cursor.execute(query, (ticker, tf, dt))
 		else:
 			query = "SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s AND tf = %s ORDER BY dt ASC"
 			cursor.execute(query, (ticker, tf))
+			
 		data = cursor.fetchall()
+		print(data)
 		#data = np.array([
         #[entry['dt'],  float(entry['open']), float(entry['high']),float(entry['low']),float(entry['close']),float(entry['volume'])]
         #for entry in data
@@ -105,90 +107,98 @@ class Database:
 
 		with self._conn.cursor(buffered=True) as cursor:
 			
-			# #update full ticker list
+			#update full ticker list
+			
 			# current_ticker_list = self.get_ticker_list('current')
 			# for ticker in current_ticker_list:
 			# 	cursor.executemany('INSERT IGNORE INTO full_ticker_list VALUES (%s)',(ticker,))
 		
 			# self._conn.commit()
 
-			# #update data
+			#update data
 
 
-			# def findex(df, dt):
-			# 	dt = Database.format_datetime(dt)
-			# 	i = int(len(df)/2)		
-			# 	k = int(i/2)
-			# 	while k != 0:
-			# 		date = df.index[i]
-			# 		if date > dt:
-			# 			i -= k
-			# 		elif date < dt:
-			# 			i += k
-			# 		k = int(k/2)
-			# 	while df.index[i] < dt:
-			# 		i += 1
-			# 	while df.index[i] > dt:
-			# 		i -= 1
-			# 	return i
+			def findex(df, dt):
+				dt = Database.format_datetime(dt)
+				i = int(len(df)/2)		
+				k = int(i/2)
+				while k != 0:
+					date = df.index[i]
+					if date > dt:
+						i -= k
+					elif date < dt:
+						i += k
+					k = int(k/2)
+				while df.index[i] < dt:
+					i += 1
+				while df.index[i] > dt:
+					i -= 1
+				return i
 		
-			# ticker_list = self.get_ticker_list('full')
+			ticker_list = self.get_ticker_list('full')
+
 		
-			# for ticker in tqdm(ticker_list):
-			# 	for tf in ['1d']:
-			# 		try:
-			# 			if tf == '1d':
+			for ticker in tqdm(ticker_list):
+				for tf in ['1d']:
+					try:
+						if tf == '1d':
 						
-			# 				ytf = '1d'
-			# 				period = '25y'
-			# 			elif tf == '1min':
-			# 				ytf = '1m'
-			# 				period = '5d'
-			# 			else:
-			# 				raise Exception('invalid timeframe to update')
-			# 			ydf = yf.download(tickers = ticker, period = period, group_by='ticker', interval = ytf, ignore_tz = True, progress=False, show_errors = False, threads = True, prepost = True) 
-			# 			ydf.drop(axis=1, labels="Adj Close",inplace = True)
-			# 			ydf.dropna(inplace = True)
-			# 			if Database.is_market_open() == 1: ydf.drop(ydf.tail(1).index,inplace=True)
-			# 			ydf.index = ydf.index.normalize() + pd.Timedelta(minutes = 570)
-			# 			ydf.index = (ydf.index.astype(np.int64) // 10**9)
-			# 			cursor.execute("SELECT MAX(dt) FROM dfs WHERE ticker = %s AND tf = %s", (ticker, tf))
-			# 			result = cursor.fetchone()
-			# 			last_day = result[0] if result else 0
+							ytf = '1d'
+							period = '25y'
+						elif tf == '1min':
+							ytf = '1m'
+							period = '5d'
+						else:
+							raise Exception('invalid timeframe to update')
+						ydf = yf.download(tickers = ticker, period = period, group_by='ticker', interval = ytf, ignore_tz = True, progress=False, show_errors = False, threads = True, prepost = True) 
+						ydf.drop(axis=1, labels="Adj Close",inplace = True)
+						ydf.dropna(inplace = True)
+						if Database.is_market_open() == 1: ydf.drop(ydf.tail(1).index,inplace=True)
+						ydf.index = ydf.index.normalize() + pd.Timedelta(minutes = 570)
+						ydf.index = (ydf.index.astype(np.int64) // 10**9)
+						cursor.execute("SELECT MAX(dt) FROM dfs WHERE ticker = %s AND tf = %s", (ticker, tf))
+						result = cursor.fetchone()
+						last_day = result[0] if result else 0
 					
-			# 			if type(last_day) == int:
-			# 				index = findex(ydf, last_day) 
-			# 				ydf = ydf[index + 1:]
-			# 			ydf.reset_index(inplace = True)
+						if type(last_day) == int:
+							index = findex(ydf, last_day) 
+							ydf = ydf[index + 1:]
+						ydf.reset_index(inplace = True)
 					
-			# 			ydf = ydf.values.tolist()
-			# 			ydf = [[ticker, tf] + row for row in ydf]
-			# 			insert_query = """
-			# 			INSERT INTO dfs (ticker, tf, dt, open, high, low, close, volume) 
-			# 			VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-			# 			ON DUPLICATE KEY UPDATE 
-			# 			open = VALUES(open), 
-			# 			high = VALUES(high), 
-			# 			low = VALUES(low), 
-			# 			close = VALUES(close), 
-			# 			volume = VALUES(volume)
-			# 			"""
-			# 			cursor.executemany(insert_query, ydf)
-			# 			self._conn.commit()
+						ydf = ydf.values.tolist()
+						ydf = [[ticker, tf] + row for row in ydf]
+						insert_query = """
+						INSERT INTO dfs (ticker, tf, dt, open, high, low, close, volume) 
+						VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+						ON DUPLICATE KEY UPDATE 
+						open = VALUES(open), 
+						high = VALUES(high), 
+						low = VALUES(low), 
+						close = VALUES(close), 
+						volume = VALUES(volume)
+						"""
+						cursor.executemany(insert_query, ydf)
+						self._conn.commit()
 					
-			# 		except TimeoutError:
-			# 			pass
+					except TimeoutError:
+						pass
 					
-
+			
 
 			#update models
-			if datetime.datetime.now().day == 4 or force_retrain:
+			# if datetime.datetime.now().day == 4 or force_retrain:
 				
-				cursor.execute('SELECT * from setups')
-				setups = cursor.fetchall()
-				for setup_id, st, tf, model in setups:
-					cursor.execute('SELECT * from')
-					print("I HAVE A HUGE DICK 6969696969696969 8======================D")
+			# 	cursor.execute('SELECT * from setups')
+			# 	setups = cursor.fetchall()
+			# 	for setup_id, st, tf, model in setups:
+			# 		cursor.execute('SELECT * from')
+
+
+
+
+
+
+
 
 
 
@@ -200,12 +210,12 @@ class Database:
 		try:
 			dbconfig = {"host": "localhost","port": 3306,"user": "root","password": "7+WCy76_2$%g","database": 'broker'}
 			self._conn = mysql.connector.connect(**dbconfig)
-			# with self._conn.cursor(buffered=True) as cursor:
-			# 	cursor.execute("SELECT COUNT(*) FROM dfs;")
-			# 	count = cursor.fetchall()[0][0]
-			# 	assert count > 0
-			# 	if count < 8000*300:
-			# 		print(f'WARNING: DATA ISNT COMPLETE! ONLY {count} DAILY DATAPOINTS!')
+			with self._conn.cursor(buffered=True) as cursor:
+				cursor.execute("SELECT COUNT(*) FROM dfs;")
+				count = cursor.fetchall()[0][0]
+				assert count > 0
+				if count < 8000*300:
+					print(f'WARNING: DATA ISNT COMPLETE! ONLY {count} DAILY DATAPOINTS!')
 			
 		except:
 			dbconfig = {
@@ -357,14 +367,11 @@ CREATE TABLE current_ticker_list(ticker VARCHAR(5) NOT NULL);
 
 class Dataset:
 	
-	def __init__(self, db, request='full',tf='d', bars=0, offset=0, value=None, pm=True):
-		
+	def __init__(self, db, request='full',tf='d', bars=0, value=None, pm=True):
 		if request == 'full':
-			request = [[ticker,None] for ticker in self.get_ticker_list('full')]
-		for ticker, dt in request:
-			self.dfs.append(Data(db,ticker, tf, dt, bars, offset, value, pm))
+			request = [[ticker,None] for ticker in db.get_ticker_list('full')]
+		self.dfs = [Data(db,ticker, tf, dt, bars, value, pm) for ticker,dt in request]
 		self.bars = bars
-		self.offset = offset
 		self.len = len(self.dfs)
 		
 
@@ -424,10 +431,10 @@ class Dataset:
 class Data:
 
 	def __init__(self, db, ticker='QQQ', tf='d', dt=None, bars=0,value=None, pm=True):
-		try:
-			self.df = db.get_df(ticker,tf,dt,bars,pm)
-		except:
-			self.df = []
+		# try:
+		self.df = db.get_df(ticker,tf,dt,bars,pm)
+		# except:
+		# 	self.df = []
 		self.len = len(self.df)
 		self.ticker = ticker
 		self.tf = tf
@@ -446,7 +453,7 @@ class Data:
 
 if __name__ == '__main__':
 	db = Database()
-	db.update()
+	#db.update()
 	# db.set_user(email = 'billingsandrewjohn@gmail.com',password = 'password')
 	# # except:
 	# # 	pass
