@@ -77,14 +77,12 @@ class Match:
             formatted_top_scores.append([ticker,str(Data(ticker).df.index[index]),round(score,2)])
         return formatted_top_scores
 
-
     def formatArray(data):
         d = np.zeros((data.shape[0]-1, data.shape[1]))
-        for i in range(len(d)):  # add ohlc
-	        d[i] = float(data[i+1]/data[i, 3] - 1)
-                
-
+        for i in range(len(d)):
+            d[i] = float(data[i+1]/data[i, 3] - 1)
         return d
+
         
 if __name__ == '__main__':
     db = Database()
