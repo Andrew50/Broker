@@ -41,6 +41,7 @@ CREATE TABLE setup_data(
     setup_id INT NOT NULL,
     ticker VARCHAR(5) NOT NULL,
     dt INT NOT NULL,
+    value BOOLEAN NOT NULL,
     UNIQUE(ticker, dt),
     FOREIGN KEY (setup_id) REFERENCES setups(setup_id)
 );

@@ -26,7 +26,7 @@ import Odtw
 import math
 np_bars = 10
 sqrt = math.sqrt
-class Match:
+class Match: 
 
     # def load(tf):
     #     ticker_list = screener.get('full')[:5000]
@@ -62,10 +62,12 @@ class Match:
         dt = Database.format_datetime(dt)
         #ticker,dt,tf = lis
         #ds = Match.load(tf)
-        ds = Dataset(db,'full')
-        y = Data(db,ticker, tf, dt,bars = np_bars+1)
-        y = y.load_np('dtw',np_bars,True)
-        y = y[0][0]
+        y = Data(db,ticker, tf, dt,bars = np_bars+1).df
+        ds = Dataset(db,'full').dfs
+        
+        #print(y)
+        #y = y.load_np('dtw',np_bars,True)
+        #y = y[0][0]
         top_scores = Match.run(ds, y)
         formatted_top_scores = []
         for score, ticker, index in top_scores:
@@ -74,9 +76,9 @@ class Match:
 
 if __name__ == '__main__':
     db = Database()
-    ticker = 'JBL'  # input('input ticker: ')
-    dt = '2023-10-03'  # input('input date: ')
-    tf = 'd'  # int(input('input tf: '))
+    ticker = 'AAPL'  # input('input ticker: ')
+    dt = None#'2023-10-03'  # input('input date: ')
+    tf = '1d'  # int(input('input tf: '))
     
     top_scores = Match.compute(db,ticker,dt,tf)
     for score,ticker,date in top_scores:

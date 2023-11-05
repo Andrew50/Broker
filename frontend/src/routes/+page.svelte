@@ -15,6 +15,13 @@
     let innerHeight;
     let isMatch = false;
     let isScreener = false;
+    let isStudy = false;
+    let isTrainer = false;
+    let isAccount = false;
+    let isBroker = false;
+    let isSettings = false;
+
+
 
      // $: {
      //    if (chart_data.length > 0 && CandlestickSeries) {
@@ -30,6 +37,14 @@
     isScreener = !isScreener;
     isMatch = false; 
     }
+    // function toggleScreener() {
+    // isScreener = !isMatch;
+    // isMatch = false; 
+    // }
+    // function toggleScreener() {
+    // isScreener = !isScreener;
+    // isMatch = false; 
+    // }
     
     let ticker = "AAPL";
     let tf = "d";
@@ -169,47 +184,82 @@
         <div>R</div>
         <div>E</div>
         <div>E</div>
+        <div>N</div>
+        <div>E</div>
+        <div>R</div>
     </button>
+    <button class="screener-button" on:click={toggleStudy}>
+        <div>S</div>
+        <div>T</div>
+        <div>U</div>
+        <div>D</div>
+        <div>Y</div>
+    </button>
+    <button class="screener-button" on:click={toggleTrainer}>
+        <div>A</div>
+        <div>C</div>
+        <div>C</div>
+        <div>I</div>
+        <div>N</div>
+        <div>E</div>
+        <div>R</div>
+    </button>
+    <button class="screener-button" on:click={toggleStudy}>
+        <div>S</div>
+        <div>T</div>
+        <div>U</div>
+        <div>D</div>
+        <div>Y</div>
+    </button>
+
+
+
+
+
     <div class="popout-menu"  style="min-height: {innerHeight}px;" class:visible={isMatch}>
       {#if isMatch}
-        THIS IS MATCH
-     <form on:submit|preventDefault={() => startTask('Match-get',match_data)}>
-  <div class="form-group">
-    <input type="text" id="ticker" bind:value="{ticker}" name="ticker" placeholder="Enter Ticker" required>
-  </div>
-  <div class="form-group">
-    <input type="text" id="tf" bind:value="{tf}" name="tf" placeholder="Enter TF" required>
-  </div>
-  <div class="form-group">
-    <input type="text" id="dt" bind:value="{dt}" name="dt" placeholder="Enter Date Time">
-  </div>
-  <div class="form-group">
-    <input type="submit" value="FETCH">
-  </div>
-</form>
-<table>
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Name</th>
-    </tr>
-  </thead>
-  <tbody>
-    {#each $match_data as item}
-      <tr>
-        <td>{item.id}</td>
-        <td>{item.name}</td>
-      </tr>
-    {/each}
-  </tbody>
-</table>
+                    <form on:submit|preventDefault={() => startTask('Match-get',match_data)}>
+                    <div class="form-group">
+                    <input type="text" id="ticker" bind:value="{ticker}" name="ticker" placeholder="Enter Ticker" required>
+                    </div>
+                    <div class="form-group">
+                    <input type="text" id="tf" bind:value="{tf}" name="tf" placeholder="Enter TF" required>
+                    </div>
+                    <div class="form-group">
+                    <input type="text" id="dt" bind:value="{dt}" name="dt" placeholder="Enter Date Time">
+                    </div>
+                    <div class="form-group">
+                    <input type="submit" value="FETCH">
+                    </div>
+                    </form>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Name</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {#each $match_data as item}
+                          <tr>
+                            <td>{item.id}</td>
+                            <td>{item.name}</td>
+                          </tr>
+                        {/each}
+                      </tbody>
+                    </table>
       {/if}
     </div>
     <div class="popout-menu"  style="min-height: {innerHeight}px;" class:visible={isScreener}>
 
-      {#if isScreener}
-        THIS IS SCREENER
-      {/if}
+    {#if isScreener}
+                  <form on:submit|preventDefault={() => startTask('Screener-get',screener_data)}>
+                    
+                    <div class="form-group">
+                    <input type="submit" value="Screen">
+                    </div>
+                    </form>
+    {/if}
     </div>
   </div>
 </div>
