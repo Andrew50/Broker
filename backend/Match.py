@@ -59,7 +59,7 @@ class Match:
         return [Odtw.dtwupd(x,y,radius), ticker, index]
 
     def compute(db,ticker,dt,tf):
-        dt = Database.format_date(dt)
+        dt = Database.format_datetime(dt)
         #ticker,dt,tf = lis
         #ds = Match.load(tf)
         ds = Dataset(db,'full')
