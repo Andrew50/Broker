@@ -89,6 +89,8 @@ class Database:
 	def get_df(self, ticker, tf='1d', dt=None, bars=0, pm=True):
 		cursor = self._conn.cursor(buffered=True)
 		if dt != None:
+			dt = Database.format_datetime(dt)
+			print(dt)
 			query = "SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s AND tf = %s AND dt <= %s ORDER BY dt ASC"
 			cursor.execute(query, (ticker, tf, dt))
 		else:
@@ -179,8 +181,6 @@ class Database:
 					
 					except TimeoutError:
 						pass
-					
-			
 
 			#update models
 			# if datetime.datetime.now().day == 4 or force_retrain:
@@ -189,17 +189,6 @@ class Database:
 			# 	setups = cursor.fetchall()
 			# 	for setup_id, st, tf, model in setups:
 			# 		cursor.execute('SELECT * from')
-
-
-
-
-
-
-
-
-
-
-
 			#backup
 	
 	
@@ -355,7 +344,7 @@ CREATE TABLE current_ticker_list(ticker VARCHAR(5) NOT NULL);
 		if dt.hour == 0 and dt.minute == 0:
 			time = datetime.time(9, 30, 0)
 			dt = datetime.datetime.combine(dt.date(), time)
-		return dt
+		#return dt
 		if not reverse:
 			dt = dt.timestamp()
 		else:
@@ -450,7 +439,7 @@ class Data:
 
 if __name__ == '__main__':
 	db = Database()
-	print(db.get_df('AAPL'))
+	print(db.get_df('AAPL',dt = '2023-10-03'))
 	#db.update()
 	# db.set_user(email = 'billingsandrewjohn@gmail.com',password = 'password')
 	# # except:
