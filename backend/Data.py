@@ -59,6 +59,7 @@ class Database:
 			insert_query = "INSERT INTO setups (user_id, name, tf, model) VALUES (%s, %s, %s, %s)"
 			cursor.execute(insert_query, (user_id,st,tf,''))
 		self._conn.commit()
+		
 	def get_sample(self,user_id,st):
 		with self._conn.cursor(buffered=True) as cursor:
 			cursor.execute('SELECT setup_id from setups WHERE user_id = %s AND name = %s',(user_id,st))
@@ -68,7 +69,6 @@ class Database:
 		
 	def set_sample(self,user_id,st,ticker,dt):
 		with self._conn.cursor(buffered=True) as cursor:
-			
 			cursor.execute('SELECT setup_id from setups WHERE user_id = %s AND name = %s',(user_id,st))
 			setup_id = cursor.fetchone()[0]
 			cursor.execute("INSERT IGNORE INTO setup_data VALUES (%s, %s, %s)", (setup_id,ticker,dt))
@@ -89,6 +89,7 @@ class Database:
 	def get_df(self, ticker, tf='1d', dt=None, bars=0, pm=True):
 		cursor = self._conn.cursor(buffered=True)
 		if dt != None:
+			dt = Database.format_datetime(dt)
 			query = "SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s AND tf = %s AND dt <= %s ORDER BY dt ASC"
 			cursor.execute(query, (ticker, tf, dt))
 		else:
@@ -179,8 +180,6 @@ class Database:
 					
 					except TimeoutError:
 						pass
-					
-			
 
 			#update models
 			# if datetime.datetime.now().day == 4 or force_retrain:
@@ -189,17 +188,6 @@ class Database:
 			# 	setups = cursor.fetchall()
 			# 	for setup_id, st, tf, model in setups:
 			# 		cursor.execute('SELECT * from')
-
-
-
-
-
-
-
-
-
-
-
 			#backup
 	
 	
@@ -212,7 +200,7 @@ class Database:
 				count = cursor.fetchall()[0][0]
 				assert count > 0
 				if count < 8000*300:
-					print(f'WARNING: DATA ISNT COMPLETE! ONLY {count} DAILY DATAPOINTS!')
+					pass#rint(f'WARNING: DATA ISNT COMPLETE! ONLY {count} DAILY DATAPOINTS!')
 			
 		except:
 			dbconfig = {
@@ -229,7 +217,6 @@ class Database:
 				
 				
 			# except Exception as e:
-			# 	print(e)
 			self.load_from_legacy()
 
 	def close_connection(self):
@@ -335,15 +322,10 @@ CREATE TABLE current_ticker_list(ticker VARCHAR(5) NOT NULL);
 			return True
 		return False
 
-	def print_all(self):
-		query = "SELECT * FROM dfs"
-		cursor = self._conn.cursor(buffered=True)
-		cursor.execute(query)
-		data = cursor.fetchall()
-		print(data)
+
 	
 	def format_datetime(dt,reverse=False):
-		if type(dt) == int:
+		if type(dt) == int or type(dt) == float:
 			return dt
 		if dt is None: return None
 		if dt == 'current': return datetime.datetime.now(pytz.timezone('EST'))
@@ -355,7 +337,7 @@ CREATE TABLE current_ticker_list(ticker VARCHAR(5) NOT NULL);
 		if dt.hour == 0 and dt.minute == 0:
 			time = datetime.time(9, 30, 0)
 			dt = datetime.datetime.combine(dt.date(), time)
-		return dt
+		#return dt
 		if not reverse:
 			dt = dt.timestamp()
 		else:
@@ -412,7 +394,6 @@ class Dataset:
 		df = pd.read_feather('local/data/' + st + '.feather')
 		ones = len(df[df['value'] == 1])
 		if ones < 150:
-			print(f'{st} cannot be trained with only {ones} positives')
 			return
 		x = self.raw_np
 		y = self.y_np
