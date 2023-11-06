@@ -36,6 +36,7 @@ class Match:
         cutoff = 0.02*100
         arglist = [[Match.formatArray(data.df), y, data.ticker, upper, lower, cutoff, radius] for data in ds]
         start = datetime.datetime.now()
+        print(start)
         scores = Pool().map(Match.worker, arglist)#Main.pool(Match.worker, arglist)
         print(f'completed in {datetime.datetime.now() - start}')
         scores.sort(key=lambda x: x[0])
@@ -45,7 +46,7 @@ class Match:
     def worker(bar):
         x, y, ticker, upper, lower, cutoff, radius = bar
         
-        return Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius, ticker)
+        return [ticker, Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius)]
 
     def compute(db,ticker,dt,tf):
         dt = Database.format_datetime(dt)
@@ -89,8 +90,9 @@ class Match:
         return d 
         
 if __name__ == '__main__':
+    print(datetime.datetime.now())
     db = Database()
-    ticker = 'AAPL'  # input('input ticker: ')
+    ticker = 'JBL'  # input('input ticker: ')
     dt = '2023-10-03'  # input('input date: ')
     tf = '1d'  # int(input('input tf: '))
     
