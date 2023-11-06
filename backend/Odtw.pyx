@@ -21,20 +21,32 @@ def calcBounds(double[:] y, int radius):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def calcDtw(np.ndarray[double, ndim=1] xSeq, np.ndarray[double, ndim=1] ySeq, np.ndarray[double, ndim=1] upper, np.ndarray[double, ndim=1] lower, int bars, double cutoff, int r):
-    cdef int total_length = xSeq.shape[0]
     scores = []
+    # Variables for the Lower Bound Check
+    cdef int total_length = xSeq.shape[0]
     cdef int n 
     cdef int b 
+    cdef double totalLowerBound
+    cdef int zeroIndex
+    cdef int start
+    cdef bint terminate
+
+    #Variables for full DTW
+
+    cdef Py_ssize_t i, j, k
+    cdef double c, x, y, z, d
+    cdef double[:] cost
+    cdef double[:] cost_prev
     with cython.nogil:
         
         for n in range(bars, total_length+1): # for the nth iteration, going through bars n-bars to n-1 
 
 
             # Lower Bound Check 
-            cdef double totalLowerBound = 0.0
-            cdef int zeroIndex = n-bars
-            cdef int start = n - (bars // 4)
-            cdef bint terminate = False
+            totalLowerBound = 0.0
+            zeroIndex = n-bars
+            start = n - (bars // 4)
+            terminate = False
             for b in range(start, n):
                 if xSeq[b] > upper[b] or xSeq[b] < lower[b]:
                     terminate = True
@@ -45,47 +57,44 @@ def calcDtw(np.ndarray[double, ndim=1] xSeq, np.ndarray[double, ndim=1] ySeq, np
                     totalLowerBound += (xSeq[b] - upper[b]) ** 2
                 elif xSeq[b] < lower[b]:
                     totalLowerBound += (xSeq[b] - lower[b]) ** 2
-            if(totalLowerBound > cutoff): continue # Check if the lower bound is greater than the cutoff
-
+            if (sqrt(totalLowerBound)*100) > cutoff: continue # Check if the lower bound is greater than the cutoff
 
             # Run full dtw 
             # in original version, a = x sequence, b = y sequence. 
-            cdef Py_ssize_t i, j, k
-            cdef double c, x, y, z, d
             # Initialize cost and cost_prev arrays with typed values
-            cdef double[:] cost = np.empty(2 * r + 1, dtype=np.float64)
-            cdef double[:] cost_prev = np.empty(2 * r + 1, dtype=np.float64)
+            with gil: 
+                cost = np.empty(2 * r + 1, dtype=np.float64)
+                cost_prev = np.empty(2 * r + 1, dtype=np.float64)
 
-            # Initialize cost and cost_prev arrays
-            for i in range(2 * r + 1):
-                cost[i] = float('inf')
-                cost_prev[i] = float('inf')
+                # Initialize cost and cost_prev arrays
+                for i in range(2 * r + 1):
+                    cost[i] = float('inf')
+                    cost_prev[i] = float('inf')
 
-            cdef double[:] cost = [float('inf')] * (2 * r + 1)
-            cdef double[:] cost_prev = [float('inf')] * (2 * r + 1)
+                for i in range(bars):
+                    k = max(0, r - i)
 
-            for i in range(bars):
-                k = max(0, r - i)
+                    for j in range(max(0, i - r), min(bars - 1, i + r) + 1):
+                        if i == 0 and j == 0:
+                            c = xSeq[zeroIndex] - ySeq[0]
+                            cost[k] = c * c
+                            k += 1
+                            continue
 
-                for j in range(max(0, i - r), min(bars - 1, i + r) + 1):
-                    if i == 0 and j == 0:
-                        c = xSeq[zeroIndex] - ySeq[0]
-                        cost[k] = c * c
+                        y = float('inf') if j - 1 < 0 or k - 1 < 0 else cost[k - 1]
+                        x = float('inf') if i < 1 or k > 2 * r - 1 else cost_prev[k + 1]
+                        z = float('inf') if i < 1 or j < 1 else cost_prev[k]
+
+                        d = xSeq[i+zeroIndex] - ySeq[j]
+                        cost[k] = min(x, y, z) + d * d
                         k += 1
-                        continue
 
-                    y = float('inf') if j - 1 < 0 or k - 1 < 0 else cost[k - 1]
-                    x = float('inf') if i < 1 or k > 2 * r - 1 else cost_prev[k + 1]
-                    z = float('inf') if i < 1 or j < 1 else cost_prev[k]
+                    cost, cost_prev = cost_prev, cost
 
-                    d = xSeq[i+zeroIndex] - ySeq[j]
-                    cost[k] = min(x, y, z) + d * d
-                    k += 1
+                k -= 1
+                scores.append([n, sqrt(cost_prev[k]) * 100])
 
-                cost, cost_prev = cost_prev, cost
-
-            k -= 1
-            return sqrt(cost_prev[k]) * 100
+    return scores
                 
 
         

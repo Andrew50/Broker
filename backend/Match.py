@@ -68,8 +68,10 @@ class Match:
         #ds = Match.load(tf)
         y = Data(db,ticker, tf, dt,bars = np_bars+1).df
         ds = Dataset(db,'full').dfs
-        y = y[len(y)-1-np_bars:len(y)-1]
-        y = Match.formatArray(y);
+        print(y)
+        y = Match.formatArray(y, True)
+        print(y)
+        raise AttributeError
         #y = y.load_np('dtw',np_bars,True)
         #y = y[0][0]
         top_scores = Match.run(ds, y)
@@ -78,25 +80,37 @@ class Match:
             formatted_top_scores.append([ticker,str(Data(ticker).df.index[index]),round(score,2)])
         return formatted_top_scores
 
-    def formatArray(data):
-        d = np.zeros((len(data), 6))
+    def formatArray(data, onlyCloseAndVol = True, yValue = False):
         data = np.array(data)
-        print(data)
-        for i in range(len(d)-1):
-            d[i][0] = data[i][0]
-            d[i][1] = float(data[i+1][1]/data[i][4] - 1)
-            d[i][2] = float(data[i+1][2]/data[i][4] - 1)
-            d[i][3] = float(data[i+1][3]/data[i][4] - 1)
-            d[i][4] = float(data[i+1][4]/data[i][4] - 1)
-            d[i][5] = data[i][5]
+        if yValue:
+            d = np.zeros((len(data), 1))
+            for i in range(len(d)-1):
+                d[i] = data[i+1,3]/data[i, 3] - 1
+            return d
+        if onlyCloseAndVol: 
+            d = np.zeros((len(data), 3))
+            for i in range(len(d)-1):
+                close = data[i+1,3]
+                d[i] = [float(close), float(close/data[i,3] - 1), data[i, 5]]
+            return d
+        else: 
+            d = np.zeros((len(data), 6))
+            for i in range(len(d)-1):
+                d[i][0] = data[i][0]
+                d[i][1] = float(data[i+1][1]/data[i][4] - 1)
+                d[i][2] = float(data[i+1][2]/data[i][4] - 1)
+                d[i][3] = float(data[i+1][3]/data[i][4] - 1)
+                d[i][4] = float(data[i+1][4]/data[i][4] - 1)
+                d[i][5] = data[i][5]
             
-        return d
-
+            return d
+        raise AttributeError
+        return d 
         
 if __name__ == '__main__':
     db = Database()
     ticker = 'AAPL'  # input('input ticker: ')
-    dt = None#'2023-10-03'  # input('input date: ')
+    dt = '2023-10-03'  # input('input date: ')
     tf = '1d'  # int(input('input tf: '))
     
     top_scores = Match.compute(db,ticker,dt,tf)
