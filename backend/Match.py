@@ -27,16 +27,7 @@ import math
 np_bars = 10
 sqrt = math.sqrt
 class Match: 
-
-    # def load(tf):
-    #     ticker_list = screener.get('full')[:5000]
-    #     df = pd.DataFrame({'ticker': ticker_list})
-    #     df['dt'] = None
-    #     df['tf'] = tf
-    #     ds = Dataset(df)
-    #     df = ds.load_np('dtw',np_bars)
-    #     return df
-
+    `
     def run(ds,y):
         
         radius = math.ceil(np_bars/10)
@@ -60,14 +51,8 @@ class Match:
 
     def compute(db,ticker,dt,tf):
         dt = Database.format_datetime(dt)
-        #ticker,dt,tf = lis
-        #ds = Match.load(tf)
-        y = Data(db,ticker, tf, dt,bars = np_bars+1).df
+        y = Data(db,ticker, tf, dt,bars = np_bars+1).df###################
         ds = Dataset(db,'full').dfs
-        
-        #print(y)
-        #y = y.load_np('dtw',np_bars,True)
-        #y = y[0][0]
         top_scores = Match.run(ds, y)
         formatted_top_scores = []
         for score, ticker, index in top_scores:
