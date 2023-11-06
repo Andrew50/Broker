@@ -94,7 +94,7 @@ class Database:
 		else:
 			query = "SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s AND tf = %s ORDER BY dt ASC"
 			cursor.execute(query, (ticker, tf))
-			
+		
 		data = cursor.fetchall()
 
 		
@@ -364,7 +364,7 @@ CREATE TABLE current_ticker_list(ticker VARCHAR(5) NOT NULL);
 
 class Dataset:
 	
-	def __init__(self, db, request='full',tf='d', bars=0, value=None, pm=True):
+	def __init__(self, db, request='full',tf='1d', bars=0, value=None, pm=True):
 		if request == 'full':
 			request = [[ticker,None] for ticker in db.get_ticker_list('full')]
 		self.dfs = [Data(db,ticker, tf, dt, bars, value, pm) for ticker,dt in request]
@@ -458,8 +458,6 @@ if __name__ == '__main__':
 	# user_id = db.get_user('billingsandrewjohn@gmail.com','password')
 	# db.set_setup(user_id,'EP','1d')
 	# db.set_sample(user_id,'EP','AAPL',10)
-	# print(db.get_sample(user_id,'EP'))
 	# #db.set_user(user_id,delete=True)
-	# ##print(settings)
 
 	
