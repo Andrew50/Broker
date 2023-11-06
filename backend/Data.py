@@ -49,10 +49,16 @@ class Database:
 			return cursor.fetchone()[0]
 
 
-	def get_model(self,user_id,st):
+	def get_model(self,user_id,st=None):
 		with self._conn.cursor(buffered=True) as cursor:
-			cursor.execute('SELECT model from setups WHERE user_id = %s AND name = %s',(user_id,st))
+			if st is None:
+				cursor.execute('SELECT model from setups WHERE user_id = %s AND name = %s',(user_id,st))
+			else:
+				cursor.execute('SELECT model from setups WHERE user_id = %s',(user_id,))
 			return cursor.fetchone()[0]
+		
+	def set_model(self,user_id):
+		pass
 
 	def set_setup(self,user_id,st,tf):
 		with self._conn.cursor(buffered=True) as cursor:
