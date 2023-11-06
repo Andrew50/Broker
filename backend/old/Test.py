@@ -1,17 +1,14 @@
 
-import numpy as np
-import os, time
-import pandas as pd
-import datetime
-import pytz
-from Data import Main as main
-from multiprocessing import Pool
-path1 = 'C:/Stocks/local/data/d/'
-path2 = 'C:/Stocks2/local/data/d/'
-import os
 
-df = Data()
-plot = df.load_plot()
+if __name__ == '__main__':
+    
+	for i in range(10):
+		if(i == 7): continue
+		for j in range(10):
+			if(j == 7): break
+			print(f"{i} {j}")
+		
+			
 # if __name__ == '__main__':
 #     main.train('d_EP',200,.05)
 

@@ -96,10 +96,8 @@ class Database:
 			cursor.execute(query, (ticker, tf))
 		
 		data = cursor.fetchall()
-		#data = np.array([
-        #[entry['dt'],  float(entry['open']), float(entry['high']),float(entry['low']),float(entry['close']),float(entry['volume'])]
-        #for entry in data
-		#])
+
+		
 		return data
 	
 	def update(self,force_retrain=False):

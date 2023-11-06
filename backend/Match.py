@@ -1,6 +1,7 @@
 import os, sys
 from locale import normalize
 from multiprocessing.pool import Pool
+from unittest import defaultTestLoader
 from Data import Database, Data, Dataset
 #from Study import Screener as screener
 import numpy as np
@@ -32,8 +33,11 @@ class Match:
         
         radius = math.ceil(np_bars/10)
         upper, lower = Odtw.calcBounds(y, radius)
+        print(upper)
+        print(lower)
+        raise AttributeError
         cutoff = 0.02*100
-        arglist = [[x, y, tick, index, upper, lower, cutoff, radius, np_bars] for x, tick, index in ds]
+        arglist = [[x, y, tick, index, upper, lower, cutoff, radius] for x, tick, index in ds]
         start = datetime.datetime.now()
         scores = Pool().map(Match.worker, arglist)#Main.pool(Match.worker, arglist)
         print(f'completed in {datetime.datetime.now() - start}')
@@ -44,21 +48,40 @@ class Match:
         return scores[:20]
 
     def worker(bar):
-        x, y, ticker, index, upper, lower, cutoff, radius, num_bars = bar
+        x, y, ticker, index, upper, lower, cutoff, radius = bar
         
-        if (Odtw.calclowerBound(x, upper, lower, num_bars) > cutoff): return None
+        if (Odtw.calclowerBound(x, upper, lower) > cutoff): return None
         return [Odtw.dtwupd(x,y,radius), ticker, index]
 
     def compute(db,ticker,dt,tf):
         dt = Database.format_datetime(dt)
         y = Data(db,ticker, tf, dt,bars = np_bars+1).df###################
         ds = Dataset(db,'full').dfs
+        y = y[len(y)-1-np_bars:len(y)-1]
+        y = Match.formatArray(y);
+        #y = y.load_np('dtw',np_bars,True)
+        #y = y[0][0]
         top_scores = Match.run(ds, y)
         formatted_top_scores = []
         for score, ticker, index in top_scores:
             formatted_top_scores.append([ticker,str(Data(ticker).df.index[index]),round(score,2)])
         return formatted_top_scores
 
+    def formatArray(data):
+        d = np.zeros((len(data), 6))
+        data = np.array(data)
+        print(data)
+        for i in range(len(d)-1):
+            d[i][0] = data[i][0]
+            d[i][1] = float(data[i+1][1]/data[i][4] - 1)
+            d[i][2] = float(data[i+1][2]/data[i][4] - 1)
+            d[i][3] = float(data[i+1][3]/data[i][4] - 1)
+            d[i][4] = float(data[i+1][4]/data[i][4] - 1)
+            d[i][5] = data[i][5]
+            
+        return d
+
+        
 if __name__ == '__main__':
     db = Database()
     ticker = 'AAPL'  # input('input ticker: ')
