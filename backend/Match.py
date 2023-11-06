@@ -35,7 +35,6 @@ class Match:
         upper, lower = Odtw.calcBounds(y, radius)
         print(upper)
         print(lower)
-        raise AttributeError
         cutoff = 0.02*100
         arglist = [[x, y, tick, index, upper, lower, cutoff, radius] for x, tick, index in ds]
         start = datetime.datetime.now()
@@ -50,17 +49,14 @@ class Match:
     def worker(bar):
         x, y, ticker, index, upper, lower, cutoff, radius = bar
         
-        if (Odtw.calclowerBound(x, upper, lower) > cutoff): return None
-        return [Odtw.dtwupd(x,y,radius), ticker, index]
+        return Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius)
 
     def compute(db,ticker,dt,tf):
         dt = Database.format_datetime(dt)
         y = Data(db,ticker, tf, dt,bars = np_bars+1).df###################
         ds = Dataset(db,'full').dfs
-        print(y)
         y = Match.formatArray(y, yValue=True)
         print(y)
-        raise AttributeError
         #y = y.load_np('dtw',np_bars,True)
         #y = y[0][0]
         top_scores = Match.run(ds, y)
@@ -74,7 +70,8 @@ class Match:
         if yValue:
             d = np.zeros((len(data), 1))
             for i in range(len(d)-1):
-                d[i] = data[i+1,3]/data[i, 3] - 1
+                d[i] = data[i+1][3]/data[i][3] - 1
+            d = d[len(d)-1-np_bars:len(d)-1].flatten()
             return d
         if onlyCloseAndVol: 
             d = np.zeros((len(data), 3))
