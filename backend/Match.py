@@ -38,8 +38,6 @@ class Match:
         start = datetime.datetime.now()
         scores = Pool().map(Match.worker, arglist)#Main.pool(Match.worker, arglist)
         print(f'completed in {datetime.datetime.now() - start}')
-        print(f'average time is {(datetime.datetime.now()-start)/len(scores)}')
-        scores = list(filter(lambda x : x is not None, scores))
         scores.sort(key=lambda x: x[0])
         print(f"Total: {len(scores)}")
         return scores[:20]
