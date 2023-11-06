@@ -28,7 +28,6 @@ import math
 np_bars = 10
 sqrt = math.sqrt
 class Match: 
-    `
     def run(ds,y):
         
         radius = math.ceil(np_bars/10)
@@ -58,7 +57,7 @@ class Match:
         y = Data(db,ticker, tf, dt,bars = np_bars+1).df###################
         ds = Dataset(db,'full').dfs
         print(y)
-        y = Match.formatArray(y, True)
+        y = Match.formatArray(y, yValue=True)
         print(y)
         raise AttributeError
         #y = y.load_np('dtw',np_bars,True)
