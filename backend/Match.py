@@ -33,10 +33,8 @@ class Match:
         
         radius = math.ceil(np_bars/10)
         upper, lower = Odtw.calcBounds(y, radius)
-        print(upper)
-        print(lower)
         cutoff = 0.02*100
-        arglist = [[x, y, tick, index, upper, lower, cutoff, radius] for x, tick, index in ds]
+        arglist = [[Match.formatArray(data.df), y, data.ticker, upper, lower, cutoff, radius] for data in ds]
         start = datetime.datetime.now()
         scores = Pool().map(Match.worker, arglist)#Main.pool(Match.worker, arglist)
         print(f'completed in {datetime.datetime.now() - start}')
@@ -47,16 +45,15 @@ class Match:
         return scores[:20]
 
     def worker(bar):
-        x, y, ticker, index, upper, lower, cutoff, radius = bar
+        x, y, ticker, upper, lower, cutoff, radius = bar
         
-        return Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius)
+        return Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius, ticker)
 
     def compute(db,ticker,dt,tf):
         dt = Database.format_datetime(dt)
         y = Data(db,ticker, tf, dt,bars = np_bars+1).df###################
         ds = Dataset(db,'full').dfs
         y = Match.formatArray(y, yValue=True)
-        print(y)
         #y = y.load_np('dtw',np_bars,True)
         #y = y[0][0]
         top_scores = Match.run(ds, y)
