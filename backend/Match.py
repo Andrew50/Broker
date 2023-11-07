@@ -45,8 +45,9 @@ class Match:
 
     def worker(bar):
         x, y, ticker, upper, lower, cutoff, radius = bar
-        
-        return [ticker, Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius)]
+        d = Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius)
+        print(f'done {ticker}')
+        return [ticker, d]
 
     def compute(db,ticker,dt,tf):
         dt = Database.format_datetime(dt)
