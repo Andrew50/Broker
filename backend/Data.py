@@ -447,8 +447,8 @@ class Data:
 if __name__ == '__main__':
 	start = datetime.datetime.now()
 	db = Database()
-	#db.load_from_legacy()
-	db.update()
+	db.load_from_legacy()
+	#db.update()
 	
 
 
