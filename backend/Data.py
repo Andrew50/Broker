@@ -5,6 +5,10 @@ import array, os, pandas as pd, numpy as np, datetime, mysql.connector, pytz
 from tqdm import tqdm
 import yfinance as yf
 
+
+class Cache:
+	pass
+
 class Database:
 	
 	def get_user(self,email,password):
@@ -73,7 +77,7 @@ class Database:
 			cursor.execute('SELECT * from setup_data WHERE setup_id = %s',(setup_id,))
 			return cursor.fetchall()
 		
-	def set_sample(self,user_id,st,ticker,dt):
+	def set_sample(self,user_id,st,ticker,dt,value):##################################### ix this shit bruhhg dododosoosdodsfdsiho
 		with self._conn.cursor(buffered=True) as cursor:
 			cursor.execute('SELECT setup_id from setups WHERE user_id = %s AND name = %s',(user_id,st))
 			setup_id = cursor.fetchone()[0]
@@ -103,7 +107,10 @@ class Database:
 			cursor.execute(query, (ticker, tf))
 		
 		data = cursor.fetchall()
-
+		
+		data = np.array(data)#####new
+		print('now a numpy array: line 107 Data')
+		###
 		
 		return data
 	
@@ -281,6 +288,7 @@ CREATE TABLE setup_data(
     setup_id INT NOT NULL,
     ticker VARCHAR(5) NOT NULL,
     dt INT NOT NULL,
+    value BOOLEAN NOT NULL,
     UNIQUE(ticker, dt),
     FOREIGN KEY (setup_id) REFERENCES setups(setup_id)
 );
