@@ -184,8 +184,8 @@ class Database:
 						cursor.executemany(insert_query, ydf)
 						self._conn.commit()
 					
-					except TimeoutError:
-						pass
+					except Exception as e:
+						print(f'{ticker} failed: {e}')
 
 			#update models
 			# if datetime.datetime.now().day == 4 or force_retrain:
@@ -248,10 +248,10 @@ CREATE TABLE dfs(
     ticker VARCHAR(5) NOT NULL,
     tf VARCHAR(3) NOT NULL,
     dt INT NOT NULL,
-    open DECIMAL(10, 4),
-    high DECIMAL(10, 4),
-    low DECIMAL(10, 4),
-    close DECIMAL(10, 4),
+    open FLOAT,
+    high FLOAT,
+    low FLOAT,
+    close FLOAT,
     volume FLOAT,
     PRIMARY KEY (ticker, tf, dt)
 );
