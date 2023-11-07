@@ -193,6 +193,7 @@ class Database:
 					
 					except Exception as e:
 						print(f'{ticker} failed: {e}')
+						print(ydf)
 
 			#update models
 			# if datetime.datetime.now().day == 4 or force_retrain:
@@ -447,7 +448,16 @@ class Data:
 if __name__ == '__main__':
 	start = datetime.datetime.now()
 	db = Database()
-	print(datetime.datetime.now() - start)
+	#db.load_from_legacy()
+	db.update()
+	
+
+
+
+
+
+
+	#print(datetime.datetime.now() - start)
 	#db.update()
 	# db.set_user(email = 'billingsandrewjohn@gmail.com',password = 'password')
 	# # except:
