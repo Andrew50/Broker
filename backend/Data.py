@@ -5,6 +5,10 @@ import array, os, pandas as pd, numpy as np, datetime, mysql.connector, pytz
 from tqdm import tqdm
 import yfinance as yf
 
+
+class Cache:
+	pass
+
 class Database:
 	
 	def get_user(self,email,password):
@@ -73,7 +77,7 @@ class Database:
 			cursor.execute('SELECT * from setup_data WHERE setup_id = %s',(setup_id,))
 			return cursor.fetchall()
 		
-	def set_sample(self,user_id,st,ticker,dt):
+	def set_sample(self,user_id,st,ticker,dt,value):##################################### ix this shit bruhhg dododosoosdodsfdsiho
 		with self._conn.cursor(buffered=True) as cursor:
 			cursor.execute('SELECT setup_id from setups WHERE user_id = %s AND name = %s',(user_id,st))
 			setup_id = cursor.fetchone()[0]
@@ -103,7 +107,10 @@ class Database:
 			cursor.execute(query, (ticker, tf))
 		
 		data = cursor.fetchall()
-
+		
+		data = np.array(data)#####new
+		print('now a numpy array: line 107 Data')
+		###
 		
 		return data
 	
@@ -184,8 +191,8 @@ class Database:
 						cursor.executemany(insert_query, ydf)
 						self._conn.commit()
 					
-					except TimeoutError:
-						pass
+					except Exception as e:
+						print(f'{ticker} failed: {e}')
 
 			#update models
 			# if datetime.datetime.now().day == 4 or force_retrain:
@@ -201,14 +208,15 @@ class Database:
 		try:
 			dbconfig = {"host": "localhost","port": 3306,"user": "root","password": "7+WCy76_2$%g","database": 'broker'}
 			self._conn = mysql.connector.connect(**dbconfig)
-			with self._conn.cursor(buffered=True) as cursor:
-				cursor.execute("SELECT COUNT(*) FROM dfs;")
-				count = cursor.fetchall()[0][0]
-				assert count > 0
-				if count < 8000*300:
-					pass#rint(f'WARNING: DATA ISNT COMPLETE! ONLY {count} DAILY DATAPOINTS!')
 			
-		except:
+			# with self._conn.cursor(buffered=True) as cursor:
+			# 	cursor.execute("SELECT COUNT(*) FROM dfs;")
+			# 	count = cursor.fetchall()[0][0]
+			# 	assert count > 0
+			# 	if count < 8000*300:
+					#pass#rint(f'WARNING: DATA ISNT COMPLETE! ONLY {count} DAILY DATAPOINTS!')
+			
+		except TimeoutError:
 			dbconfig = {
 				"host": "localhost",
 				"port": 3306,
@@ -248,10 +256,10 @@ CREATE TABLE dfs(
     ticker VARCHAR(5) NOT NULL,
     tf VARCHAR(3) NOT NULL,
     dt INT NOT NULL,
-    open DECIMAL(10, 4),
-    high DECIMAL(10, 4),
-    low DECIMAL(10, 4),
-    close DECIMAL(10, 4),
+    open FLOAT,
+    high FLOAT,
+    low FLOAT,
+    close FLOAT,
     volume FLOAT,
     PRIMARY KEY (ticker, tf, dt)
 );
@@ -280,6 +288,7 @@ CREATE TABLE setup_data(
     setup_id INT NOT NULL,
     ticker VARCHAR(5) NOT NULL,
     dt INT NOT NULL,
+    value BOOLEAN NOT NULL,
     UNIQUE(ticker, dt),
     FOREIGN KEY (setup_id) REFERENCES setups(setup_id)
 );
@@ -436,8 +445,9 @@ class Data:
 		return returns
 
 if __name__ == '__main__':
+	start = datetime.datetime.now()
 	db = Database()
-	db.update()
+	print(datetime.datetime.now() - start)
 	#db.update()
 	# db.set_user(email = 'billingsandrewjohn@gmail.com',password = 'password')
 	# # except:
