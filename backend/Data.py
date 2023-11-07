@@ -201,14 +201,15 @@ class Database:
 		try:
 			dbconfig = {"host": "localhost","port": 3306,"user": "root","password": "7+WCy76_2$%g","database": 'broker'}
 			self._conn = mysql.connector.connect(**dbconfig)
-			with self._conn.cursor(buffered=True) as cursor:
-				cursor.execute("SELECT COUNT(*) FROM dfs;")
-				count = cursor.fetchall()[0][0]
-				assert count > 0
-				if count < 8000*300:
-					pass#rint(f'WARNING: DATA ISNT COMPLETE! ONLY {count} DAILY DATAPOINTS!')
 			
-		except:
+			# with self._conn.cursor(buffered=True) as cursor:
+			# 	cursor.execute("SELECT COUNT(*) FROM dfs;")
+			# 	count = cursor.fetchall()[0][0]
+			# 	assert count > 0
+			# 	if count < 8000*300:
+					#pass#rint(f'WARNING: DATA ISNT COMPLETE! ONLY {count} DAILY DATAPOINTS!')
+			
+		except TimeoutError:
 			dbconfig = {
 				"host": "localhost",
 				"port": 3306,
@@ -436,7 +437,9 @@ class Data:
 		return returns
 
 if __name__ == '__main__':
+	start = datetime.datetime.now()
 	db = Database()
+	print(datetime.datetime.now() - start)
 	#db.update()
 	# db.set_user(email = 'billingsandrewjohn@gmail.com',password = 'password')
 	# # except:
