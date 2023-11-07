@@ -35,8 +35,9 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np
 
     cdef Py_ssize_t i, j, k
     cdef double c, x, y, z, d
-    cdef double[:] cost
-    cdef double[:] cost_prev
+    cdef double[:] cost = np.empty(2 * r + 1, dtype=np.float64)
+    cdef double[:] cost_prev = np.empty(2 * r + 1, dtype=np.float64)
+
 
         
     for n in range(bars, total_length+1): # for the nth iteration, going through bars n-bars to n-1 
@@ -61,9 +62,6 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np
 
         # Run full dtw 
         # in original version, a = x sequence, b = y sequence. 
-        # Initialize cost and cost_prev arrays with typed values
-        cost = np.empty(2 * r + 1, dtype=np.float64)
-        cost_prev = np.empty(2 * r + 1, dtype=np.float64)
 
         # Initialize cost and cost_prev arrays
         for i in range(2 * r + 1):
@@ -91,7 +89,6 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np
             cost, cost_prev = cost_prev, cost
 
         k -= 1
-        print(f"{n} working")
         scores.append([n, sqrt(cost_prev[k]) * 100])
 
     return scores

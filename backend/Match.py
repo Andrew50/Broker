@@ -34,6 +34,7 @@ class Match:
         radius = math.ceil(np_bars/10)
         upper, lower = Odtw.calcBounds(y, radius)
         cutoff = 0.02*100
+        print('init')
         arglist = [[Match.formatArray(data.df), y, data.ticker, upper, lower, cutoff, radius] for data in ds]
         start = datetime.datetime.now()
         print(start)
@@ -50,9 +51,13 @@ class Match:
 
     def compute(db,ticker,dt,tf):
         dt = Database.format_datetime(dt)
+        print('1')
         y = Data(db,ticker, tf, dt,bars = np_bars+1).df###################
+        print('2')
         ds = Dataset(db,'full').dfs
+        print('3')
         y = Match.formatArray(y, yValue=True)
+        print('4')
         #y = y.load_np('dtw',np_bars,True)
         #y = y[0][0]
         top_scores = Match.run(ds, y)
@@ -63,6 +68,7 @@ class Match:
 
     def formatArray(data, onlyCloseAndVol = True, yValue = False):
         data = np.array(data)
+        print(data[0,0])
         if yValue:
             d = np.zeros((len(data), 1))
             for i in range(len(d)-1):
@@ -90,9 +96,10 @@ class Match:
         return d 
         
 if __name__ == '__main__':
-    print(datetime.datetime.now())
+    start = datetime.datetime.now()
+    print(start)
     db = Database()
-    ticker = 'JBL'  # input('input ticker: ')
+    ticker = 'AAPL'  # input('input ticker: ')
     dt = '2023-10-03'  # input('input date: ')
     tf = '1d'  # int(input('input tf: '))
     

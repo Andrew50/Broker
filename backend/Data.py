@@ -437,6 +437,7 @@ class Data:
 
 if __name__ == '__main__':
 	db = Database()
+	db.update()
 	#db.update()
 	# db.set_user(email = 'billingsandrewjohn@gmail.com',password = 'password')
 	# # except:
