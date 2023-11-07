@@ -36,6 +36,7 @@ class Match:
         cutoff = 0.02*100
         arglist = [[Match.formatArray(data.df), y, data.ticker, upper, lower, cutoff, radius] for data in ds]
         start = datetime.datetime.now()
+        print('starting match')
         print(start)
         scores = Pool().map(Match.worker, arglist)#Main.pool(Match.worker, arglist)
         print(f'completed in {datetime.datetime.now() - start}')
