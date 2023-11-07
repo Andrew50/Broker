@@ -109,7 +109,6 @@ class Database:
 		data = cursor.fetchall()
 		
 		data = np.array(data)#####new
-		print('now a numpy array: line 107 Data')
 		###
 		
 		return data
