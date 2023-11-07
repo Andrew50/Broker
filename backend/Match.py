@@ -45,13 +45,16 @@ class Match:
 
     def worker(bar):
         x, y, ticker, upper, lower, cutoff, radius = bar
-        
-        return [ticker, Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius)]
+        d = Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius)
+        print(f'done {ticker}')
+        return [ticker, d]
 
     def compute(db,ticker,dt,tf):
         dt = Database.format_datetime(dt)
         y = Data(db,ticker, tf, dt,bars = np_bars+1).df###################
+        start = datetime.datetime.now()
         ds = Dataset(db,'full').dfs
+        print(datetime.datetime.now()-start)
         y = Match.formatArray(y, yValue=True)
         #y = y.load_np('dtw',np_bars,True)
         #y = y[0][0]
@@ -90,9 +93,10 @@ class Match:
         return d 
         
 if __name__ == '__main__':
-    print(datetime.datetime.now())
+    start = datetime.datetime.now()
+    print(start)
     db = Database()
-    ticker = 'JBL'  # input('input ticker: ')
+    ticker = 'AAPL'  # input('input ticker: ')
     dt = '2023-10-03'  # input('input date: ')
     tf = '1d'  # int(input('input tf: '))
     
