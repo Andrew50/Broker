@@ -20,7 +20,7 @@ def calcBounds(double[:] y, int radius):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np.ndarray[double, ndim=1] upper, np.ndarray[double, ndim=1] lower, int bars, double cutoff, int r):
+def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np.ndarray[double, ndim=1] upper, np.ndarray[double, ndim=1] lower, int bars, double cutoff, int r, str ticker):
     scores = []
     # Variables for the Lower Bound Check
     cdef int total_length = xSeq.shape[0]
@@ -90,7 +90,7 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np
             cost, cost_prev = cost_prev, cost
 
         k -= 1
-        scores.append([n, sqrt(cost_prev[k]) * 100])
+        scores.append([ticker, n, sqrt(cost_prev[k]) * 100])
     return scores
                 
 

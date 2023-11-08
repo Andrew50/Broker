@@ -40,14 +40,13 @@ class Match:
         print(start)
         scores = Pool().map(Match.worker, arglist)#Main.pool(Match.worker, arglist)
         print(f'completed in {datetime.datetime.now() - start}')
-        scores.sort(key=lambda x: x[0])
-        print(f"Total: {len(scores)}")
+        scores.sort(key=lambda x: x[2])
+        print(scores[:20])
         return scores[:20]
 
     def worker(bar):
         x, y, ticker, upper, lower, cutoff, radius = bar
-        d = Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius)
-        return [ticker, d]
+        return Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius, ticker)
 
     def compute(db,ticker,dt,tf):
         dt = Database.format_datetime(dt)
@@ -97,7 +96,7 @@ if __name__ == '__main__':
     start = datetime.datetime.now()
     print(start)
     db = Database()
-    ticker = 'AAPL'  # input('input ticker: ')
+    ticker = 'JBL'  # input('input ticker: ')
     dt = '2023-10-03'  # input('input date: ')
     tf = '1d'  # int(input('input tf: '))
     
