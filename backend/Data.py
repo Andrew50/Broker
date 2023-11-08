@@ -238,7 +238,9 @@ class Database:
 		
 	
 
-	def load_from_legacy(self):
+	def setup(self):
+		if input('Override database data? y/n') != 'y':
+			return
 		with self._conn.cursor(buffered=True) as cursor:
 			##configure tables
 			cursor.execute("CREATE DATABASE IF NOT EXISTS broker DEFAULT CHARACTER SET 'utf8';")
@@ -447,8 +449,7 @@ class Data:
 if __name__ == '__main__':
 	start = datetime.datetime.now()
 	db = Database()
-	db.load_from_legacy()
-	#db.update()
+	
 	
 
 
