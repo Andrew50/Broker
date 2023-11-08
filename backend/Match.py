@@ -47,7 +47,6 @@ class Match:
     def worker(bar):
         x, y, ticker, upper, lower, cutoff, radius = bar
         d = Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius)
-        print(f'done {ticker}')
         return [ticker, d]
 
     def compute(db,ticker,dt,tf):
@@ -77,7 +76,8 @@ class Match:
             d = np.zeros((len(data), 3))
             for i in range(len(d)-1):
                 close = data[i+1,3]
-                d[i] = [float(close), float(close/data[i,3] - 1), data[i, 5]]
+                if data[i,3] != 0:
+                    d[i] = [float(close), float(close/data[i,3] - 1), data[i, 5]]
             return d
         else: 
             d = np.zeros((len(data), 6))

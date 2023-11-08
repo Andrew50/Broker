@@ -24,12 +24,12 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np
     scores = []
     # Variables for the Lower Bound Check
     cdef int total_length = xSeq.shape[0]
-    cdef int n 
-    cdef int b 
-    cdef double totalLowerBound
-    cdef int zeroIndex
-    cdef int start
-    cdef bint terminate
+    cdef int n = 0
+    cdef int b = 0
+    cdef double totalLowerBound = 0
+    cdef int zeroIndex = 0
+    cdef int start = 0 
+    cdef bint terminate = False
 
     #Variables for full DTW
 
@@ -58,6 +58,7 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np
                 totalLowerBound += (xSeq[b, 1] - upper[b]) ** 2
             elif xSeq[b, 1] < lower[b]:
                 totalLowerBound += (xSeq[b, 1] - lower[b]) ** 2
+        print(f"{n} {sqrt(totalLowerBound)*100}")
         if (sqrt(totalLowerBound)*100) > cutoff: continue # Check if the lower bound is greater than the cutoff
 
         # Run full dtw 

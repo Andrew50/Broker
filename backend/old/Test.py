@@ -1,11 +1,7 @@
 import numpy as np
 if __name__ == '__main__':
     
-	array = np.array(
-		[[[1, 2, 3], [2,3,4], [3,4,5], [4,5,6]], [[1, 2, 3], [2,3,4], [3,4,5], [4,5,6], [5,6,7]]]
-		  )
-	print(array)
-	print(array.shape)
+	
 # if __name__ == '__main__':
 #     main.train('d_EP',200,.05)
 
