@@ -25,6 +25,7 @@ from scipy.spatial.distance import euclidean
 from multiprocessing import Pool
 import Odtw
 import math
+import cProfile
 np_bars = 10
 sqrt = math.sqrt
 class Match: 
@@ -38,24 +39,28 @@ class Match:
         start = datetime.datetime.now()
         print('starting match')
         print(start)
+        profiler = cProfile.Profile()
+        profiler.enable()
         scores = Pool().map(Match.worker, arglist)#Main.pool(Match.worker, arglist)
+        profiler.disable()
+        profiler.print_stats(sort='cumulative')
         print(f'completed in {datetime.datetime.now() - start}')
-        scores.sort(key=lambda x: x[0])
-        print(f"Total: {len(scores)}")
+        scores.sort(key=lambda x: x[2])
+        print(scores[:20])
         return scores[:20]
 
     def worker(bar):
         x, y, ticker, upper, lower, cutoff, radius = bar
-        d = Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius)
-        return [ticker, d]
+        return Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius, ticker)
 
     def compute(db,ticker,dt,tf):
         dt = Database.format_datetime(dt)
         y = Data(db,ticker, tf, dt,bars = np_bars+1).df###################
+        y = Match.formatArray(y, yValue=True)
         start = datetime.datetime.now()
         ds = Dataset(db,'full').dfs
         print(datetime.datetime.now()-start)
-        y = Match.formatArray(y, yValue=True)
+        
         #y = y.load_np('dtw',np_bars,True)
         #y = y[0][0]
         top_scores = Match.run(ds, y)
@@ -69,15 +74,15 @@ class Match:
         if yValue:
             d = np.zeros((len(data), 1))
             for i in range(len(d)-1):
-                d[i] = data[i+1][3]/data[i][3] - 1
+                d[i] = data[i+1, 4]/data[i, 4] - 1
             d = d[len(d)-1-np_bars:len(d)-1].flatten()
             return d
         if onlyCloseAndVol: 
             d = np.zeros((len(data), 3))
             for i in range(len(d)-1):
-                close = data[i+1,3]
-                if data[i,3] != 0:
-                    d[i] = [float(close), float(close/data[i,3] - 1), data[i, 5]]
+                close = data[i+1,4]
+                if data[i,4] != 0:
+                    d[i] = [float(close), float(close/data[i,4] - 1), data[i, 5]]
             return d
         else: 
             d = np.zeros((len(data), 6))
@@ -97,7 +102,7 @@ if __name__ == '__main__':
     start = datetime.datetime.now()
     print(start)
     db = Database()
-    ticker = 'AAPL'  # input('input ticker: ')
+    ticker = 'JBL'  # input('input ticker: ')
     dt = '2023-10-03'  # input('input date: ')
     tf = '1d'  # int(input('input tf: '))
     
