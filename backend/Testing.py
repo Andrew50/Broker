@@ -5,7 +5,7 @@ import math
 sqrt = math.sqrt
 import numpy as np
 import datetime
-
+import cProfile
 class TestOdtw:
     def worker(bar):
         xSeq, ySeq, ticker, upper, lower, bars, cutoff, r  = bar
@@ -89,10 +89,16 @@ if __name__ == '__main__':
     data = Match.formatArray(data)
     radius = math.ceil(np_bars/10)
     upper, lower = Odtw.calcBounds(y, radius)
-    bar = [data, y, ticker, upper, lower, 2, radius]
-    sTime = datetime.datetime.now()
-    scores = Match.worker(bar)
+    bar = [data, y, ticker, upper, lower, 10, 2, radius]
+    profiler = cProfile.Profile()
+    profiler.enable()
+    scores = TestOdtw.calcDtw(data, y, upper, lower, 10, 2, radius)
+    profiler.disable()
+    profiler.print_stats(sort='cumulative')
+    
+    
+    '''scores = Match.worker(bar)
     print(datetime.datetime.now()-sTime)
     scores = scores[1]
     scores.sort(key=lambda x: x[1])
-    print(scores)
+    print(scores)'''
