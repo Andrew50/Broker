@@ -1,5 +1,6 @@
 
 from turtle import update
+from typing import Any
 import numpy as np
 import array, os, pandas as pd, numpy as np, datetime, mysql.connector, pytz
 from tqdm import tqdm
@@ -7,7 +8,26 @@ import yfinance as yf
 
 
 class Cache:
-	pass
+	
+
+	def get(*args,**kwargs):
+		
+		
+
+
+
+	def __getattr__(self,name):
+		
+		self.db.nae
+		
+	
+
+	
+	def __init__(self):
+		self.db
+		self.db = Database()
+		self.dfs = Dataset(self.db)
+
 
 class Database:
 	
@@ -32,7 +52,6 @@ class Database:
 						fields.append("password = %s")
 						values.append(password)
 					if settings_string is not None:
-	
 						fields.append("settings = %s")
 						values.append(settings_string)
 					if fields:
@@ -369,6 +388,9 @@ class Dataset:
 		self.dfs = [Data(db,ticker, tf, dt, bars, value, pm) for ticker,dt in request]
 		self.bars = bars
 		self.len = len(self.dfs)
+		
+
+	##def score(self
 		
 
 	def train(self, st, use, epochs): 

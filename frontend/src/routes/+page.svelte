@@ -47,7 +47,7 @@
     // }
     
     let ticker = "AAPL";
-    let tf = "d";
+    let tf = "1d";
     let dt = "2023-10-03";
     let chart_ticker = "AAPL";
     let chart_tf = "1d";

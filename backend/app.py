@@ -3,7 +3,7 @@ from flask_cors import CORS
 from multiprocessing import Pool
 import uuid
 import importlib
-from Data import Database
+from Data import Cache
 
 class App:
 	def __init__(self):
@@ -12,8 +12,7 @@ class App:
 		self.pool = Pool()
 		self.tasks = {}
 		self.cores = 6
-		#df = Database(True)
-		#df.close_connection()
+		#self.cache = Cache()
 
 	def start_task(self, script_name):
 
