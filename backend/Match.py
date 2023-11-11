@@ -1,4 +1,5 @@
 import os, sys
+from re import T
 from locale import normalize
 from multiprocessing.pool import Pool
 from unittest import defaultTestLoader
@@ -27,42 +28,49 @@ import Odtw
 import math
 import cProfile
 np_bars = 10
+num_cores = 3
 sqrt = math.sqrt
+from Testing import TestOdtw
 class Match: 
     
-    def run(ds,y):
+    def run(ds,y): 
         
         radius = math.ceil(np_bars/10)
         upper, lower = Odtw.calcBounds(y, radius)
         cutoff = 0.02*100
-        arglist = [[Match.formatArray(data.df), y, data.ticker, upper, lower, cutoff, radius] for data in ds]
+        tickerBatches = [ [[], []] for i in range(num_cores) ]
+        for i in range(len(ds)):
+            tickerBatches[i % num_cores][0].append(ds[i].df)
+            tickerBatches[i % num_cores][1].append(ds[i].ticker)
+        arglist = [[tickerBatch, y, upper, lower, cutoff, radius] for tickerBatch in tickerBatches]
         start = datetime.datetime.now()
         print('starting match')
         print(start)
-        profiler = cProfile.Profile()
-        profiler.enable()
-        scores = Pool().map(Match.worker, arglist)#Main.pool(Match.worker, arglist)
-        profiler.disable()
-        profiler.print_stats(sort='cumulative')
+        scores = Pool(num_cores).map(Match.worker, arglist)#Main.pool(Match.worker, arglist)
         print(f'completed in {datetime.datetime.now() - start}')
         scores.sort(key=lambda x: x[2])
         print(scores[:20])
         return scores[:20]
 
     def worker(bar):
-        x, y, ticker, upper, lower, cutoff, radius = bar
-        return Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius, ticker)
+        tickerBatch, y, upper, lower, cutoff, radius = bar
+        return TestOdtw.calcDtw(tickerBatch, y, upper, lower, np_bars, cutoff, radius)
 
     def compute(db,ticker,dt,tf):
         dt = Database.format_datetime(dt)
         y = Data(db,ticker, tf, dt,bars = np_bars+1).df###################
         y = Match.formatArray(y, yValue=True)
+        
         start = datetime.datetime.now()
         ds = Dataset(db,'full').dfs
+        print('time to load dataset:')
         print(datetime.datetime.now()-start)
         
-        #y = y.load_np('dtw',np_bars,True)
-        #y = y[0][0]
+        start = datetime.datetime.now()
+        Dataset.formatDataframesForMatch(ds)
+        print('time to format dataframes:')
+        print(datetime.datetime.now()-start)
+        
         top_scores = Match.run(ds, y)
         formatted_top_scores = []
         for score, ticker, index in top_scores:
