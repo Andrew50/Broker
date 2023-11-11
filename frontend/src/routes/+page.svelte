@@ -4,34 +4,32 @@
     import {onMount} from 'svelte';
     import {ColorType, CrosshairMode} from 'lightweight-charts';
     import {Chart, CandlestickSeries,TimeScale} from 'svelte-lightweight-charts';
-    export let match_data = writable([])
-    export let data1 = 'None';
-    export let taskId1 = null;
-    export let taskStatus1 = writable('Not started');
-    //export let taskResult1 = writable(null);
+
+
+
+    let match_data_store = writable()
+    let match_data;
+    match_data_store.subscribe((value) => {
+    match_data = value
+    });
+    
+    let screener_data_store = writable()
+    let screener_data;
+    screener_data_store.subscribe((value) => {
+    screener_data = value
+    });
 
 
     let innerWidth;
     let innerHeight;
     let isMatch = false;
     let isScreener = false;
-    let isStudy = false;
-    let isTrainer = false;
-    let isAccount = false;
-    let isBroker = false;
-    let isSettings = false;
 
     let TickerBox;
 	let popup = false;
 	let TickerBoxValue = '';
 	let chartTicker;
 	let TickerBoxVisible = "none";
-
-     // $: {
-     //    if (chart_data.length > 0 && CandlestickSeries) {
-     //      CandlestickSeries.setData($chart_data);
-     //        }
-     //      }
 
     function toggleMatch() {
     isMatch = !isMatch;
@@ -41,15 +39,7 @@
     isScreener = !isScreener;
     isMatch = false; 
     }
-    // function toggleScreener() {
-    // isScreener = !isMatch;
-    // isMatch = false; 
-    // }
-    // function toggleScreener() {
-    // isScreener = !isScreener;
-    // isMatch = false; 
-    // }
-    
+
     let ticker = "AAPL";
     let tf = "1d";
     let dt = "2023-10-03";
@@ -68,48 +58,31 @@
 ]
     // task list: chart-get match-get trainer-get trainer-set screener-get study-get study-set settings-set
 
+    
 
-
-    async function startTask(task,bind_variable) {
-        const queryParams = new URLSearchParams({ ticker, tf, dt }).toString();
-      const url = `http://127.0.0.1:5000/api/${task}?${queryParams}`;
-      console.log(url);
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-        });
-        if (response.ok) {
-            const responseData = await response.json();
-            taskId1 = responseData.task_id;
-            taskStatus1.set('Pending');
-            waitForResult(taskId1, taskStatus1, bind_variable);
-        } else {
-            console.error('Request failed for Task 1:', response.statusText);
-            data1 = 'Failed to start task 1';
+    async function startTask(bind_variable,func) {
+        try{
+    
+        const response = await fetch(`http://localhost:5057/${func}`, {method: 'POST',headers: {'Content-Type': 'application/json'},});
+        if (!response.ok) {throw new Error('POST response not ok')}
+        const responseData = await response.json();
+        const task_id = responseData.task_id;
+        const checkStatus = async () => {
+            const response = await fetch(`http://localhost:5057/poll/${task_id}`);
+            if (!response.ok){throw new Error('GET response not ok')}
+                const responseData = await response.json();
+                if (responseData.status === 'done') {
+                    clearInterval(intervalId);
+                    bind_variable.set(responseData.result);
+                }
+        };
+        const intervalId = setInterval(checkStatus, 500); // Check every 2 seconds
+        }catch{
+        bind_variable.set(null);
         }
     }
 
-    async function waitForResult(taskId, statusStore, bind_variable) {
-        const checkStatus = async () => {
-            const response = await fetch(`http://127.0.0.1:5000/api/status/${taskId}`);
-            if (response.ok) {
-            const responseData = await response.json();
-            if (responseData.status === 'done') {
-                clearInterval(intervalId);
-                statusStore.set('Done');
-                bind_variable.set(responseData.result);
-                console.log('Unpacked Response:', responseData);
-                console.log('Unpacked Response:', responseData.result);
-            }
-            } else {
-            clearInterval(intervalId);
-            console.error(`Failed to get task status for Task ID ${taskId}`);
-            }
-        };
-        const intervalId = setInterval(checkStatus, 2000); // Check every 2 seconds
-    }
+    
     const options = {
         layout: {background: {type: ColorType.Solid,color: '#000000',},textColor: 'rgba(255, 255, 255, 0.9)',},
         grid: {vertLines: {color: 'rgba(197, 203, 206, 0.5)',},horzLines: {color: 'rgba(197, 203, 206, 0.5)',},},
@@ -216,8 +189,7 @@
         <div>E</div>
         <div>R</div>
     </button>
-    <!--
-    <button class="screener-button" on:click={toggleStudy}>
+<!--     <button class="screener-button" on:click={toggleStudy}>
         <div>S</div>
         <div>T</div>
         <div>U</div>
@@ -239,9 +211,8 @@
         <div>U</div>
         <div>D</div>
         <div>Y</div>
-    </button>
-    -->
-    
+    </button> -->
+
 
 
 
