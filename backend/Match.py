@@ -30,7 +30,6 @@ import cProfile
 np_bars = 10
 num_cores = 3
 sqrt = math.sqrt
-from Testing import TestOdtw
 class Match: 
     
     def run(ds,y): 
@@ -38,23 +37,25 @@ class Match:
         radius = math.ceil(np_bars/10)
         upper, lower = Odtw.calcBounds(y, radius)
         cutoff = 0.02*100
-        tickerBatches = [ [[], []] for i in range(num_cores) ]
-        for i in range(len(ds)):
-            tickerBatches[i % num_cores][0].append(ds[i].df)
-            tickerBatches[i % num_cores][1].append(ds[i].ticker)
-        arglist = [[tickerBatch, y, upper, lower, cutoff, radius] for tickerBatch in tickerBatches]
+        arglist = [[Match.formatArray(data.df), y, data.ticker, upper, lower, cutoff, radius] for data in ds]
         start = datetime.datetime.now()
         print('starting match')
-        print(start)
+        print(start)  
         scores = Pool(num_cores).map(Match.worker, arglist)#Main.pool(Match.worker, arglist)
         print(f'completed in {datetime.datetime.now() - start}')
-        scores.sort(key=lambda x: x[2])
-        print(scores[:20])
-        return scores[:20]
+        newScores = []
+        start = datetime.datetime.now()
+        for tickerScores in scores:
+            for i in range(len(tickerScores)):
+                newScores.append(tickerScores[i])
+        newScores.sort(key=lambda x: x[2])
+        print('time to sort scores')
+        print(datetime.datetime.now() - start)
+        return newScores[:20]
 
     def worker(bar):
-        tickerBatch, y, upper, lower, cutoff, radius = bar
-        return TestOdtw.calcDtw(tickerBatch, y, upper, lower, np_bars, cutoff, radius)
+        x, y, ticker, upper, lower, cutoff, radius = bar
+        return Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius, ticker)
 
     def compute(db,ticker,dt,tf):
         dt = Database.format_datetime(dt)
@@ -66,15 +67,11 @@ class Match:
         print('time to load dataset:')
         print(datetime.datetime.now()-start)
         
-        start = datetime.datetime.now()
-        Dataset.formatDataframesForMatch(ds)
-        print('time to format dataframes:')
-        print(datetime.datetime.now()-start)
         
         top_scores = Match.run(ds, y)
         formatted_top_scores = []
-        for score, ticker, index in top_scores:
-            formatted_top_scores.append([ticker,str(Data(ticker).df.index[index]),round(score,2)])
+        for ticker, timestamp, score in top_scores:
+            formatted_top_scores.append([ticker,str(Database.format_datetime(timestamp, True)),round(score,2)])
         return formatted_top_scores
 
     def formatArray(data, onlyCloseAndVol = True, yValue = False):
@@ -86,11 +83,11 @@ class Match:
             d = d[len(d)-1-np_bars:len(d)-1].flatten()
             return d
         if onlyCloseAndVol: 
-            d = np.zeros((len(data), 3))
-            for i in range(len(d)-1):
-                close = data[i+1,4]
-                if data[i,4] != 0:
-                    d[i] = [float(close), float(close/data[i,4] - 1), data[i, 5]]
+            if(len(data) < 3): return np.zeros((1, 4))
+            d = np.zeros((len(data)-1, 4))
+            for i in range(1, len(data)):
+                close = data[i,4]
+                d[i-1] = [float(close), float(close/data[i-1,4] - 1), data[i, 5], data[i, 0]]
             return d
         else: 
             d = np.zeros((len(data), 6))
@@ -115,7 +112,7 @@ if __name__ == '__main__':
     tf = '1d'  # int(input('input tf: '))
     
     top_scores = Match.compute(db,ticker,dt,tf)
-    for score,ticker,date in top_scores:
+    for ticker, date, score in top_scores:
     #for score, ticker, index in top_scores:
         print(f'{ticker} {date} {score}')
          

@@ -385,11 +385,18 @@ class Dataset:
 	def __init__(self, db, request='full',tf='1d', bars=0, value=None, pm=True):
 		if request == 'full':
 			request = [[ticker,None] for ticker in db.get_ticker_list('full')]
+		'''# TEMP CODE STARTS HERE
+		num_cores = 6
+		requestLists = [[] for i in range(num_cores)]
+		for i in range(len(request)):
+			requestLists[i % num_cores].append(request[i])
+		# TEMP CODE ENDS HERE '''
 		self.dfs = [Data(db,ticker, tf, dt, bars, value, pm) for ticker,dt in request]
 		self.bars = bars
 		self.len = len(self.dfs)
 		
-
+	def init_worker(lis):
+		return Data
 	##def score(self
 	def formatDataframesForMatch(self):
 		for df in self:

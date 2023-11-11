@@ -24,8 +24,8 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np
     scores = []
     # Variables for the Lower Bound Check
     cdef int total_length = xSeq.shape[0]
-    cdef int n = 0
-    cdef int b = 0
+    cdef Py_ssize_t n = 0
+    cdef Py_ssize_t b = 0
     cdef double totalLowerBound = 0
     cdef int zeroIndex = 0
     cdef int start = 0 
@@ -42,7 +42,7 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np
         
     for n in range(bars, total_length): # for the nth iteration, going through bars n-bars to n-1 
             
-        if xSeq[n,0]*xSeq[n, 2] < 700000: continue # Filter out low dollar volume days 
+        if xSeq[n,0]*xSeq[n, 2] < 800000: continue # Filter out low dollar volume days 
         # Lower Bound Check 
         totalLowerBound = 0.0
         zeroIndex = n-bars
@@ -90,7 +90,7 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np
             cost, cost_prev = cost_prev, cost
 
         k -= 1
-        scores.append([ticker, n, sqrt(cost_prev[k]) * 100])
+        scores.append([ticker, xSeq[zeroIndex, 3], sqrt(cost_prev[k]) * 100])
     return scores
                 
 
