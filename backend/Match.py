@@ -40,7 +40,7 @@ class Match:
         arglist = [[Match.formatArray(data.df), y, data.ticker, upper, lower, cutoff, radius] for data in ds]
         start = datetime.datetime.now()
         print('starting match')
-        print(start)
+        print(start)  
         scores = Pool(num_cores).map(Match.worker, arglist)#Main.pool(Match.worker, arglist)
         print(f'completed in {datetime.datetime.now() - start}')
         newScores = []
@@ -51,12 +51,11 @@ class Match:
         newScores.sort(key=lambda x: x[2])
         print('time to sort scores')
         print(datetime.datetime.now() - start)
-        print(newScores[:20])
         return newScores[:20]
 
     def worker(bar):
-        tickerBatch, y, ticker, upper, lower, cutoff, radius = bar
-        return Odtw.calcDtw(tickerBatch, y, upper, lower, np_bars, cutoff, radius, ticker)
+        x, y, ticker, upper, lower, cutoff, radius = bar
+        return Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius, ticker)
 
     def compute(db,ticker,dt,tf):
         dt = Database.format_datetime(dt)
@@ -71,8 +70,8 @@ class Match:
         
         top_scores = Match.run(ds, y)
         formatted_top_scores = []
-        for score, ticker, index in top_scores:
-            formatted_top_scores.append([ticker,str(Data(ticker).df.index[index]),round(score,2)])
+        for ticker, timestamp, score in top_scores:
+            formatted_top_scores.append([ticker,str(Database.format_datetime(timestamp, True)),round(score,2)])
         return formatted_top_scores
 
     def formatArray(data, onlyCloseAndVol = True, yValue = False):
@@ -84,11 +83,11 @@ class Match:
             d = d[len(d)-1-np_bars:len(d)-1].flatten()
             return d
         if onlyCloseAndVol: 
-            if(len(data) < 3): return np.zeros((1, 3))
-            d = np.zeros((len(data)-1, 3))
+            if(len(data) < 3): return np.zeros((1, 4))
+            d = np.zeros((len(data)-1, 4))
             for i in range(1, len(data)):
                 close = data[i,4]
-                d[i-1] = [float(close), float(close/data[i-1,4] - 1), data[i, 5]]
+                d[i-1] = [float(close), float(close/data[i-1,4] - 1), data[i, 5], data[i, 0]]
             return d
         else: 
             d = np.zeros((len(data), 6))
@@ -113,7 +112,7 @@ if __name__ == '__main__':
     tf = '1d'  # int(input('input tf: '))
     
     top_scores = Match.compute(db,ticker,dt,tf)
-    for score,ticker,date in top_scores:
+    for ticker, date, score in top_scores:
     #for score, ticker, index in top_scores:
         print(f'{ticker} {date} {score}')
          
