@@ -13,11 +13,10 @@ import { writable } from 'svelte/store';
             // });
         }
 
-
+        
         async pull(){
-            try{
+            //try{
                 const url = `http://localhost:5057/${this.func}`;
-                //console.log(this.func);
                 const response = await fetch(`http://localhost:5057/${this.func}`, {method: 'POST',headers: {'Content-Type': 'application/json'},});
                 //if (!response.ok){throw new Error('POST response not ok')}
                 const response_data = await response.json()
@@ -30,18 +29,19 @@ import { writable } from 'svelte/store';
                     if (response_data.status === 'done') {
                         clearInterval(interval);
                         this.store.set(response_data.result);
+                        return response_data.result;
                     }
-                    //console.log(response_data.result);
                 };
-                const interval = setInterval(checkStatus, 1000); // Check every 2 seconds
-            }catch{
-                    console.error('Request failed for Task 1:', response.statusText);
-                    this.store.set(null);
-            }
+                const interval = setInterval(checkStatus, 500);
+          //  }catch{
+        //            console.error('Request failed for Task 1:', response.statusText);
+        //            this.store.set(null);
+         //   }
         }
     }
   
     let data1 = new Task('groups/group1')
+    let data2 = 'blank';
 
 
 
@@ -52,7 +52,7 @@ import { writable } from 'svelte/store';
 <form on:submit={(event) => data1.pull()}>
      <input type="submit" value="FETCH">
 </form> 
-  <p>Result: {$data1.value}</p>
+  <p>Result: {data1.store.get}</p>
 </div>
 
 
