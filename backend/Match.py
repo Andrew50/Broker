@@ -43,7 +43,14 @@ class Match:
         print(start)
         scores = Pool(num_cores).map(Match.worker, arglist)#Main.pool(Match.worker, arglist)
         print(f'completed in {datetime.datetime.now() - start}')
-        scores.sort(key=lambda x: x[2])
+        newScores = []
+        start = datetime.datetime.now()
+        for tickerScores in scores:
+            for i in range(len(tickerScores)):
+                newScores.append(tickerScores[i])
+        newScores.sort(key=lambda x: x[2])
+        print('time to sort scores')
+        print(datetime.datetime.now() - start)
         print(scores[:20])
         return scores[:20]
 
@@ -77,6 +84,7 @@ class Match:
             d = d[len(d)-1-np_bars:len(d)-1].flatten()
             return d
         if onlyCloseAndVol: 
+            if(len(data) < 3): return np.zeros((1, 3))
             d = np.zeros((len(data)-1, 3))
             for i in range(1, len(data)):
                 close = data[i,4]
