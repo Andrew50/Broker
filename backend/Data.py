@@ -9,7 +9,7 @@ import yfinance as yf
 
 class Cache:
 	
-
+	'''
 	def get(*args,**kwargs):
 		
 		
@@ -22,7 +22,7 @@ class Cache:
 		
 	
 
-	
+	'''
 	def __init__(self):
 		self.db
 		self.db = Database()
@@ -391,8 +391,10 @@ class Dataset:
 		
 
 	##def score(self
-		
-
+	def formatDataframesForMatch(self):
+		for df in self:
+			df.formatDataframeForMatch()
+			
 	def train(self, st, use, epochs): 
 		db.consolidate_database()
 		allsetups = pd.read_feather('local/data/' + st + '.feather').sort_values(
@@ -468,6 +470,14 @@ class Data:
 		self.score = returns
 		return returns
 
+	def formatDataframeForMatch(self, onlyCloseAndVol = True): 
+		if onlyCloseAndVol:
+			if(self.len > 2):
+				d = np.zeros((self.len-1, 3))
+				for i in range(1, self.len):
+					close = self.df[i, 4]
+					d[i-1] = [float(close), float(close/self.df[i-1, 4] - 1), self.df[i, 5]]
+				self.df = d
 if __name__ == '__main__':
 	start = datetime.datetime.now()
 	db = Database()
