@@ -21,7 +21,11 @@
     let isBroker = false;
     let isSettings = false;
 
-
+    let TickerBox;
+	let popup = false;
+	let TickerBoxValue = '';
+	let chartTicker;
+	let TickerBoxVisible = "none";
 
      // $: {
      //    if (chart_data.length > 0 && CandlestickSeries) {
@@ -53,10 +57,11 @@
     let chart_tf = "1d";
     let chart_dt = "";
     let timeScale;
+    let key;
 
     export let chart_data = writable([
-  {time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85}
-]);
+        {time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85}
+    ]);
 
     export let sample_data = [
   {time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85}
@@ -111,15 +116,47 @@
         crosshair: {mode: CrosshairMode.Magnet,},
         rightPriceScale: {borderColor: 'rgba(197, 203, 206, 0.8)',},timeScale: {borderColor: 'rgba(197, 203, 206, 0.8)',},
     }
+    
+    function onKeydown(event) {
+			if (/^[a-zA-Z]$/.test(event.key.toLowerCase()) && popup == false) {
+			TickerBoxVisible = "block"
+			popup = true;
+			TickerBoxValue += event.key;
+			event.preventDefault();
+			TickerBox.focus();
+			}
+			if(event.key == "Enter"){
+				TickerBoxVisible = "none"
+				chartTicker = TickerBoxValue;
+				TickerBoxValue = '';
+				popup = false;
+				
+			}
+			TickerBox.focus();
+	}
 </script>
 
-<svelte:window  
-	bind:innerWidth
+<svelte:window 
+    on:keydown={onKeydown} 
+    bind:innerWidth
     bind:innerHeight
-  />
+/>
 
 <style>
-  .match-button {
+    .input-overlay{
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: rgba(255, 255, 255, 0.5); /* 50% opacity white background */
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        box-sizing: border-box;
+        z-index: 1000;
+        font-size:40pt;
+    }
+    .match-button {
     position: fixed;
     right: 20px;
     top: 20px; /* You can adjust the top position as needed */
@@ -128,8 +165,8 @@
     border: none;
     padding: 10px 20px;
     cursor: pointer;
-  }
-  .screener-button {
+    }
+    .screener-button {
     position: fixed;
     right: 20px;
     top: 120px; /* You can adjust the top position as needed */
@@ -138,37 +175,28 @@
     border: none;
     padding: 10px 20px;
     cursor: pointer;
-  }
-  .container {
+    }
+    .container {
     margin-right: 20px;
-  }
-  table {
+    }
+    table {
     width: 100%;
     border-collapse: collapse;
-  }
-  .popout-menu {
-  display: none;
-  position: fixed;
-  right: 70px; /* Offset from the right side */
-  top: 0; /* You can adjust the top position as needed */
-  background-color: #f9f9f9;
-  min-width: 3px;
-  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-}
-  .popout-menu button {
-    width: 100%;
-    padding: 10px;
-    border: none;
-    text-align: left;
-  }
-  .popout-menu button:hover {
-    background-color: #ddd;
-  }
-  .popout-menu.visible {
+    }
+    .popout-menu {
+    display: none;
+    position: fixed;
+    right: 70px; /* Offset from the right side */
+    top: 0; /* You can adjust the top position as needed */
+    background-color: #f9f9f9;
+    min-width: 3px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    }
+    .popout-menu.visible {
     display: block;
-  }
-
+    }
 </style>
+
 <div class="container">
   <div class="button-container">
     <button class="match-button" on:click={toggleMatch}>
@@ -188,6 +216,7 @@
         <div>E</div>
         <div>R</div>
     </button>
+    <!--
     <button class="screener-button" on:click={toggleStudy}>
         <div>S</div>
         <div>T</div>
@@ -211,7 +240,8 @@
         <div>D</div>
         <div>Y</div>
     </button>
-
+    -->
+    
 
 
 
@@ -253,12 +283,16 @@
     <div class="popout-menu"  style="min-height: {innerHeight}px;" class:visible={isScreener}>
 
     {#if isScreener}
-                  <form on:submit|preventDefault={() => startTask('Screener-get',screener_data)}>
+        <form on:submit|preventDefault={() => startTask('Screener-get',screener_data)}>
                     
-                    <div class="form-group">
-                    <input type="submit" value="Screen">
-                    </div>
-                    </form>
+        <div class="form-group">
+        <input type="submit" value="Screen">
+        </div>
+        </form>
+         <div>
+         this is the letter {key}   
+         </div>
+         
     {/if}
     </div>
   </div>
@@ -275,15 +309,15 @@
         wickUpColor="rgba(0,255, 0, 1)"
     />
 </Chart>
-<form on:submit={startTask('Chart-get',chart_data)}>
-     <input type="text" id="ticker" bind:value ={chart_ticker} name="ticker" placeholder="Enter Ticker" required>
-     <input type="text" id="tf" bind:value ={chart_tf} name="tf" placeholder="Enter TF" required>
-      <input type="text" id="dt" bind:value ={chart_dt} name="dt" placeholder="Enter Date Time">
-     <input type="submit" value="FETCH">
-</form> 
-
-
+{chartTicker}
 <a href="/test2">test2</a>
+
+<input class = 'input-overlay' 
+	bind:this={TickerBox} 
+	bind:value={TickerBoxValue} 
+	style ="display: {TickerBoxVisible};"
+					
+/>
 
 
 
