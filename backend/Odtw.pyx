@@ -42,7 +42,7 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np
         
     for n in range(bars, total_length): # for the nth iteration, going through bars n-bars to n-1 
             
-        if xSeq[n,0]*xSeq[n, 2] < 1000000: continue # Filter out low dollar volume days 
+        if xSeq[n,0]*xSeq[n, 2] < 800000: continue # Filter out low dollar volume days 
         # Lower Bound Check 
         totalLowerBound = 0.0
         zeroIndex = n-bars
