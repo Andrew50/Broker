@@ -51,8 +51,8 @@ class Match:
         newScores.sort(key=lambda x: x[2])
         print('time to sort scores')
         print(datetime.datetime.now() - start)
-        print(scores[:20])
-        return scores[:20]
+        print(newScores[:20])
+        return newScores[:20]
 
     def worker(bar):
         tickerBatch, y, ticker, upper, lower, cutoff, radius = bar

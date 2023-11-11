@@ -24,8 +24,8 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np
     scores = []
     # Variables for the Lower Bound Check
     cdef int total_length = xSeq.shape[0]
-    cdef int n = 0
-    cdef int b = 0
+    cdef Py_ssize_t n = 0
+    cdef Py_ssize_t b = 0
     cdef double totalLowerBound = 0
     cdef int zeroIndex = 0
     cdef int start = 0 
