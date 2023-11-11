@@ -2,71 +2,50 @@
     import { writable } from 'svelte/store';
 
 
-    export let data1 = 'None';
-    export let taskId1 = null;
-    export let taskStatus1 = writable('Not started');
-    let data = writable();
 
+    
 
-
+    let data1 = writable()
+    let data1val;
+    data1.subscribe((value) => {
+    data1val = value
+    });
     async function startTask(bind_variable) {
       const url = 'http://localhost:5057/groups/group1';
       console.log(url);
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-        });
+        const response = await fetch(url, {method: 'POST',headers: {'Content-Type': 'application/json'},});
         if (response.ok) {
             const responseData = await response.json();
-            taskId1 = responseData.task_id;
-            taskStatus1.set('Pending');
-            waitForResult(taskId1, taskStatus1, bind_variable);
+            const task_id = responseData.task_id;
+            waitForResult(task_id, bind_variable);
         } else {
             console.error('Request failed for Task 1:', response.statusText);
-            data1 = 'Failed to start task 1';
+            bind_variable.set(null);
         }
     }
-
-    async function waitForResult(taskId, statusStore, bind_variable) {
+    async function waitForResult(taskId, bind_variable) {
         const checkStatus = async () => {
-            const response = await fetch(`http://localhost:5057/get/${taskId}`);
+            const response = await fetch(`http://localhost:5057/poll/${taskId}`);
             if (response.ok) {
-            const responseData = await response.json();
-            if (responseData.status === 'done') {
-                clearInterval(intervalId);
-                statusStore.set('Done');
-                bind_variable.set(responseData.result);
-                console.log('Unpacked Response:', responseData);
-                console.log('Unpacked Response:', responseData.result);
-            }
+                const responseData = await response.json();
+                if (responseData.status === 'done') {
+                    clearInterval(intervalId);
+
+                    bind_variable.set(responseData.result);
+                }
             } else {
-            clearInterval(intervalId);
-            console.error(`Failed to get task status for Task ID ${taskId}`);
+                clearInterval(intervalId);
+                console.error(`Failed to get task status for Task ID ${taskId}`);
             }
         };
-        const intervalId = setInterval(checkStatus, 2000); // Check every 2 seconds
+        const intervalId = setInterval(checkStatus, 500); // Check every 2 seconds
     }
-    
 </script>
-
 <style>
-  
 </style>
-
 <div>
-<form on:submit={startTask(data)}>
-     
+<form on:submit={(event) => startTask(data1)}>
      <input type="submit" value="FETCH">
 </form> 
+  <p>Result: {data1val}</p>
 </div>
-
-
-<div>
-<p>{data}</p>
-</div>
-
-
-
-

@@ -50,7 +50,7 @@ def addTask():
 
 
 
-@app.get('/get/{job_id}')
+@app.get('/poll/{job_id}')
 def get_result(job_id: str):
     job = Job.fetch(job_id, connection=redis_conn)
 
