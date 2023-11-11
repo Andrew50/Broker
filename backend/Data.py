@@ -361,6 +361,9 @@ CREATE TABLE current_ticker_list(ticker VARCHAR(5) NOT NULL);
 
 	
 	def format_datetime(dt,reverse=False):
+		if reverse:
+			return datetime.datetime.fromtimestamp(dt)
+			
 		if type(dt) == int or type(dt) == float:
 			return dt
 		if dt is None: return None
@@ -374,10 +377,7 @@ CREATE TABLE current_ticker_list(ticker VARCHAR(5) NOT NULL);
 			time = datetime.time(9, 30, 0)
 			dt = datetime.datetime.combine(dt.date(), time)
 		#return dt
-		if not reverse:
-			dt = dt.timestamp()
-		else:
-			dt = datetime.datetime.fromtimestamp(dt)
+		dt = dt.timestamp()
 		return dt
 
 class Dataset:
