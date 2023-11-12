@@ -20486,7 +20486,7 @@ static PyObject *__pyx_pf_7backend_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_
  * 
  *     for n in range(bars, total_length): # for the nth iteration, going through bars n-bars to n-1             # <<<<<<<<<<<<<<
  * 
- *         if xSeq[n,0]*xSeq[n, 2] < 1000000: continue # Filter out low dollar volume days
+ *         if xSeq[n,0]*xSeq[n, 2] < 800000: continue # Filter out low dollar volume days
  */
   __pyx_t_8 = __pyx_v_total_length;
   __pyx_t_9 = __pyx_t_8;
@@ -20496,7 +20496,7 @@ static PyObject *__pyx_pf_7backend_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_
     /* "backend/Odtw.pyx":45
  *     for n in range(bars, total_length): # for the nth iteration, going through bars n-bars to n-1
  * 
- *         if xSeq[n,0]*xSeq[n, 2] < 1000000: continue # Filter out low dollar volume days             # <<<<<<<<<<<<<<
+ *         if xSeq[n,0]*xSeq[n, 2] < 800000: continue # Filter out low dollar volume days             # <<<<<<<<<<<<<<
  *         # Lower Bound Check
  *         totalLowerBound = 0.0
  */
@@ -20504,13 +20504,13 @@ static PyObject *__pyx_pf_7backend_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_
     __pyx_t_12 = 0;
     __pyx_t_13 = __pyx_v_n;
     __pyx_t_14 = 2;
-    __pyx_t_15 = (((*__Pyx_BufPtrStrided2d(double *, __pyx_pybuffernd_xSeq.rcbuffer->pybuffer.buf, __pyx_t_11, __pyx_pybuffernd_xSeq.diminfo[0].strides, __pyx_t_12, __pyx_pybuffernd_xSeq.diminfo[1].strides)) * (*__Pyx_BufPtrStrided2d(double *, __pyx_pybuffernd_xSeq.rcbuffer->pybuffer.buf, __pyx_t_13, __pyx_pybuffernd_xSeq.diminfo[0].strides, __pyx_t_14, __pyx_pybuffernd_xSeq.diminfo[1].strides))) < 1000000.0);
+    __pyx_t_15 = (((*__Pyx_BufPtrStrided2d(double *, __pyx_pybuffernd_xSeq.rcbuffer->pybuffer.buf, __pyx_t_11, __pyx_pybuffernd_xSeq.diminfo[0].strides, __pyx_t_12, __pyx_pybuffernd_xSeq.diminfo[1].strides)) * (*__Pyx_BufPtrStrided2d(double *, __pyx_pybuffernd_xSeq.rcbuffer->pybuffer.buf, __pyx_t_13, __pyx_pybuffernd_xSeq.diminfo[0].strides, __pyx_t_14, __pyx_pybuffernd_xSeq.diminfo[1].strides))) < 800000.0);
     if (__pyx_t_15) {
       goto __pyx_L3_continue;
     }
 
     /* "backend/Odtw.pyx":47
- *         if xSeq[n,0]*xSeq[n, 2] < 1000000: continue # Filter out low dollar volume days
+ *         if xSeq[n,0]*xSeq[n, 2] < 800000: continue # Filter out low dollar volume days
  *         # Lower Bound Check
  *         totalLowerBound = 0.0             # <<<<<<<<<<<<<<
  *         zeroIndex = n-bars
@@ -21033,7 +21033,7 @@ static PyObject *__pyx_pf_7backend_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_
  *             cost, cost_prev = cost_prev, cost
  * 
  *         k -= 1             # <<<<<<<<<<<<<<
- *         scores.append([ticker, xSeq[zeroIndex, 3], sqrt(cost_prev[k]) * 100])
+ *         scores.append([ticker, xSeq[n, 3], sqrt(cost_prev[k]) * 100])
  *     return scores
  */
     __pyx_v_k = (__pyx_v_k - 1);
@@ -21041,11 +21041,11 @@ static PyObject *__pyx_pf_7backend_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_
     /* "backend/Odtw.pyx":93
  * 
  *         k -= 1
- *         scores.append([ticker, xSeq[zeroIndex, 3], sqrt(cost_prev[k]) * 100])             # <<<<<<<<<<<<<<
+ *         scores.append([ticker, xSeq[n, 3], sqrt(cost_prev[k]) * 100])             # <<<<<<<<<<<<<<
  *     return scores
  * 
  */
-    __pyx_t_14 = __pyx_v_zeroIndex;
+    __pyx_t_14 = __pyx_v_n;
     __pyx_t_13 = 3;
     __pyx_t_5 = PyFloat_FromDouble((*__Pyx_BufPtrStrided2d(double *, __pyx_pybuffernd_xSeq.rcbuffer->pybuffer.buf, __pyx_t_14, __pyx_pybuffernd_xSeq.diminfo[0].strides, __pyx_t_13, __pyx_pybuffernd_xSeq.diminfo[1].strides))); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 93, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
@@ -21070,7 +21070,7 @@ static PyObject *__pyx_pf_7backend_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_
 
   /* "backend/Odtw.pyx":94
  *         k -= 1
- *         scores.append([ticker, xSeq[zeroIndex, 3], sqrt(cost_prev[k]) * 100])
+ *         scores.append([ticker, xSeq[n, 3], sqrt(cost_prev[k]) * 100])
  *     return scores             # <<<<<<<<<<<<<<
  * 
  * 
