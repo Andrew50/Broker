@@ -19,6 +19,15 @@
     screener_data = value
     });
 
+    export let chart_data_store = writable([
+        {time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85}
+    ]);
+    let chart_data;
+    chart_data_store.subscribe((value) => {
+    chart_data = value
+    });
+
+
 
     let innerWidth;
     let innerHeight;
@@ -44,17 +53,14 @@
     let ticker = "AAPL";
     let tf = "1d";
     let dt = "2023-10-03";
-    let chart_ticker = "AAPL";
-    let chart_tf = "1d";
-    let chart_dt = "";
-    let timeScale;
+    // let chart_ticker = "AAPL";
+    // let chart_tf = "1d";
+    // let chart_dt = "";
+    // let timeScale;
     let key;
 
 
-    export let chart_data = writable([
-        {time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85}
-    ]);
-
+    
     export let sample_data = [
   {time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85}
 ]
@@ -101,10 +107,22 @@
 		}
 	}
 
-    async function startTask(bind_variable,func) {
+
+
+    async function startTask(bind_variable,func=false) {
+        event.preventDefault(); // Prevent the default form submission
+        const formData = new FormData(event.target);
+        let formValues = Array.from(formData.values()).join('-');
+        let args;
+        if (func){
+            args = `${func}-${formValues}`;
+        }else{
+            args = formValues
+        }
+        const url = `http://localhost:5057/fetch/${args}`;
         try{
-    
-        const response = await fetch(`http://localhost:5057/${func}`, {method: 'POST',headers: {'Content-Type': 'application/json'},});
+        console.log('request sent',url)
+        const response = await fetch(url, {method: 'POST',headers: {'Content-Type': 'application/json'},});
         if (!response.ok) {throw new Error('POST response not ok')}
         const responseData = await response.json();
         const task_id = responseData.task_id;
@@ -112,9 +130,14 @@
             const response = await fetch(`http://localhost:5057/poll/${task_id}`);
             if (!response.ok){throw new Error('GET response not ok')}
                 const responseData = await response.json();
+                const status = responseData.status
                 if (responseData.status === 'done') {
                     clearInterval(intervalId);
                     bind_variable.set(responseData.result);
+                    console.log(responseData.result);
+                }else if(status === 'failed'){
+                    clearInterval(intervalId);
+                    bind_variable.set('failed')
                 }
         };
         const intervalId = setInterval(checkStatus, 500); // Check every 2 seconds
@@ -323,7 +346,7 @@
     />
 </Chart>
 {chartTicker}
-<a href="/test2">test2</a>
+<a href="/test">test</a>
 
 <input class = 'input-overlay' 
 	bind:this={TickerBox} 

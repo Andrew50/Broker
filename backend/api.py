@@ -35,7 +35,7 @@ def addTask(request):
 @app.get('/poll/{job_id}')
 def get_result(job_id: str):
 	job = Job.fetch(job_id, connection=redis_conn)
-
+	#print(job)
 	if job.is_finished:
 		return {"status":"done",
 			"result": job.result}
