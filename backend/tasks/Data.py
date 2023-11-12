@@ -340,7 +340,7 @@ CREATE TABLE current_ticker_list(ticker VARCHAR(5) NOT NULL);
 			commands = [cmd.strip() for cmd in sql_commands.split(';') if cmd.strip()]
 			for command in commands:cursor.execute(command)
 			##transfer full_ticker_list
-			df = pd.read_feather("C:/dev/Broker/backend/old/sync/files/full_scan.feather")
+			df = pd.read_feather("C:/dev/Broker/old/sync/files/full_scan.feather")
 			df = df['ticker'].tolist()
 			df = [[x] for x in df]
 			insert_query = "INSERT INTO full_ticker_list VALUES (%s)"
@@ -350,7 +350,7 @@ CREATE TABLE current_ticker_list(ticker VARCHAR(5) NOT NULL);
 			if True:
 				
 				for tf in ['1d']:
-					args = [[ticker, tf, 'C:/dev/broker/backend/old/' + tf + '/' + ticker + '.feather'] for ticker in self.get_ticker_list()]
+					args = [[ticker, tf, 'C:/dev/broker/old/' + tf + '/' + ticker + '.feather'] for ticker in self.get_ticker_list()]
 					for ticker, tf, path in tqdm(args,desc='Transfering Dataframes'):
 						try:
 							df = pd.read_feather(path)
