@@ -30,6 +30,7 @@
 	let TickerBoxValue = '';
 	let chartTicker;
 	let TickerBoxVisible = "none";
+    let value = 'An input.';
 
     function toggleMatch() {
     isMatch = !isMatch;
@@ -49,6 +50,7 @@
     let timeScale;
     let key;
 
+
     export let chart_data = writable([
         {time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85}
     ]);
@@ -57,8 +59,47 @@
   {time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85}
 ]
     // task list: chart-get match-get trainer-get trainer-set screener-get study-get study-set settings-set
+	
+	function resizeInputOnDynamicContent(node) {
+		
+		const measuringElement = document.createElement('div');
+		document.body.appendChild(measuringElement);
+		
+		/** duplicate the styles of the existing node, but
+		remove the measuring element from the viewport. */
+		function duplicateAndSet() {
+			const styles = window.getComputedStyle(node);
+			measuringElement.innerHTML = node.value;
+			measuringElement.style.fontSize = styles.fontSize;
+			measuringElement.style.fontFamily = styles.fontFamily;
+			measuringElement.style.paddingLeft = styles.paddingLeft;
+			measuringElement.style.paddingRight = styles.paddingRight;
+			measuringElement.style.boxSizing = 'border-box';
+			measuringElement.style.border = styles.border;
+			measuringElement.style.width='max-content';
+			measuringElement.style.position = 'absolute';
+			measuringElement.style.top = '0';
+			measuringElement.style.left = '-9999px';
+			measuringElement.style.overflow = 'hidden';
+			measuringElement.style.visibility = 'hidden';
+ 			measuringElement.style.whiteSpace = 'pre';
+			measuringElement.style.height = '0';
+			node.style.width = `${(measuringElement.offsetWidth)*1.5}px`;
+		}
 
-    
+		duplicateAndSet();
+		/** listen to any style changes */
+		const observer = new MutationObserver(duplicateAndSet)
+		observer.observe(node, { attributes: true, childList: true, subtree: true });
+		
+		node.addEventListener('input', duplicateAndSet);
+		return {
+			destroy() {
+					observer.disconnect(node);
+					node.removeEventListener('input', duplicateAndSet)
+			}
+		}
+	}
 
     async function startTask(bind_variable,func) {
         try{
@@ -94,7 +135,7 @@
 			if (/^[a-zA-Z]$/.test(event.key.toLowerCase()) && popup == false) {
 			TickerBoxVisible = "block"
 			popup = true;
-			TickerBoxValue += event.key;
+			TickerBoxValue += event.key.toUpperCase();
 			event.preventDefault();
 			TickerBox.focus();
 			}
@@ -104,7 +145,7 @@
 				TickerBoxValue = '';
 				popup = false;
 				
-			}
+			} 
 			TickerBox.focus();
 	}
 </script>
@@ -128,6 +169,7 @@
         box-sizing: border-box;
         z-index: 1000;
         font-size:40pt;
+        text-transform:uppercase;
     }
     .match-button {
     position: fixed;
@@ -287,6 +329,7 @@
 	bind:this={TickerBox} 
 	bind:value={TickerBoxValue} 
 	style ="display: {TickerBoxVisible};"
+    use:resizeInputOnDynamicContent
 					
 />
 
