@@ -7,11 +7,11 @@
 
 
 
-    let match_data_store = writable()
-    let match_data;
-    match_data_store.subscribe((value) => {
-    match_data = value
-    });
+     export let match_data_store = writable([])
+    export let match_data = [];
+     match_data_store.subscribe((value) => {
+     match_data = value
+     });
     
     let screener_data_store = writable()
     let screener_data;
@@ -22,9 +22,13 @@
     export let chart_data_store = writable([
         {time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85}
     ]);
-    let chart_data;
+    export let chart_data;
+    console.log(chart_data)
     chart_data_store.subscribe((value) => {
-    chart_data = value
+    try{chart_data = JSON.parse(value)}
+    catch{chart_data = value}
+        console.log(chart_data)
+
     });
 
 
@@ -59,12 +63,6 @@
     // let timeScale;
     let key;
 
-
-    
-    export let sample_data = [
-  {time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85}
-]
-    // task list: chart-get match-get trainer-get trainer-set screener-get study-get study-set settings-set
 	
 	function resizeInputOnDynamicContent(node) {
 		
@@ -109,15 +107,15 @@
 
 
 
-    async function startTask(bind_variable,func=false) {
-        event.preventDefault(); // Prevent the default form submission
-        const formData = new FormData(event.target);
-        let formValues = Array.from(formData.values()).join('-');
-        let args;
+    async function startTask(bind_variable,func=false,args = false) {
+        if (!args){
+
+            event.preventDefault(); // Prevent the default form submission
+            const formData = new FormData(event.target);
+            args = Array.from(formData.values()).join('-');
+        }
         if (func){
-            args = `${func}-${formValues}`;
-        }else{
-            args = formValues
+            args = `${func}-${args}`;
         }
         const url = `http://localhost:5057/fetch/${args}`;
         try{
@@ -133,8 +131,9 @@
                 const status = responseData.status
                 if (responseData.status === 'done') {
                     clearInterval(intervalId);
-                    bind_variable.set(responseData.result);
                     console.log(responseData.result);
+
+                    bind_variable.set(responseData.result);
                 }else if(status === 'failed'){
                     clearInterval(intervalId);
                     bind_variable.set('failed')
@@ -163,8 +162,11 @@
 			TickerBox.focus();
 			}
 			if(event.key == "Enter"){
+
+                chartTicker = TickerBoxValue;
+                startTask(chart_data_store,'Chart_get',TickerBoxValue)
 				TickerBoxVisible = "none"
-				chartTicker = TickerBoxValue;
+				
 				TickerBoxValue = '';
 				popup = false;
 				
@@ -254,37 +256,10 @@
         <div>E</div>
         <div>R</div>
     </button>
-<!--     <button class="screener-button" on:click={toggleStudy}>
-        <div>S</div>
-        <div>T</div>
-        <div>U</div>
-        <div>D</div>
-        <div>Y</div>
-    </button>
-    <button class="screener-button" on:click={toggleTrainer}>
-        <div>A</div>
-        <div>C</div>
-        <div>C</div>
-        <div>I</div>
-        <div>N</div>
-        <div>E</div>
-        <div>R</div>
-    </button>
-    <button class="screener-button" on:click={toggleStudy}>
-        <div>S</div>
-        <div>T</div>
-        <div>U</div>
-        <div>D</div>
-        <div>Y</div>
-    </button> -->
-
-
-
-
 
     <div class="popout-menu"  style="min-height: {innerHeight}px;" class:visible={isMatch}>
       {#if isMatch}
-                    <form on:submit|preventDefault={() => startTask('Match-get',match_data)}>
+                    <form on:submit|preventDefault={() => startTask(match_data_store,'Match_get')}>
                     <div class="form-group">
                     <input type="text" id="ticker" bind:value="{ticker}" name="ticker" placeholder="Enter Ticker" required>
                     </div>
@@ -298,6 +273,7 @@
                     <input type="submit" value="FETCH">
                     </div>
                     </form>
+                    {#if match_data.length > 0}
                     <table>
                       <thead>
                         <tr>
@@ -306,7 +282,7 @@
                         </tr>
                       </thead>
                       <tbody>
-                        {#each $match_data as item}
+                        {#each match_data as item}
                           <tr>
                             <td>{item.id}</td>
                             <td>{item.name}</td>
@@ -314,12 +290,13 @@
                         {/each}
                       </tbody>
                     </table>
+                    {/if}
       {/if}
     </div>
     <div class="popout-menu"  style="min-height: {innerHeight}px;" class:visible={isScreener}>
 
     {#if isScreener}
-        <form on:submit|preventDefault={() => startTask('Screener-get',screener_data)}>
+        <form on:submit|preventDefault={() => startTask(screener_data_store,'Screener_get')}>
                     
         <div class="form-group">
         <input type="submit" value="Screen">
@@ -335,7 +312,7 @@
 </div>
 <Chart width={innerWidth - 300}  height={innerHeight - 40} {...options}>
     <CandlestickSeries
-        data={sample_data}
+        data={chart_data}
         reactive={true}
         upColor="rgba(0,255, 0, 1)"
         downColor="rgba(255, 0, 0, 1)"

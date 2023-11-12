@@ -16,4 +16,4 @@ COPY tasks/ tasks
 COPY Setup.py ./
 
 
-RUN python Setup.py build_ext --inplace
+#RUN python Setup.py build_ext --inplace
