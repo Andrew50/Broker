@@ -15,7 +15,7 @@ np_bars = 10
 num_cores = 3
 sqrt = math.sqrt
 class Match: 
-    
+    max()
     def run(ds,y): 
         
         radius = math.ceil(np_bars/10)
