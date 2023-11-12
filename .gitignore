@@ -9,7 +9,7 @@
 *.user
 *.userosscache
 *.sln.docstates
-
+backend/database/database_dump.sql
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 backend/1d
@@ -36,6 +36,29 @@ backend/scripts/d
 backend/tasks/d
 backend/tasks/local
 backend/tasks/1min
+backend/database
+backend/old/1d
+backend/old/1min
+
+frontend/node_modules
+frontend/.svelte-kit
+build
+
+
+#.DS_Store
+#node_modules
+#/build
+#/.svelte-kit
+#/package
+
+#.env
+#.env.*
+#!.env.example
+#vite.config.js.timestamp-*
+#vite.config.ts.timestamp-*
+
+
+
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
