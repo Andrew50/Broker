@@ -1,0 +1,66 @@
+version: '3.6'
+
+services:
+    myproj_redis:
+        container_name: myproj_redis
+        hostname: redis
+        image: redis:latest
+        command: --port 6379
+        ports:
+            - "6379:6379"
+        expose:
+            - "6379"
+        restart: always
+        networks:
+        - my-network
+
+    myproj_api:
+        container_name: my_api
+        build:
+            context: ./
+            dockerfile: ./Dockerfile
+        ports:
+        - "5057:5057"
+        working_dir: /home/myproj
+        volumes:
+            - ./:/home/myproj
+        links:
+            - myproj_redis
+        command: uvicorn api:app --host 0.0.0.0 --port 5057 --reload
+        networks:
+        - my-network
+
+    myproj_worker:
+        build:
+            context: ./
+            dockerfile: ./Dockerfile
+        working_dir: /home/myproj
+        volumes:
+            - ./:/home/myproj
+        links:
+            - myproj_redis
+        command: rq worker --url redis://myproj_redis:6379 my_queue
+        networks:
+        - my-network
+
+    mysql:
+        container_name: mysql
+        image: mysql:latest
+        environment:
+            MYSQL_ROOT_PASSWORD: 7+WCy76_2$%g
+            #MYSQL_DATABASE: broker
+            #MYSQL_USER: root
+            MYSQL_PASSWORD: 7+WCy76_2$%g
+        ports:
+        - "3307:3306"
+        volumes:
+        - mysql-data:/var/lib/mysql
+        - ./my.cnf:/etc/mysql/my.cnf
+        networks:
+        - my-network
+
+volumes:
+    mysql-data:
+
+networks:
+    my-network:    

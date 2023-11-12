@@ -1,9 +1,18 @@
-import time
+import time,importlib,sys,traceback
 
+sys.path.append('./tasks')
 
-def runTask():
-    print('starting runTask') # in place of actual logging
-
-    time.sleep(5) # simulate long running task
-    print('finished runTask')
-    return {'group_name': 'task complete'}
+def run_task(request='Test_get'):
+	try:
+		#print('Some message', flush=True)
+		split = request.split('-')
+		func = split[0]
+		args = split[1:]
+		module_name, function_name = func.split('_')
+		module = importlib.import_module(module_name)
+		func = getattr(module, function_name, None)
+		return func(args)
+	#except Exception as e:
+		#return str(traceback.format_exc()) + str(e)
+	except TimeoutError:
+		return 'failed'
