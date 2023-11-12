@@ -90,7 +90,7 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np
             cost, cost_prev = cost_prev, cost
 
         k -= 1
-        scores.append([ticker, xSeq[zeroIndex, 3], sqrt(cost_prev[k]) * 100])
+        scores.append([ticker, xSeq[n, 3], sqrt(cost_prev[k]) * 100])
     return scores
                 
 
