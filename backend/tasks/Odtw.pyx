@@ -20,7 +20,7 @@ def calcBounds(double[:] y, int radius):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-@cython.cdivision(true)
+@cython.cdivision(True)
 @cython.nonecheck(False)
 def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np.ndarray[double, ndim=1] upper, np.ndarray[double, ndim=1] lower, int bars, double cutoff, int r, str ticker):
     scores = []
