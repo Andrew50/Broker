@@ -39,8 +39,8 @@ services:
             - ./:/home/myproj
         links:
             - myproj_redis
-        command: 
-              uvicorn api:app --host 0.0.0.0 --port 5057 --reload
+        #command: 
+         #     uvicorn api:app --host 0.0.0.0 --port 5057 --reload
         
         
         

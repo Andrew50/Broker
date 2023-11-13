@@ -27,4 +27,4 @@ WORKDIR /home/myproj
 
 
 
-ENTRYPOINT ["sh", "-c", "python startup.py && your-main-service-command"]
+ENTRYPOINT ["sh", "-c", "python startup.py && uvicorn api:app --host 0.0.0.0 --port 5057 --reload"]
