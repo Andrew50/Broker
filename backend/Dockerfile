@@ -23,8 +23,8 @@ WORKDIR /home/myproj/tasks
 RUN python Setup.py build_ext --inplace
 
 
-WORKDIR /home/myproj
+#WORKDIR /home/myproj
 
 
 
-ENTRYPOINT ["sh", "-c", "python tasks/startup.py && uvicorn api:app --host 0.0.0.0 --port 5057 --reload"]
+#ENTRYPOINT ["sh", "-c", "python tasks/startup.py && uvicorn api:app --host 0.0.0.0 --port 5057 --reload"]

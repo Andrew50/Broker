@@ -9,6 +9,7 @@ sys.path.append('./tasks')
 def run_task(request='Test_get'):
 
 	try:
+		print('god')
 		#print('Some message', flush=True)
 		split = request.split('_')
 		func = split[0]
@@ -16,7 +17,7 @@ def run_task(request='Test_get'):
 		module_name, function_name = func.split('-')
 		module = importlib.import_module(module_name)
 		func = getattr(module, function_name, None)
-		return func(args,ds)
+		return func(args)
 	#except Exception as e:
 		#return str(traceback.format_exc()) + str(e)
 	except:

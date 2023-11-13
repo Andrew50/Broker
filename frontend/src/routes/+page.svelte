@@ -33,19 +33,11 @@
 
 
 
-    console.log(chart_data)
 
     chart_data_store.subscribe((value) => {
-
-
+    console.log(value)
     try{chart_data = JSON.parse(value)}
     catch{chart_data = value}
-
-
-
-
-        console.log(chart_data)
-
     });
 
 

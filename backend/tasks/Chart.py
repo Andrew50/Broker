@@ -15,9 +15,9 @@ def get(args):
     
     tf = args[1]
     dt = args[2]
-    dt = None
     db = Database()
     df = db.get_df(ticker)
+    print('god')
     list_of_lists = df.tolist()[:]
 
     # Convert the first column (Unix timestamps) to string datetimes
