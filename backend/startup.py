@@ -7,7 +7,9 @@ if __name__ == '__main__':
 
     db = Database()
     ds = Dataset(db,'full').dfs
-
+    for data in ds: 
+        data.df = data.formatDataframeForMatch()
+        
     cache_startup = [[ds,'ds']]
 
     cache = Cache()
