@@ -1,4 +1,3 @@
-#FROM python:3.7.6
 FROM python:3.10.1-bullseye
 WORKDIR /home/myproj
 RUN pip install --upgrade pip
@@ -7,28 +6,9 @@ RUN pip install -r requirements.txt
 COPY api.py ./
 COPY worker.py ./
 COPY tasks/ tasks
-#COPY startup.py ./
-#COPY Setup.py ./
-#COPY start.sh /start.sh
-
-# Give execute permissions
-#RUN chmod +x /start.sh
-
-
-RUN apt-get update && \
-    apt-get install -y gcc libpython3-dev && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN pip install cython
-
+COPY startup.py ./
+RUN apt-get update && apt-get install -y gcc libpython3-dev && rm -rf /var/lib/apt/lists/*
+#RUN pip install cython
 ENV C_INCLUDE_PATH=/usr/local/lib/python3.10/site-packages/numpy/core/include:$C_INCLUDE_PATH
-#RUN python startup.py
 WORKDIR /home/myproj/tasks
 RUN python Setup.py build_ext --inplace
-
-
-#WORKDIR /home/myproj
-
-
-#ENTRYPOINT ["python tasks/startup.py && uvicorn api:app --host 0.0.0.0 --port 5057 --reload"]
-#ENTRYPOINT ["sh", "-c", "python tasks/startup.py && uvicorn api:app --host 0.0.0.0 --port 5057 --reload"]
