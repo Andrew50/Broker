@@ -148,7 +148,7 @@
                     bind_variable.set('failed')
                 }
         };
-        const intervalId = setInterval(checkStatus, 500); // Check every 2 seconds
+        const intervalId = setInterval(checkStatus, 200); // Check every 2 seconds
         }catch{
         bind_variable.set(null);
         }
