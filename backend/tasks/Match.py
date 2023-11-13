@@ -1,5 +1,5 @@
 from multiprocessing.pool import Pool
-from Data import Database, Data, Dataset
+from Data import Database, Data, Dataset, Cache
 #from Study import Screener as screener
 import numpy as np
 import json
@@ -40,13 +40,13 @@ class Match:
         x, y, ticker, upper, lower, cutoff, radius = bar
         return Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius, ticker)
 
-    def compute(db,ticker,dt,tf):
+    def compute(db,ticker,dt,tf,ds):
         dt = Database.format_datetime(dt)
         y = Data(db,ticker, tf, dt,bars = np_bars+1).df###################
         y = Match.formatArray(y, yValue=True)
         
         start = datetime.datetime.now()
-        ds = Dataset(db,'full').dfs
+        #ds = Dataset(db,'full').dfs
         print('time to load dataset:')
         print(datetime.datetime.now()-start)
         
@@ -89,12 +89,16 @@ class Match:
 if __name__ == '__main__':
     start = datetime.datetime.now()
     print(start)
+    cache = Cache()
+    ds = cache.get('ds')
+    print(ds)
     db = Database()
+    
     ticker = 'JBL'  # input('input ticker: ')
     dt = '2023-10-03'  # input('input date: ')
     tf = '1d'  # int(input('input tf: '))
     
-    top_scores = Match.compute(db,ticker,dt,tf)
+    top_scores = Match.compute(db,ticker,dt,tf,ds)
     for ticker, date, score in top_scores:
     #for score, ticker, index in top_scores:
         print(f'{ticker} {date} {score}')

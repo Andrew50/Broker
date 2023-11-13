@@ -112,10 +112,10 @@
 
             event.preventDefault(); // Prevent the default form submission
             const formData = new FormData(event.target);
-            args = Array.from(formData.values()).join('-');
+            args = Array.from(formData.values()).join('_');
         }
         if (func){
-            args = `${func}-${args}`;
+            args = `${func}_${args}`;
         }
         const url = `http://localhost:5057/fetch/${args}`;
         try{
@@ -164,7 +164,7 @@
 			if(event.key == "Enter"){
 
                 chartTicker = TickerBoxValue;
-                startTask(chart_data_store,'Chart_get',TickerBoxValue)
+                startTask(chart_data_store,'Chart-get',TickerBoxValue)
 				TickerBoxVisible = "none"
 				
 				TickerBoxValue = '';
@@ -259,7 +259,7 @@
 
     <div class="popout-menu"  style="min-height: {innerHeight}px;" class:visible={isMatch}>
       {#if isMatch}
-                    <form on:submit|preventDefault={() => startTask(match_data_store,'Match_get')}>
+                    <form on:submit|preventDefault={() => startTask(match_data_store,'Match-get')}>
                     <div class="form-group">
                     <input type="text" id="ticker" bind:value="{ticker}" name="ticker" placeholder="Enter Ticker" required>
                     </div>
@@ -296,7 +296,7 @@
     <div class="popout-menu"  style="min-height: {innerHeight}px;" class:visible={isScreener}>
 
     {#if isScreener}
-        <form on:submit|preventDefault={() => startTask(screener_data_store,'Screener_get')}>
+        <form on:submit|preventDefault={() => startTask(screener_data_store,'Screener-get')}>
                     
         <div class="form-group">
         <input type="submit" value="Screen">

@@ -7,6 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from worker import run_task
 
+
+
+
 app = FastAPI()
 
 origins = [
@@ -27,7 +30,7 @@ q = Queue('my_queue', connection=redis_conn)
 
 @app.post('/fetch/{request}', status_code=201)
 def addTask(request):
-	job = q.enqueue(run_task,kwargs={'request':request})
+	job = q.enqueue(run_task,kwargs={'request':request},timeout=600)
 	#size = len(q)
 	return {'task_id': job.get_id()}
 

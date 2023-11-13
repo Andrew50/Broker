@@ -1,31 +1,31 @@
 
 import numpy as np
-import  pandas as pd, numpy as np, datetime, mysql.connector, pytz
+import  pandas as pd, numpy as np, datetime, mysql.connector, pytz, redis, pickle, time
 from tqdm import tqdm
 import yfinance as yf
 
 
 class Cache:
 	
-	'''
-	def get(*args,**kwargs):
-		
-		
+	def get(self,key):
 
+		serialized_data = self.r.get(key)
+		if serialized_data:
+			return pickle.loads(serialized_data)
+		else:
+			return None
 
+	def set(self,data,key):
+		serialized_data = pickle.dumps(data)
+		self.r.set(key, serialized_data)
 
-	def __getattr__(self,name):
-		
-		self.db.nae
-		
-	
-
-	'''
 	def __init__(self):
-		self.db
-		self.db = Database()
-		self.dfs = Dataset(self.db)
-
+		try: 
+			self.r = redis.Redis(host='myproj_redis', port=6379)
+			self.r.ping()
+		except:
+			print('assuming that redis being accessed from outside class')
+			self.r = redis.Redis(host='localhost', port=6379)
 
 class Database:
 	

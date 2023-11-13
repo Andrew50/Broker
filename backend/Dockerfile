@@ -7,6 +7,7 @@ RUN pip install -r requirements.txt
 COPY api.py ./
 COPY worker.py ./
 COPY tasks/ tasks
+COPY startup.py ./
 #COPY Setup.py ./
 
 
@@ -17,5 +18,13 @@ RUN apt-get update && \
 RUN pip install cython
 
 ENV C_INCLUDE_PATH=/usr/local/lib/python3.10/site-packages/numpy/core/include:$C_INCLUDE_PATH
+#RUN python startup.py
+WORKDIR /home/myproj/tasks
+RUN python Setup.py build_ext --inplace
 
-RUN python tasks/Setup.py build_ext --inplace
+
+WORKDIR /home/myproj
+
+
+
+ENTRYPOINT ["sh", "-c", "python startup.py && your-main-service-command"]

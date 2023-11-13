@@ -1,6 +1,19 @@
 version: '3.6'
 
 services:
+
+
+    myproj_initializer:
+        build: 
+          context: ./
+          dockerfile: ./Dockerfile
+        depends_on:
+          - myproj_redis
+          - mysql
+        networks:
+          - my-network
+
+    
     myproj_redis:
         container_name: myproj_redis
         hostname: redis
@@ -26,20 +39,25 @@ services:
             - ./:/home/myproj
         links:
             - myproj_redis
-        command: uvicorn api:app --host 0.0.0.0 --port 5057 --reload
+        command: 
+              uvicorn api:app --host 0.0.0.0 --port 5057 --reload
+        
+        
+        
+       # uvicorn api:app --host 0.0.0.0 --port 5057 --reload
         networks:
-        - my-network
+            - my-network
 
     myproj_worker:
         build:
             context: ./
             dockerfile: ./Dockerfile
         working_dir: /home/myproj
-        volumes:
-            - ./:/home/myproj
+     #   volumes:
+     #       - ./:/home/myproj
         links:
             - myproj_redis
-        command: rq worker --url redis://myproj_redis:6379 my_queue
+        command: rq worker --url redis://myproj_redis:6379 my_queue #600 seconds
         networks:
         - my-network
 
