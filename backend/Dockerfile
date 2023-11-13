@@ -7,7 +7,7 @@ RUN pip install -r requirements.txt
 COPY api.py ./
 COPY worker.py ./
 COPY tasks/ tasks
-COPY startup.py ./
+#COPY startup.py ./
 #COPY Setup.py ./
 
 
@@ -27,4 +27,4 @@ WORKDIR /home/myproj
 
 
 
-ENTRYPOINT ["sh", "-c", "python startup.py && uvicorn api:app --host 0.0.0.0 --port 5057 --reload"]
+ENTRYPOINT ["sh", "-c", "python tasks/startup.py && uvicorn api:app --host 0.0.0.0 --port 5057 --reload"]
