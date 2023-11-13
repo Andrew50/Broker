@@ -88,7 +88,6 @@ class Match:
         
 if __name__ == '__main__':
     start = datetime.datetime.now()
-    print(start)
     cache = Cache()
     ds = cache.get('ds')
     print(ds)

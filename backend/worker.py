@@ -20,5 +20,5 @@ def run_task(request='Test_get'):
 		return func(args)
 	#except Exception as e:
 		#return str(traceback.format_exc()) + str(e)
-	except:
+	except TimeoutError:
 		return 'failed'
