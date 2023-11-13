@@ -29,7 +29,6 @@ services:
             - myproj_redis
         command: 
             python startup.py
-              #python tasks/startup.py && uvicorn api:app --host 0.0.0.0 --port 5057 --reload
         networks:
             - my-network
 
