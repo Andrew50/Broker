@@ -9,7 +9,7 @@ uvicorn==0.11.7
 uvloop
 cython==3.0.5
 
-mysql-connector-python
+mysql-connector-python==8.1.0
 
 numpy==1.23.5
 pandas==2.0.1
