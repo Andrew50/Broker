@@ -405,7 +405,7 @@ class Dataset:
 	
 	def __init__(self, db, request='full',tf='1d', bars=0, value=None, pm=True):
 		if request == 'full':
-			request = [[ticker,None] for ticker in db.get_ticker_list('full')]#fix goodsfsdisdfosdo
+			request = [[ticker,None] for ticker in db.get_ticker_list('full')][:5000]#fix goodsfsdisdfosdo
 		'''# TEMP CODE STARTS HERE
 		num_cores = 6
 		requestLists = [[] for i in range(num_cores)]

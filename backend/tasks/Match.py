@@ -44,13 +44,6 @@ class Match:
         dt = Database.format_datetime(dt)
         y = Data(db,ticker, tf, dt,bars = np_bars+1).df###################
         y = Match.formatArray(y, yValue=True)
-        
-        start = datetime.datetime.now()
-        #ds = Dataset(db,'full').dfs
-        print('time to load dataset:')
-        print(datetime.datetime.now()-start)
-        
-        
         top_scores = Match.run(ds, y)
         formatted_top_scores = []
         for ticker, timestamp, score in top_scores:
@@ -90,9 +83,8 @@ if __name__ == '__main__':
     start = datetime.datetime.now()
     cache = Cache()
     ds = cache.get('ds')
-    print(ds)
     db = Database()
-    
+    print(datetime.datetime.now()-start)
     ticker = 'JBL'  # input('input ticker: ')
     dt = '2023-10-03'  # input('input date: ')
     tf = '1d'  # int(input('input tf: '))
