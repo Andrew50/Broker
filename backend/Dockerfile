@@ -9,6 +9,10 @@ COPY worker.py ./
 COPY tasks/ tasks
 #COPY startup.py ./
 #COPY Setup.py ./
+#COPY start.sh /start.sh
+
+# Give execute permissions
+#RUN chmod +x /start.sh
 
 
 RUN apt-get update && \
@@ -26,5 +30,5 @@ RUN python Setup.py build_ext --inplace
 #WORKDIR /home/myproj
 
 
-
+#ENTRYPOINT ["python tasks/startup.py && uvicorn api:app --host 0.0.0.0 --port 5057 --reload"]
 #ENTRYPOINT ["sh", "-c", "python tasks/startup.py && uvicorn api:app --host 0.0.0.0 --port 5057 --reload"]
