@@ -8,6 +8,6 @@ import numpy
 # py setup.py build_ext --inplace 
 
 setup(
-    ext_modules = cythonize("tasks/Odtw.pyx"),
+    ext_modules = cythonize("Odtw.pyx"),
     include_dirs=[numpy.get_include()]
 )
