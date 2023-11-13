@@ -57,20 +57,20 @@ class Match:
             formatted_top_scores.append([ticker,str(Database.format_datetime(timestamp, True)),round(score,2)])
         return formatted_top_scores
 
-    def formatArray(data, onlyCloseAndVol = True, yValue = False):
+    def formatArray(data, onlyCloseAndVol = True, yValue = False, whichColumn=4):
         data = np.array(data)
         if yValue:
             d = np.zeros((len(data), 1))
             for i in range(len(d)-1):
-                d[i] = data[i+1, 4]/data[i, 4] - 1
+                d[i] = data[i+1, whichColumn]/data[i, whichColumn] - 1
             d = d[len(d)-1-np_bars:len(d)-1].flatten()
             return d
         if onlyCloseAndVol: 
             if(len(data) < 3): return np.zeros((1, 4))
             d = np.zeros((len(data)-1, 4))
             for i in range(1, len(data)):
-                close = data[i,4]
-                d[i-1] = [float(close), float(close/data[i-1,4] - 1), data[i, 5], data[i, 0]]
+                close = data[i,whichColumn]
+                d[i-1] = [float(close), float(close/data[i-1,whichColumn] - 1), data[i, 5], data[i, 0]]
             return d
         else: 
             d = np.zeros((len(data), 6))
