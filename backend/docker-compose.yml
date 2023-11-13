@@ -2,7 +2,6 @@ version: '3.6'
 
 services:
 
-
     myproj_initializer:
         build: 
           context: ./
@@ -12,7 +11,6 @@ services:
           - mysql
         networks:
           - my-network
-
     
     myproj_redis:
         container_name: myproj_redis
@@ -41,10 +39,6 @@ services:
             - myproj_redis
         #command: 
          #     uvicorn api:app --host 0.0.0.0 --port 5057 --reload
-        
-        
-        
-       # uvicorn api:app --host 0.0.0.0 --port 5057 --reload
         networks:
             - my-network
 
@@ -53,11 +47,9 @@ services:
             context: ./
             dockerfile: ./Dockerfile
         working_dir: /home/myproj
-     #   volumes:
-     #       - ./:/home/myproj
         links:
             - myproj_redis
-        command: rq worker --url redis://myproj_redis:6379 my_queue #600 seconds
+        command: rq worker --url redis://myproj_redis:6379 my_queue
         networks:
         - my-network
 
@@ -66,8 +58,6 @@ services:
         image: mysql:latest
         environment:
             MYSQL_ROOT_PASSWORD: 7+WCy76_2$%g
-            #MYSQL_DATABASE: broker
-            #MYSQL_USER: root
             MYSQL_PASSWORD: 7+WCy76_2$%g
         ports:
         - "3307:3306"
