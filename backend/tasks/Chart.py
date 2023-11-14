@@ -14,9 +14,9 @@ def get(args):
     ticker = args[0]
     
     tf = args[1]
-    dt = args[2]
+    dt = Database.format_datetime(args[2])
     db = Database()
-    df = db.get_df(ticker)
+    df = db.get_df(ticker,tf,dt)
     print('god')
     list_of_lists = df.tolist()[:]
 
