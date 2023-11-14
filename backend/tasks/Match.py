@@ -20,7 +20,7 @@ class Match:
         radius = math.ceil(np_bars/10)
         upper, lower = Odtw.calcBounds(y, radius)
         cutoff = 0.02*100
-        arglist = [[data[0], y, data[1], upper, lower, cutoff, radius] for data in ds]
+        arglist = [[ds[data], y, data, upper, lower, cutoff, radius] for data in ds]
         start = datetime.datetime.now()
         print('starting match')
         scores = Pool(num_cores).map(Match.worker, arglist)#Main.pool(Match.worker, arglist)
@@ -107,5 +107,7 @@ def get(args):
     dt = args[1]
     tf = args[2]
     db = Database()
-    return json.dumps(Match.compute(db,ticker,tf,dt))
+    cache = Cache()
+    ds = cache.get_hash('ds')
+    return json.dumps(Match.compute(db,ticker,tf,dt, ds))
     
