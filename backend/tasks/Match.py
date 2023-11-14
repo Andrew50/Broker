@@ -109,5 +109,10 @@ def get(args):
     db = Database()
     cache = Cache()
     ds = cache.get_hash('ds')
-    return json.dumps(Match.compute(db,ticker,tf,dt, ds))
+    match_data = Match.compute(db,ticker,tf,dt, ds)
+    for i in range(len(match_data)):
+        match_data[i][1] = match_data[i][1][:10]
+    #[match_data[i][1] = match_data[i][1].date() for i in range(len(match_data))]
+    print(match_data,flush=True)
+    return json.dumps(match_data)
     

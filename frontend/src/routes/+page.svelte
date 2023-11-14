@@ -10,7 +10,8 @@
      export let match_data_store = writable([])
     export let match_data = [];
      match_data_store.subscribe((value) => {
-     match_data = JSON.parse(value)
+     try{match_data = JSON.parse(value)}
+    catch{match_data = value}
      });
     
 
