@@ -14,3 +14,4 @@ pandas==2.0.1
 pytz==2023.3
 tqdm==4.65.0
 yfinance==0.2.18
+msgpack==1.0.7
