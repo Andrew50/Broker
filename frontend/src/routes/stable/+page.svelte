@@ -10,7 +10,8 @@
      export let match_data_store = writable([])
     export let match_data = [];
      match_data_store.subscribe((value) => {
-     match_data = value
+     try{match_data = JSON.parse(value)}
+    catch{match_data = value}
      });
     
 
@@ -282,24 +283,32 @@
                     <input type="submit" value="FETCH">
                     </div>
                     </form>
+
+
+
                     {#if match_data.length > 0}
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>ID</th>
-                          <th>Name</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {#each match_data as item}
-                          <tr>
-                            <td>{item.id}</td>
-                            <td>{item.name}</td>
-                          </tr>
-                        {/each}
-                      </tbody>
-                    </table>
-                    {/if}
+                   <table>
+        <thead>
+            <tr>
+                <th>Ticker Symbol</th>
+                <th>Timestamp</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            {#each match_data as item}
+                <tr>
+                    <td>{item[0]}</td> <!-- Ticker Symbol -->
+                    <td>{item[1]}</td> <!-- Timestamp -->
+                    <td>{item[2]}</td> <!-- Value -->
+                </tr>
+            {/each}
+        </tbody>
+    </table>
+    {/if}
+
+
+
       {/if}
     </div>
     <div class="popout-menu"  style="min-height: {innerHeight}px;" class:visible={isScreener}>
@@ -341,6 +350,3 @@
     use:resizeInputOnDynamicContent
 					
 />
-
-
-
