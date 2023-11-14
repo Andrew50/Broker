@@ -16,7 +16,6 @@ num_cores = 3
 sqrt = math.sqrt
 class Match: 
     def run(ds,y): 
-        
         radius = math.ceil(np_bars/10)
         upper, lower = Odtw.calcBounds(y, radius)
         cutoff = 0.02*100
@@ -41,7 +40,7 @@ class Match:
 
     def compute(db,ticker,dt,tf,ds):
         dt = Database.format_datetime(dt)
-        y = Data(db,ticker, tf, dt,bars = np_bars+1).df###################
+        y = Data(db,ticker, tf, dt,bars=np_bars+1).df###################
         y = Match.formatArray(y, yValue=True)
         top_scores = Match.run(ds, y)
         formatted_top_scores = []
@@ -50,11 +49,11 @@ class Match:
         return formatted_top_scores
 
     def formatArray(data, onlyCloseAndVol = True, yValue = False, whichColumn=4):
-        data = np.array(data)
         if yValue:
-            d = np.zeros((len(data), 1))
-            for i in range(len(d)-1):
-                d[i] = data[i+1, whichColumn]/data[i, whichColumn] - 1
+            d = np.zeros(len(data)-1)
+            for i in range(1, len(d)):
+                d[i-1] = data[i, whichColumn]/data[i-1, whichColumn] - 1
+            print(d)
             d = d[len(d)-1-np_bars:len(d)-1].flatten()
             return d
         if onlyCloseAndVol: 
@@ -82,18 +81,11 @@ if __name__ == '__main__':
     start = datetime.datetime.now()
     
     cache = Cache()
-    
-    print(datetime.datetime.now()-start)
-    start = datetime.datetime.now()
-    
-
     ds = cache.get_hash('ds')
-    print(datetime.datetime.now()-start)
-    print(ds)
     
     db = Database()
-    ticker = 'JBL'  # input('input ticker: ')
-    dt = '2023-10-03'  # input('input date: ')
+    ticker = 'AAPL'  # input('input ticker: ')
+    dt = '2021-09-01'  # input('input date: ')
     tf = '1d'  # int(input('input tf: '))
     
     top_scores = Match.compute(db,ticker,dt,tf,ds)
