@@ -522,12 +522,12 @@ class Data:
 
 	def formatDataframeForMatch(self, onlyCloseAndVol = True, whichColumn=4): 
 		if onlyCloseAndVol: 
-			if(len(self.len) < 3): return np.zeros((1, 4))
+			if(self.len < 3): return np.zeros((1, 4))
 			d = np.zeros((self.len-1, 4))
 			for i in range(1, self.len):
 				close = self.df[i,whichColumn]
 				d[i-1] = [float(close), float(close/self.df[i-1,whichColumn] - 1), self.df[i, 5], self.df[i, 0]]
-			return d
+			self.df = d
 
 if __name__ == '__main__':
 	start = datetime.datetime.now()
