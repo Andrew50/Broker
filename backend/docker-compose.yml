@@ -6,7 +6,8 @@ services:
         container_name: myproj_redis
         hostname: redis
         image: redis:latest
-        command: --port 6379
+        #command: --port 6379
+        command: ["redis-server", "--maxmemory 6gb", "--port 6379"]
         ports:
             - "6379:6379"
         expose:

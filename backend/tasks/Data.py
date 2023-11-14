@@ -4,18 +4,28 @@ import  pandas as pd, numpy as np, datetime, mysql.connector, pytz, redis, pickl
 from tqdm import tqdm
 import yfinance as yf
 
-
 class Cache:
-	
-	def get(self,key):
 
+	def get_hash(self, parent_key,child_key = None):
+		if child_key: hash_data = self.r.hget(parent_key,child_key)
+		else:  hash_data = self.r.hgetall(parent_key)
+		return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
+		
+
+	def set_hash(self, data, parent_key):
+		#if not isintance(data,list):
+		for item, child_key in data:
+			serialized_item = pickle.dumps(item)
+			self.r.hset(parent_key, child_key, serialized_item)
+
+	def get(self, key):
 		serialized_data = self.r.get(key)
-		if serialized_data:
-			return pickle.loads(serialized_data)
-		else:
-			return None
+		#if serialized_data:
+		return pickle.loads(serialized_data)
+		#else:
+			#return None
 
-	def set(self,data,key):
+	def set(self, data, key):
 		serialized_data = pickle.dumps(data)
 		self.r.set(key, serialized_data)
 
@@ -26,6 +36,31 @@ class Cache:
 		except:
 			print('assuming that redis being accessed from outside class')
 			self.r = redis.Redis(host='localhost', port=6379)
+
+
+
+
+# class Cache:
+
+# 	def get(self,key):
+
+# 		serialized_data = self.r.get(key)
+# 		if serialized_data:
+# 			return pickle.loads(serialized_data)
+# 		else:
+# 			return None
+
+# 	def set(self,data,key):
+# 		serialized_data = pickle.dumps(data)
+# 		self.r.set(key, serialized_data)
+
+# 	def __init__(self):
+# 		try: 
+# 			self.r = redis.Redis(host='myproj_redis', port=6379)
+# 			self.r.ping()
+# 		except:
+# 			print('assuming that redis being accessed from outside class')
+# 			self.r = redis.Redis(host='localhost', port=6379)
 
 class Database:
 	
@@ -294,44 +329,44 @@ DROP TABLE IF EXISTS dfs;
 DROP TABLE IF EXISTS full_ticker_list;
 DROP TABLE IF EXISTS current_ticker_list;
 CREATE TABLE dfs(
-    ticker VARCHAR(5) NOT NULL,
-    tf VARCHAR(3) NOT NULL,
-    dt INT NOT NULL,
-    open FLOAT,
-    high FLOAT,
-    low FLOAT,
-    close FLOAT,
-    volume FLOAT,
-    PRIMARY KEY (ticker, tf, dt)
+	ticker VARCHAR(5) NOT NULL,
+	tf VARCHAR(3) NOT NULL,
+	dt INT NOT NULL,
+	open FLOAT,
+	high FLOAT,
+	low FLOAT,
+	close FLOAT,
+	volume FLOAT,
+	PRIMARY KEY (ticker, tf, dt)
 );
 CREATE INDEX ticker_index ON dfs (ticker);
 CREATE INDEX tf_index ON dfs (tf);
 CREATE INDEX dt_index ON dfs (dt);
 CREATE TABLE users(
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255),
-    settings TEXT
+	id INT AUTO_INCREMENT PRIMARY KEY,
+	email VARCHAR(255) NOT NULL UNIQUE,
+	password VARCHAR(255),
+	settings TEXT
 );
 CREATE INDEX email_index ON users(email);
 CREATE TABLE setups(
-    user_id INT NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    setup_id INT AUTO_INCREMENT UNIQUE,
-    tf VARCHAR(3) NOT NULL,
-    model BINARY,
-    UNIQUE(user_id, name),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+	user_id INT NOT NULL,
+	name VARCHAR(255) NOT NULL,
+	setup_id INT AUTO_INCREMENT UNIQUE,
+	tf VARCHAR(3) NOT NULL,
+	model BINARY,
+	UNIQUE(user_id, name),
+	FOREIGN KEY (user_id) REFERENCES users(id)
 );
 CREATE INDEX user_id_index ON setups (user_id);
 CREATE INDEX name_index ON setups (name);
 CREATE TABLE setup_data(
-    setup_id INT NOT NULL,
-    ticker VARCHAR(5) NOT NULL,
-    dt INT NOT NULL,
-    value BOOLEAN NOT NULL,
-    UNIQUE(ticker, dt),
-    FOREIGN KEY (setup_id) REFERENCES setups(setup_id)
+	setup_id INT NOT NULL,
+	ticker VARCHAR(5) NOT NULL,
+	dt INT NOT NULL,
+	value BOOLEAN NOT NULL,
+	UNIQUE(ticker, dt),
+	FOREIGN KEY (setup_id) REFERENCES setups(setup_id)
 );
 CREATE INDEX id_index ON setup_data (setup_id);
 CREATE TABLE full_ticker_list(ticker VARCHAR(5) NOT NULL);
@@ -403,16 +438,28 @@ CREATE TABLE current_ticker_list(ticker VARCHAR(5) NOT NULL);
 
 class Dataset:
 	
-	def __init__(self, db, request='full',tf='1d', bars=0, value=None, pm=True):
+	def __init__(self, db, request='full',tf='1d', bars=0, value=None, pm=True,debug = 0,_print=False):
 		if request == 'full':
-			request = [[ticker,None] for ticker in db.get_ticker_list('full')][:5000]#fix goodsfsdisdfosdo
+			request = [[ticker,None] for ticker in db.get_ticker_list('full')]#fix goodsfsdisdfosdo
+		if debug:
+			request = request[:debug]
 		'''# TEMP CODE STARTS HERE
 		num_cores = 6
 		requestLists = [[] for i in range(num_cores)]
 		for i in range(len(request)):
 			requestLists[i % num_cores].append(request[i])
 		# TEMP CODE ENDS HERE '''
-		self.dfs = [Data(db,ticker, tf, dt, bars, value, pm) for ticker,dt in request]
+		self.dfs = []
+		i_max = len(request)
+		i = 0
+		ii = 0
+		for ticker,dt in request:
+			self.dfs.append(Data(db,ticker, tf, dt, bars, value, pm))
+			if _print and round(100 * i/i_max) > ii:
+				ii = round(100*i/i_max)
+				print(str(ii) + '%',flush=True)
+				
+			i += 1
 		self.bars = bars
 		self.len = len(self.dfs)
 		
@@ -506,6 +553,8 @@ class Data:
 					close = self.df[i, 4]
 					d[i-1] = [float(close), float(close/self.df[i-1, 4] - 1), self.df[i, 5]]
 				self.df = d
+
+
 if __name__ == '__main__':
 	start = datetime.datetime.now()
 	db = Database()

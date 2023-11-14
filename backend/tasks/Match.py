@@ -81,10 +81,18 @@ class Match:
         
 if __name__ == '__main__':
     start = datetime.datetime.now()
+    
     cache = Cache()
-    ds = cache.get('ds')
-    db = Database()
+    
     print(datetime.datetime.now()-start)
+    start = datetime.datetime.now()
+    
+
+    ds = cache.get_hash('ds')
+    print(datetime.datetime.now()-start)
+    print(ds)
+    
+    db = Database()
     ticker = 'JBL'  # input('input ticker: ')
     dt = '2023-10-03'  # input('input date: ')
     tf = '1d'  # int(input('input tf: '))
