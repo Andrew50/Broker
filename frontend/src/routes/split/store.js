@@ -1,39 +1,22 @@
-export let match_data_store = writable([])
-export let match_data = [];
-match_data_store.subscribe((value) => {
-    match_data = value
-});
-
 import { writable } from 'svelte/store';
-import { onMount } from 'svelte';
 
-let screener_data_store = writable()
-let screener_data;
-screener_data_store.subscribe((value) => {
-    screener_data = value
-});
-
-
-
-
-export let chart_data_store = writable([
-    { time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85 }
-]);
-
+export let screener_data;
+export let screener_data_store = writable()
+screener_data_store.subscribe((value) => {screener_data = value});
 
 export let chart_data;
+export let chart_data_score = writable()
+chart_data_store.subscribe((value) => { chart_data = try_parse(value)});
 
+export let match_data_store = writable([])
+export let match_data = [];
+match_data_store.subscribe((value) => {match_data = value});
 
-
-
-chart_data_store.subscribe((value) => {
-    console.log(value)
-    try { chart_data = JSON.parse(value) }
-    catch { chart_data = value }
-});
-
-
-async function startTask(bind_variable, func = false, args = false) {
+function try_parse(value) {
+    try { return JSON.parse(value) }
+    catch { return value }
+}
+export async function fetch(bind_variable, func = false, args = false) {
     if (!args) {
 
         event.preventDefault(); // Prevent the default form submission
