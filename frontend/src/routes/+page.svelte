@@ -10,7 +10,6 @@
      export let match_data_store = writable([])
     export let match_data = [];
      match_data_store.subscribe((value) => {
-     console.log(value)
      match_data = value
      });
     
