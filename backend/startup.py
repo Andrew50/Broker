@@ -14,4 +14,17 @@ if __name__ == '__main__':
             
     except Exception as e:
         print(traceback.format_exc() + str(e),flush=True)
+        
+
+
+
+
+    #cache = Cache()
+
+
+
+
+
+
+
     uvicorn.run("api:app", host="0.0.0.0", port=5057, reload=True)

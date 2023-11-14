@@ -37,31 +37,6 @@ class Cache:
 			print('assuming that redis being accessed from outside class')
 			self.r = redis.Redis(host='localhost', port=6379)
 
-
-
-
-# class Cache:
-
-# 	def get(self,key):
-
-# 		serialized_data = self.r.get(key)
-# 		if serialized_data:
-# 			return pickle.loads(serialized_data)
-# 		else:
-# 			return None
-
-# 	def set(self,data,key):
-# 		serialized_data = pickle.dumps(data)
-# 		self.r.set(key, serialized_data)
-
-# 	def __init__(self):
-# 		try: 
-# 			self.r = redis.Redis(host='myproj_redis', port=6379)
-# 			self.r.ping()
-# 		except:
-# 			print('assuming that redis being accessed from outside class')
-# 			self.r = redis.Redis(host='localhost', port=6379)
-
 class Database:
 	
 	def get_user(self,email,password):
