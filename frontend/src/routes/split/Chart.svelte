@@ -1,30 +1,37 @@
- 
+<svelte:window 
+    on:keydown={onKeydown} 
+    bind:innerWidth
+    bind:innerHeight
+/>
+
 <script>
 
+	import {ColorType, CrosshairMode} from 'lightweight-charts';
+    import {Chart, CandlestickSeries} from 'svelte-lightweight-charts';
+	import {match_data_store, screener_data_store, chart_data_score, chart_data, fetch} from './store.js';
 
-import {ColorType, CrosshairMode} from 'lightweight-charts';
-    import {Chart, CandlestickSeries,TimeScale} from 'svelte-lightweight-charts';
+	let innerWidth;
+    let innerHeight;
+	let chart_ticker = "AAPL";
+    let chart_tf = "1d";
+    let chart_dt;
 
+	let TickerBox;
+	let popup = false;
+	let TickerBoxValue = '';
+	let TickerBoxVisible = "none";
 
+	const options = {
+        layout: {background: {type: ColorType.Solid,color: '#000000',},textColor: 'rgba(255, 255, 255, 0.9)',},
+        grid: {vertLines: {color: 'rgba(197, 203, 206, 0.5)',},horzLines: {color: 'rgba(197, 203, 206, 0.5)',},},
+        crosshair: {mode: CrosshairMode.Magnet,},
+        rightPriceScale: {borderColor: 'rgba(197, 203, 206, 0.8)',},timeScale: {borderColor: 'rgba(197, 203, 206, 0.8)',},
+    }
 
-
-	let ticker = "AAPL";
-    let tf = "1d";
-    let dt = "2023-10-03";
-    // let chart_ticker = "AAPL";
-    // let chart_tf = "1d";
-    // let chart_dt = "";
-    // let timeScale;
-    let key;
-
-	
 	function resizeInputOnDynamicContent(node) {
 		
 		const measuringElement = document.createElement('div');
 		document.body.appendChild(measuringElement);
-		
-		/** duplicate the styles of the existing node, but
-		remove the measuring element from the viewport. */
 		function duplicateAndSet() {
 			const styles = window.getComputedStyle(node);
 			measuringElement.innerHTML = node.value;
@@ -46,7 +53,6 @@ import {ColorType, CrosshairMode} from 'lightweight-charts';
 		}
 
 		duplicateAndSet();
-		/** listen to any style changes */
 		const observer = new MutationObserver(duplicateAndSet)
 		observer.observe(node, { attributes: true, childList: true, subtree: true });
 		
@@ -58,26 +64,6 @@ import {ColorType, CrosshairMode} from 'lightweight-charts';
 			}
 		}
 	}
-<svelte:window 
-    on:keydown={onKeydown} 
-    bind:innerWidth
-    bind:innerHeight
-/>
-
-let TickerBox;
-	let popup = false;
-	let TickerBoxValue = '';
-	let chartTicker;
-	let TickerBoxVisible = "none";
-    let value = 'An input.';
-
-const options = {
-        layout: {background: {type: ColorType.Solid,color: '#000000',},textColor: 'rgba(255, 255, 255, 0.9)',},
-        grid: {vertLines: {color: 'rgba(197, 203, 206, 0.5)',},horzLines: {color: 'rgba(197, 203, 206, 0.5)',},},
-        crosshair: {mode: CrosshairMode.Magnet,},
-        rightPriceScale: {borderColor: 'rgba(197, 203, 206, 0.8)',},timeScale: {borderColor: 'rgba(197, 203, 206, 0.8)',},
-    }
-    
     function onKeydown(event) {
 			if (/^[a-zA-Z]$/.test(event.key.toLowerCase()) && popup == false) {
 			TickerBoxVisible = "block"
@@ -87,18 +73,14 @@ const options = {
 			TickerBox.focus();
 			}
 			if(event.key == "Enter"){
-
-                chartTicker = TickerBoxValue;
-                startTask(chart_data_store,'Chart-get',TickerBoxValue)
+                chart_ticker = TickerBoxValue;
+                startTask(chart_data_store,'Chart-get',chart_ticker)
 				TickerBoxVisible = "none"
-				
 				TickerBoxValue = '';
 				popup = false;
-				
 			} 
 			TickerBox.focus();
 	}
-
 </script>
 
 <Chart width={innerWidth - 300}  height={innerHeight - 40} {...options}>
@@ -114,38 +96,28 @@ const options = {
     />
 </Chart>
 
-
-
-			<input class = 'input-overlay' 
+<input class = 'input-overlay' 
 	bind:this={TickerBox} 
 	bind:value={TickerBoxValue} 
 	style ="display: {TickerBoxVisible};"
     use:resizeInputOnDynamicContent
-					
 />
 
-
-
-		.input-overlay{
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: rgba(255, 255, 255, 0.5); /* 50% opacity white background */
-        padding: 20px;
-        border-radius: 10px;
-        text-align: center;
-        box-sizing: border-box;
-        z-index: 1000;
-        font-size:40pt;
-        text-transform:uppercase;
+<style>
+	.input-overlay{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(255, 255, 255, 0.5); /* 50% opacity white background */
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-sizing: border-box;
+    z-index: 1000;
+    font-size:40pt;
+    text-transform:uppercase;
     }
     
-   
-    .container {
-    margin-right: 20px;
-    }
-    table {
-    width: 100%;
-    border-collapse: collapse;
-    }
+
+</style>
