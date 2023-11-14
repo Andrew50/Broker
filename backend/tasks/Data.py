@@ -526,7 +526,7 @@ class Data:
 				d = np.zeros((self.len-1, 3))
 				for i in range(1, self.len):
 					close = self.df[i, 4]
-					d[i-1] = [float(close), float(close/self.df[i-1, 4] - 1), self.df[i, 5]]
+					d[i-1] = [float(close), float(close/self.df[i-1, 4] - 1), self.df[i, 5], self.df[i, 0]]
 				self.df = d
 
 
