@@ -40,15 +40,15 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np
     cdef double[:] cost_prev = np.empty(2 * r + 1, dtype=np.float64)
 
 
-    for n in range(bars, total_length): # for the nth iteration, going through bars n-bars to n-1 
+    for n in range(bars-1, total_length): # for the nth iteration, going through bars n-bars to n-1 
             
         if xSeq[n,0]*xSeq[n, 2] < 800000: continue # Filter out low dollar volume days 
         # Lower Bound Check 
         totalLowerBound = 0.0
-        zeroIndex = n-bars
+        zeroIndex = n-bars+1
         start = n - (bars // 4)
         terminate = False
-        for b in range(start, n):
+        for b in range(start, n+1):
             if xSeq[b, 1] > upper[b-zeroIndex] or xSeq[b, 1] < lower[b-zeroIndex]:
                 terminate = True
                 break
