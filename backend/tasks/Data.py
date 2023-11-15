@@ -134,11 +134,11 @@ class Database:
 			cursor.execute(query, (ticker, tf))
 		
 		data = cursor.fetchall()
-		
-		data = np.array(data)#####new
+		if bars != 0:
+			return np.array(data[-bars:])
+		return np.array(data)#####new
 		###
 		
-		return data
 	
 	def update(self,force_retrain=False):
 

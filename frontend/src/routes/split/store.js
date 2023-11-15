@@ -5,7 +5,7 @@ export let screener_data_store = writable()
 screener_data_store.subscribe((value) => {screener_data = value});
 
 export let chart_data;
-export let chart_data_score = writable()
+export let chart_data_store = writable()
 chart_data_store.subscribe((value) => { chart_data = try_parse(value)});
 
 export let match_data_store = writable([])
@@ -16,21 +16,25 @@ function try_parse(value) {
     try { return JSON.parse(value) }
     catch { return value }
 }
-export async function fetch(bind_variable, func = false, args = false) {
-    if (!args) {
+export async function backend_request(bind_variable, func, ...args) {
+    //if (!args) {
 
-        event.preventDefault(); // Prevent the default form submission
-        const formData = new FormData(event.target);
-        args = Array.from(formData.values()).join('_');
-    }
-    if (func) {
-        args = `${func}_${args}`;
-    }
-    const url = `http://localhost:5057/fetch/${args}`;
+    //    event.preventDefault(); // Prevent the default form submission
+    //    const formData = new FormData(event.target);
+    //    args = Array.from(formData.values()).join('_');
+    //}
+    //if (func) {
+    //    args = `${func}_${args}`;
+    //}
+
+    const query = `${func}_${args.join('_')}`
+    console.log(func)
+    console.log(args)
+    const url = `http://localhost:5057/fetch/${query}`;
     try {
         console.log('request sent', url)
         const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, });
-        if (!response.ok) { throw new Error('POST response not ok') }
+        if (!response.ok) {throw new Error('POST response not ok') }
         const responseData = await response.json();
         const task_id = responseData.task_id;
         const checkStatus = async () => {

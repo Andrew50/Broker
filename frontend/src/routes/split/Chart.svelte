@@ -8,7 +8,7 @@
 
 	import {ColorType, CrosshairMode} from 'lightweight-charts';
     import {Chart, CandlestickSeries} from 'svelte-lightweight-charts';
-	import {match_data_store, screener_data_store, chart_data_score, chart_data, fetch} from './store.js';
+	import {match_data_store, screener_data_store, chart_data_store, chart_data, backend_request} from './store.js';
 
 	let innerWidth;
     let innerHeight;
@@ -74,7 +74,7 @@
 			}
 			if(event.key == "Enter"){
                 chart_ticker = TickerBoxValue;
-                startTask(chart_data_store,'Chart-get',chart_ticker)
+                backend_request(chart_data_store,'Chart-get',chart_ticker)
 				TickerBoxVisible = "none"
 				TickerBoxValue = '';
 				popup = false;
@@ -104,6 +104,7 @@
 />
 
 <style>
+
 	.input-overlay{
     position: absolute;
     top: 50%;
