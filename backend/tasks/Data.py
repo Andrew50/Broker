@@ -5,6 +5,8 @@ from tqdm import tqdm
 import yfinance as yf
 
 class Cache:
+	
+	
 
 	def get_hash(self, parent_key,child_key = None):
 		if child_key: hash_data = self.r.hget(parent_key,child_key)
@@ -430,9 +432,7 @@ class Dataset:
 		ii = 0
 		for ticker,dt in request:
 			self.dfs.append(Data(db,ticker, tf, dt, bars, value, pm))
-			if _print and round(100 * i/i_max) > ii:
-				ii = round(100*i/i_max)
-				print(str(ii) + '%',flush=True)
+			
 				
 			i += 1
 		self.bars = bars
@@ -520,14 +520,26 @@ class Data:
 		self.score = returns
 		return returns
 
-	def formatDataframeForMatch(self, onlyCloseAndVol = True, whichColumn=4): 
+	def formatDataframeForMatch(self, onlyCloseAndVol = True, whichColumn=4):
+		obj = False
+		if isinstance(self,Data):
+			obj = True
+			df = self.df
+		else:
+			df = self
+		length = len(df)
+		
 		if onlyCloseAndVol: 
-			if(self.len < 3): return np.zeros((1, 4))
-			d = np.zeros((self.len-1, 4))
-			for i in range(1, self.len):
-				close = self.df[i,whichColumn]
-				d[i-1] = [close, (close/self.df[i-1,whichColumn]) - 1, self.df[i, 5], self.df[i, 0]]
+			if(length < 3): return np.zeros((1, 4))
+			d = np.zeros((length-1, 4))
+			for i in range(1, length):
+				close = df[i,whichColumn]
+				d[i-1] = [close, (close/df[i-1,whichColumn]) - 1, df[i, 5], df[i, 0]]
+			if not obj:
+				return d
 			self.df = d
+			
+		
 
 if __name__ == '__main__':
 	start = datetime.datetime.now()
