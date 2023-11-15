@@ -21,6 +21,8 @@ class Match:
         radius = math.ceil(np_bars/10)
         upper, lower = Odtw.calcBounds(y, radius)
         cutoff = 0.02*100
+        print(ds["CELH"])
+        
         arglist = [[ds[data], y, data, upper, lower, cutoff, radius] for data in ds]
         start = datetime.datetime.now()
         print('starting match')
@@ -50,6 +52,8 @@ class Match:
         dt = Database.format_datetime(dt)
         y = Data(db,ticker, tf, dt,bars=np_bars+1).df###################
         y = Match.formatArray(y, yValue=True)
+        print(y)
+        print("y")
         top_scores = Match.run(ds, y)
         formatted_top_scores = []
         for ticker, timestamp, score in top_scores:
@@ -58,11 +62,11 @@ class Match:
 
     def formatArray(data, onlyCloseAndVol = True, yValue = False, whichColumn=4):
         if yValue:
-            d = np.zeros(len(data)-1)
-            for i in range(1, len(d)):
-                d[i-1] = data[i, 4]/data[i-1, 4] - 1
-            d = d[len(d)-np_bars:len(d)].flatten()
-            return d
+            print(data)
+            newDf = np.zeros(len(data)-1)
+            for i in range(1, len(data)):
+                newDf[i-1] = data[i, 4]/data[i-1, 4] - 1
+            return newDf.flatten()
         if onlyCloseAndVol: 
             if(len(data) < 3): return np.zeros((1, 4))
             d = np.zeros((len(data)-1, 4))
