@@ -14,6 +14,10 @@ class Match:
         dt = Database.format_datetime(dt)
         y = Match.formatArray(Data(db,ticker, tf, dt,bars=np_bars+1).df, yValue=True)
         radius = math.ceil(np_bars/10)
+        
+
+
+
         upper, lower = Odtw.calcBounds(y, radius)
         cutoff = 0.02*100
         start = datetime.datetime.now()
