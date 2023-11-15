@@ -5,7 +5,7 @@ if __name__ == '__main__':
     try:
         cache = Cache()
         db = Database()
-        ds = Dataset(db,'full',debug = 100,_print=True).dfs
+        ds = Dataset(db,'full',debug = 0,_print=True).dfs
         match_data = []
         for data in ds: 
             data.formatDataframeForMatch()

@@ -11,8 +11,8 @@ def calcBounds(double[:] y, int radius):
     cdef Py_ssize_t i
 
     for i in range(n):
-        indexLowerBound = c_max(0, i - radius)
-        indexUpperBound = c_min(n - 1, i + radius)
+        indexLowerBound = max(0, i - radius)
+        indexUpperBound = min(n - 1, i + radius)
         u[i] = max(y[indexLowerBound:indexUpperBound + 1])
         l[i] = min(y[indexLowerBound:indexUpperBound + 1])
 
@@ -20,8 +20,6 @@ def calcBounds(double[:] y, int radius):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-@cython.cdivision(True)
-@cython.nonecheck(False)
 def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np.ndarray[double, ndim=1] upper, np.ndarray[double, ndim=1] lower, int bars, double cutoff, int r, str ticker):
     scores = []
     # Variables for the Lower Bound Check
@@ -95,21 +93,6 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np
         scores.append([ticker, xSeq[n, 3], sqrt(cost_prev[k]) * 100])
     return scores
                 
-
-       
-cdef inline int c_max(int a, int b):
-    return a if a > b else b
-
-cdef inline int c_min(int a, int b):
-    return a if a < b else b
-
-cdef inline double c_minDoubles(double a, double b):
-    return a if a < b else b 
-
-cdef inline double c_minThreeObjects(double a, double b, double c):
-    lowAB = c_minDoubles(a, b)
-    return lowAB if lowAB < c else c 
-
 
 
 

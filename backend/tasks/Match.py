@@ -1,4 +1,5 @@
 from multiprocessing.pool import Pool
+from re import L
 from Data import Database, Data, Dataset, Cache
 #from Study import Screener as screener
 import numpy as np
@@ -27,9 +28,14 @@ class Match:
         print(f'completed in {datetime.datetime.now() - start}')
         newScores = []
         start = datetime.datetime.now()
+        #DEBUG STARTS HERE
+        integ = 0 
+        print(f"Number of Tickers Ran: {len(scores)}")
         for tickerScores in scores:
             for i in range(len(tickerScores)):
                 newScores.append(tickerScores[i])
+                integ = integ + 1
+        print(integ)
         newScores.sort(key=lambda x: x[2])
         print('time to sort scores')
         print(datetime.datetime.now() - start)
@@ -37,6 +43,7 @@ class Match:
 
     def worker(bar):
         x, y, ticker, upper, lower, cutoff, radius = bar
+        if x.ndim != 2: return []
         return Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius, ticker)
 
     def compute(db,ticker,dt,tf,ds):
@@ -53,9 +60,8 @@ class Match:
         if yValue:
             d = np.zeros(len(data)-1)
             for i in range(1, len(d)):
-                d[i-1] = data[i, whichColumn]/data[i-1, whichColumn] - 1
-            print(d)
-            d = d[len(d)-1-np_bars:len(d)-1].flatten()
+                d[i-1] = data[i, 4]/data[i-1, 4] - 1
+            d = d[len(d)-np_bars:len(d)].flatten()
             return d
         if onlyCloseAndVol: 
             if(len(data) < 3): return np.zeros((1, 4))
@@ -77,24 +83,24 @@ class Match:
             return d
         raise AttributeError
         return d 
-        
+
+    
 if __name__ == '__main__':
+    
     start = datetime.datetime.now()
     
     cache = Cache()
     ds = cache.get_hash('ds')
     
     db = Database()
-    ticker = 'AAPL'  # input('input ticker: ')
-    dt = '2021-09-01'  # input('input date: ')
+    ticker = 'CELH'  # input('input ticker: ')
+    dt = '2023-08-10'  # input('input date: ')
     tf = '1d'  # int(input('input tf: '))
-    
+    print(Database.format_datetime(dt))
     top_scores = Match.compute(db,ticker,dt,tf,ds)
     for ticker, date, score in top_scores:
     #for score, ticker, index in top_scores:
         print(f'{ticker} {date} {score}')
-         
-        
 def get(args):
     ticker = args[0]
     dt = args[1]
@@ -108,4 +114,3 @@ def get(args):
     #[match_data[i][1] = match_data[i][1].date() for i in range(len(match_data))]
     print(match_data,flush=True)
     return json.dumps(match_data)
-    
