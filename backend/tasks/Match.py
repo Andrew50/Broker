@@ -20,8 +20,7 @@ class Match:
     def run(ds,y): 
         radius = math.ceil(np_bars/10)
         upper, lower = Odtw.calcBounds(y, radius)
-        cutoff = 0.02*100
-        print(ds["CELH"])
+        cutoff = 0.035*100
         
         arglist = [[ds[data], y, data, upper, lower, cutoff, radius] for data in ds]
         start = datetime.datetime.now()
@@ -53,7 +52,6 @@ class Match:
         y = Data(db,ticker, tf, dt,bars=np_bars+1).df###################
         y = Match.formatArray(y, yValue=True)
         print(y)
-        print("y")
         top_scores = Match.run(ds, y)
         formatted_top_scores = []
         for ticker, timestamp, score in top_scores:
@@ -63,6 +61,7 @@ class Match:
     def formatArray(data, onlyCloseAndVol = True, yValue = False, whichColumn=4):
         if yValue:
             print(data)
+            print(Database.format_datetime(data[len(data)-1][0]))
             newDf = np.zeros(len(data)-1)
             for i in range(1, len(data)):
                 newDf[i-1] = data[i, 4]/data[i-1, 4] - 1
@@ -100,7 +99,6 @@ if __name__ == '__main__':
     ticker = 'CELH'  # input('input ticker: ')
     dt = '2023-08-10'  # input('input date: ')
     tf = '1d'  # int(input('input tf: '))
-    print(Database.format_datetime(dt))
     top_scores = Match.compute(db,ticker,dt,tf,ds)
     for ticker, date, score in top_scores:
     #for score, ticker, index in top_scores:
