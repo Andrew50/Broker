@@ -96,16 +96,20 @@ if __name__ == '__main__':
          
         
 def get(args):
+    start = datetime.datetime.now()
     ticker = args[0]
     dt = args[1]
     tf = args[2]
     db = Database()
     cache = Cache()
     ds = cache.get_hash('ds')
+    print(f'data loaded in {datetime.datetime.now() - start}')
+    start = datetime.datetime.now()
     match_data = Match.compute(db,ticker,tf,dt, ds)
+    print(f'match calculated in {datetime.datetime.now() - start}')
+    start = datetime.datetime.now()
     for i in range(len(match_data)):
         match_data[i][1] = match_data[i][1][:10]
-    #[match_data[i][1] = match_data[i][1].date() for i in range(len(match_data))]
-    print(match_data,flush=True)
+    print(f'returned in {datetime.datetime.now() - start}')
     return json.dumps(match_data)
     
