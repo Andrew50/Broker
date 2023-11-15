@@ -19,16 +19,15 @@ class Match:
         start = datetime.datetime.now()
         returns = []
         for ticker, x in ds.items():
-            vals = Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius, ticker)
-            returns += heapq.nsmallest(2, vals, key=lambda x: x[2])
-        print(datetime.datetime.now() - start)
+            returns += heapq.nsmallest(2, Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius, ticker), key=lambda x: x[2])
         top_scores = heapq.nsmallest(20, returns, key=lambda x: x[2])
+        print(datetime.datetime.now() - start)
         return [[ticker,str(Database.format_datetime(timestamp, True)),round(score,2)] for ticker,timestamp, score in top_scores]
        
 
     def formatArray(data, onlyCloseAndVol = True, yValue = False, whichColumn=4):
         if yValue:
-            print(data)
+            #print(data)
             newDf = np.zeros(len(data)-1)
             for i in range(1, len(data)):
                 newDf[i-1] = data[i, 4]/data[i-1, 4] - 1
