@@ -1,21 +1,21 @@
 import { writable } from 'svelte/store';
 
-export let screener_data;
-export let screener_data_store = writable()
-screener_data_store.subscribe((value) => {screener_data = value});
+//export let screener_data;
+export let screener_data = writable()
+//screener_data_store.subscribe((value) => {screener_data = value});
 
-export let chart_data;
-export let chart_data_store = writable()
-chart_data_store.subscribe((value) => { chart_data = try_parse(value)});
+//export let chart_data;
+export let chart_data = writable([])
+//chart_data_store.subscribe((value) => { chart_data = try_parse(value)});
 
-export let match_data_store = writable([])
-export let match_data = [];
-match_data_store.subscribe((value) => {match_data = value});
+export let match_data = writable([[],[],[]])
+//export let match_data = [];
+//match_data_store.subscribe((value) => {match_data = try_parse(value)});
 
-function try_parse(value) {
-    try { return JSON.parse(value) }
-    catch { return value }
-}
+//function try_parse(value) {
+//    try { return JSON.parse(value) }
+//    catch { return value }
+//}
 export async function backend_request(bind_variable, func, ...args) {
     //if (!args) {
 
@@ -45,8 +45,10 @@ export async function backend_request(bind_variable, func, ...args) {
             if (responseData.status === 'done') {
                 clearInterval(intervalId);
                 console.log(responseData.result);
-
-                bind_variable.set(responseData.result);
+                let result = await responseData.result
+                try { result =  await JSON.parse(result) }
+                catch { }
+                bind_variable.set(result);
             } else if (status === 'failed') {
                 clearInterval(intervalId);
                 bind_variable.set('failed')

@@ -8,13 +8,13 @@
 
 	import {ColorType, CrosshairMode} from 'lightweight-charts';
     import {Chart, CandlestickSeries} from 'svelte-lightweight-charts';
-	import {match_data_store, screener_data_store, chart_data_store, chart_data, backend_request} from './store.js';
+	import {chart_data, backend_request} from './store.js';
 
 	let innerWidth;
     let innerHeight;
-	let chart_ticker = "AAPL";
-    let chart_tf = "1d";
-    let chart_dt;
+	let ticker = "AAPL";
+    let tf = "1d";
+    let dt;
 
 	let TickerBox;
 	let popup = false;
@@ -29,7 +29,6 @@
     }
 
 	function resizeInputOnDynamicContent(node) {
-		
 		const measuringElement = document.createElement('div');
 		document.body.appendChild(measuringElement);
 		function duplicateAndSet() {
@@ -51,7 +50,6 @@
 			measuringElement.style.height = '0';
 			node.style.width = `${(measuringElement.offsetWidth)*1.5}px`;
 		}
-
 		duplicateAndSet();
 		const observer = new MutationObserver(duplicateAndSet)
 		observer.observe(node, { attributes: true, childList: true, subtree: true });
@@ -64,28 +62,54 @@
 			}
 		}
 	}
+    let chartFocused = false;
+
+    function onChartClick() {chartFocused = true}
+
+    function onChartBlur() {
+    chartFocused = false;
+        TickerBoxVisible = "none";
+    }
+
     function onKeydown(event) {
-			if (/^[a-zA-Z]$/.test(event.key.toLowerCase()) && popup == false) {
-			TickerBoxVisible = "block"
-			popup = true;
-			TickerBoxValue += event.key.toUpperCase();
-			event.preventDefault();
-			TickerBox.focus();
-			}
-			if(event.key == "Enter"){
-                chart_ticker = TickerBoxValue;
-                backend_request(chart_data_store,'Chart-get',chart_ticker)
-				TickerBoxVisible = "none"
-				TickerBoxValue = '';
-				popup = false;
-			} 
-			TickerBox.focus();
-	}
+    if (chartFocused) {
+        popup = true;
+        if (!popup && /^[a-zA-Z]$/.test(event.key.toLowerCase())) {
+            TickerBoxVisible = "block";
+            popup = true;
+            TickerBox.focus();
+        }
+        if (popup) {
+            if (event.key == "Enter") {
+                ticker = TickerBoxValue;
+                backend_request(chart_data, 'Chart-get', ticker);
+                closePopup();
+            }else{
+                TickerBoxVisible = "block"
+                const key_press = event.key.toUpperCase();
+                console.log(key_press)
+                TickerBoxValue += key_press;
+		        event.preventDefault();
+            }
+        }
+    } else {
+        chartFocused = false;
+    }
+}
+
+function closePopup() {
+    TickerBoxVisible = "none";
+    TickerBoxValue = '';
+    popup = false;
+    chartFocused = false; // Reset focus state
+}
+
 </script>
 
-<Chart width={innerWidth - 300}  height={innerHeight - 40} {...options}>
+<Chart width={innerWidth - 300} height={innerHeight - 40} {...options} on:click={onChartClick} 
+    on:blur={onChartBlur}>
     <CandlestickSeries
-        data={chart_data}
+        data={$chart_data}
         reactive={true}
         upColor="rgba(0,255, 0, 1)"
         downColor="rgba(255, 0, 0, 1)"
@@ -104,7 +128,6 @@
 />
 
 <style>
-
 	.input-overlay{
     position: absolute;
     top: 50%;
@@ -115,10 +138,8 @@
     border-radius: 10px;
     text-align: center;
     box-sizing: border-box;
-    z-index: 1000;
+    z-index: 2000;
     font-size:40pt;
     text-transform:uppercase;
     }
-    
-
 </style>

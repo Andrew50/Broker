@@ -297,7 +297,7 @@
         </thead>
         <tbody>
             {#each match_data as item}
-                <tr>
+                <tr on:click={() => startTask(chart_data_store,'Chart-get',`${item[0]}_${'1d'}_${item[1]}`)}>
                     <td>{item[0]}</td> <!-- Ticker Symbol -->
                     <td>{item[1]}</td> <!-- Timestamp -->
                     <td>{item[2]}</td> <!-- Value -->
