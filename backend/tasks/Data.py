@@ -236,8 +236,8 @@ class Database:
 	def __init__(self):
 		try:
 			self._conn = mysql.connector.connect(
-			host='mysql',  # Service name as hostname
-			port='3307',
+			host='localhost',  # Service name as hostname
+			port='3306',
 			user='root',  # or any other user you have created
 			password='7+WCy76_2$%g',  # Corresponding password
 			database='broker'  # Database name
@@ -269,7 +269,7 @@ class Database:
 				print('broker database doesnt exist so trying to setup')
 				dbconfig = {
 					"host": "localhost",
-					"port": '3307',
+					"port": '3306',
 					"user": "root",
 					"password": "7+WCy76_2$%g",#TODO
 				}
@@ -544,6 +544,7 @@ class Data:
 if __name__ == '__main__':
 	start = datetime.datetime.now()
 	db = Database()
+	db.setup()
 	print(datetime.datetime.now() - start)
 	#db.setup()
 	#print(db.get_ticker_list('full'))
