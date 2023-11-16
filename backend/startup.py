@@ -1,6 +1,5 @@
-from re import T
 from tasks.Data import Database, Cache, Data
-import uvicorn, traceback, multiprocessing, tqdm, datetime
+import uvicorn, traceback, multiprocessing, datetime
 
 def startup_worker(ticker):
     
@@ -12,17 +11,7 @@ def startup_worker(ticker):
 if __name__ == '__main__':
     try:
         start = datetime.datetime.now()
-        cache = Cache()
-        db = Database()
-        ticker_list = db.get_ticker_list()
-        ds = []
-        pool = multiprocessing.Pool()
-        for df in pool.imap_unordered(startup_worker, ticker_list):
-            ds.append(df)
-        pool.close()
-        pool.join()
-        #ds = multiprocessing.Pool().imap_unordered(startup_worker,ticker_list)
-        cache.set_hash(ds,'ds')
+        Cache().set_hash(Database().get_ds(),'ds')
         print(datetime.datetime.now() - start,flush = True)
             
     except Exception as e:
