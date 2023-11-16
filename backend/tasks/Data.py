@@ -237,7 +237,7 @@ class Database:
 		try:
 			self._conn = mysql.connector.connect(
 			host='mysql',  # Service name as hostname
-			port='3306',
+			port='3307',
 			user='root',  # or any other user you have created
 			password='7+WCy76_2$%g',  # Corresponding password
 			database='broker'  # Database name
