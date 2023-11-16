@@ -291,7 +291,7 @@ class Database:
 				print('broker database doesnt exist so trying to setup')
 				dbconfig = {
 					"host": "localhost",
-					"port": '3307',
+					"port": '3306',
 					"user": "root",
 					"password": "7+WCy76_2$%g",#TODO
 				}
@@ -559,6 +559,7 @@ class Data:
 if __name__ == '__main__':
 	start = datetime.datetime.now()
 	db = Database()
+	db.setup()
 	print(datetime.datetime.now() - start)
 	#db.setup()
 	#print(db.get_ticker_list('full'))
