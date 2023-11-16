@@ -270,8 +270,8 @@ class Database:
 	def __init__(self):
 		try:
 			self._conn = mysql.connector.connect(
-			host='localhost',  # Service name as hostname
-			port='3307',
+			host='mysql',  # Service name as hostname
+			port='3306',
 			user='root',  # or any other user you have created
 			password='7+WCy76_2$%g',  # Corresponding password
 			database='broker'  # Database name

@@ -48,8 +48,8 @@ services:
         container_name: mysql
         image: mysql:latest
         environment:
-            MYSQL_ROOT_PASSWORD: 7+WCy76_2$%g
-            MYSQL_PASSWORD: 7+WCy76_2$%g
+            MYSQL_ROOT_PASSWORD: god
+            #MYSQL_PASSWORD: 7+WCy76_2$%g
         ports:
         - "3307:3306"
         volumes:
