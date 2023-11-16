@@ -1,19 +1,13 @@
 from tasks.Data import Database, Cache, Data
 import uvicorn, traceback, multiprocessing, datetime
-
-def startup_worker(ticker):
-    
-    df = Database().get_df(ticker)
-    df = Data.formatDataframeForMatch(df)
-    
-    return [df,ticker]           
+       
     
 if __name__ == '__main__':
     try:
         start = datetime.datetime.now()
         Cache().set_hash(Database().get_ds(),'ds')
         print(datetime.datetime.now() - start,flush = True)
-            
+        
     except Exception as e:
         print(traceback.format_exc() + str(e),flush=True)
 

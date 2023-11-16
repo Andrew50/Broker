@@ -3,6 +3,7 @@ import numpy as np
 import  pandas as pd, numpy as np, datetime, mysql.connector, pytz, redis, pickle, time, multiprocessing
 from tqdm import tqdm
 import yfinance as yf
+from concurrent.futures import ThreadPoolExecutor
 
 class Cache:
 	
@@ -151,24 +152,27 @@ class Database:
 		# Fetch all data
 		data = cursor.fetchall()
 
-		# Create a multiprocessing pool
-		with multiprocessing.Pool() as pool:
+		# Create a thread pool executor
+		with ThreadPoolExecutor() as executor:
 			# Distribute the work of processing each ticker
 			unique_tickers = set([row[0] for row in data])
-			results = pool.map(self.process_ticker_data, [(ticker, data) for ticker in unique_tickers])
+			futures = {executor.submit(self.process_ticker_data, ticker, data): ticker for ticker in unique_tickers}
 
-		# Combine results into a dictionary
-		data_dict = {result[0]: result[1] for result in results}
+			# Collect the results into a dictionary as they complete
+			data_dict = {}
+			for future in concurrent.futures.as_completed(futures):
+				ticker = futures[future]
+				data_dict[ticker] = future.result()
+
 		return data_dict
 
-	def process_ticker_data(self, args):
-		ticker, data = args
+	def process_ticker_data(self, ticker, data):
 		# Filter data for the specific ticker
 		filtered_data = [row[1:] for row in data if row[0] == ticker]
 
 		# Convert to NumPy array
 		np_array = np.array(filtered_data)
-		return ticker, np_array
+		return np_array
 
 		
 	
@@ -266,7 +270,7 @@ class Database:
 	def __init__(self):
 		try:
 			self._conn = mysql.connector.connect(
-			host='mysql',  # Service name as hostname
+			host='localhost',  # Service name as hostname
 			port='3307',
 			user='root',  # or any other user you have created
 			password='7+WCy76_2$%g',  # Corresponding password
@@ -276,7 +280,7 @@ class Database:
 			try:
 				print('assumed that data is being run outside of container')
 				self._conn = mysql.connector.connect(
-				host='localhost',  # Service name as hostname
+				host='172.24.0.4',  # Service name as hostname
 				port='3307',
 				user='root',  # or any other user you have created
 				password='7+WCy76_2$%g',  # Corresponding password
