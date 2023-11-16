@@ -26,20 +26,20 @@ services:
         working_dir: /home/myproj
         volumes:
             - ./:/home/myproj
-        links:
-            - myproj_redis
+       # links:
+      #      - myproj_redis
         command: 
             python startup.py
         networks:
             - my-network
 
-    myproj_worker:
+    myproj_worker: 
         build:
             context: ./
             dockerfile: ./Dockerfile
         working_dir: /home/myproj
-        links:
-            - myproj_redis
+      #  links:
+      #      - myproj_redis
         command: rq worker --url redis://myproj_redis:6379 my_queue
         networks:
         - my-network

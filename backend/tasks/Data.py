@@ -1,6 +1,6 @@
 
 import numpy as np
-import  pandas as pd, numpy as np, datetime, mysql.connector, pytz, redis, pickle, time
+import  pandas as pd, numpy as np, datetime, mysql.connector, pytz, redis, pickle, time, multiprocessing
 from tqdm import tqdm
 import yfinance as yf
 
@@ -140,6 +140,36 @@ class Database:
 			return np.array(data[-bars:])
 		return np.array(data)#####new
 		###
+
+
+	def get_ds(self):
+		# Pull the entire table
+		cursor = self._conn.cursor(buffered=True)
+		query = "SELECT ticker, dt, open, high, low, close, volume FROM dfs ORDER BY ticker, dt ASC"
+		cursor.execute(query)
+
+		# Fetch all data
+		data = cursor.fetchall()
+
+		# Create a multiprocessing pool
+		with multiprocessing.Pool() as pool:
+			# Distribute the work of processing each ticker
+			unique_tickers = set([row[0] for row in data])
+			results = pool.map(self.process_ticker_data, [(ticker, data) for ticker in unique_tickers])
+
+		# Combine results into a dictionary
+		data_dict = {result[0]: result[1] for result in results}
+		return data_dict
+
+	def process_ticker_data(self, args):
+		ticker, data = args
+		# Filter data for the specific ticker
+		filtered_data = [row[1:] for row in data if row[0] == ticker]
+
+		# Convert to NumPy array
+		np_array = np.array(filtered_data)
+		return ticker, np_array
+
 		
 	
 	def update(self,force_retrain=False):
@@ -242,17 +272,6 @@ class Database:
 			password='7+WCy76_2$%g',  # Corresponding password
 			database='broker'  # Database name
 )
-			#dbconfig = {"host": "localhost","port": 3306,"user": "root","password": "7+WCy76_2$%g","database": 'broker'}
-			#self._conn = mysql.connector.connect(**dbconfig)
-			
-			# with self._conn.cursor(buffered=True) as cursor:
-			# 	cursor.execute("SELECT COUNT(*) FROM dfs;")
-			# 	count = cursor.fetchall()[0][0]
-			# 	assert count > 0
-			# 	if count < 8000*300:
-					#pass#rint(f'WARNING: DATA ISNT COMPLETE! ONLY {count} DAILY DATAPOINTS!')
-
-
 		except: 
 			try:
 				print('assumed that data is being run outside of container')
@@ -264,7 +283,6 @@ class Database:
 				database='broker'  # Database name
 				)
 			
-			
 			except:
 				print('broker database doesnt exist so trying to setup')
 				dbconfig = {
@@ -275,14 +293,7 @@ class Database:
 				}
 				self._conn = mysql.connector.connect(**dbconfig)
 				self.setup()
-				#with self._conn.cursor(buffered=True) as cursor:
-			
-				#	cursor.execute("USE broker;")
-					#self._conn.commit()
-				
-				
-			#except Exception as e:
-			#self.load_from_legacy()
+
 
 	def close_connection(self):
 		self._conn.close()
@@ -299,55 +310,55 @@ class Database:
 			cursor.execute("USE broker;")
 			self._conn.commit()
 			sql_commands = """
-DROP TABLE IF EXISTS setup_data;
-DROP TABLE IF EXISTS setups;
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS dfs;
-DROP TABLE IF EXISTS full_ticker_list;
-DROP TABLE IF EXISTS current_ticker_list;
-CREATE TABLE dfs(
-	ticker VARCHAR(5) NOT NULL,
-	tf VARCHAR(3) NOT NULL,
-	dt INT NOT NULL,
-	open FLOAT,
-	high FLOAT,
-	low FLOAT,
-	close FLOAT,
-	volume FLOAT,
-	PRIMARY KEY (ticker, tf, dt)
-);
-CREATE INDEX ticker_index ON dfs (ticker);
-CREATE INDEX tf_index ON dfs (tf);
-CREATE INDEX dt_index ON dfs (dt);
-CREATE TABLE users(
-	id INT AUTO_INCREMENT PRIMARY KEY,
-	email VARCHAR(255) NOT NULL UNIQUE,
-	password VARCHAR(255),
-	settings TEXT
-);
-CREATE INDEX email_index ON users(email);
-CREATE TABLE setups(
-	user_id INT NOT NULL,
-	name VARCHAR(255) NOT NULL,
-	setup_id INT AUTO_INCREMENT UNIQUE,
-	tf VARCHAR(3) NOT NULL,
-	model BINARY,
-	UNIQUE(user_id, name),
-	FOREIGN KEY (user_id) REFERENCES users(id)
-);
-CREATE INDEX user_id_index ON setups (user_id);
-CREATE INDEX name_index ON setups (name);
-CREATE TABLE setup_data(
-	setup_id INT NOT NULL,
-	ticker VARCHAR(5) NOT NULL,
-	dt INT NOT NULL,
-	value BOOLEAN NOT NULL,
-	UNIQUE(ticker, dt),
-	FOREIGN KEY (setup_id) REFERENCES setups(setup_id)
-);
-CREATE INDEX id_index ON setup_data (setup_id);
-CREATE TABLE full_ticker_list(ticker VARCHAR(5) NOT NULL);
-CREATE TABLE current_ticker_list(ticker VARCHAR(5) NOT NULL);
+			DROP TABLE IF EXISTS setup_data;
+			DROP TABLE IF EXISTS setups;
+			DROP TABLE IF EXISTS users;
+			DROP TABLE IF EXISTS dfs;
+			DROP TABLE IF EXISTS full_ticker_list;
+			DROP TABLE IF EXISTS current_ticker_list;
+			CREATE TABLE dfs(
+				ticker VARCHAR(5) NOT NULL,
+				tf VARCHAR(3) NOT NULL,
+				dt INT NOT NULL,
+				open FLOAT,
+				high FLOAT,
+				low FLOAT,
+				close FLOAT,
+				volume FLOAT,
+				PRIMARY KEY (ticker, tf, dt)
+			);
+			CREATE INDEX ticker_index ON dfs (ticker);
+			CREATE INDEX tf_index ON dfs (tf);
+			CREATE INDEX dt_index ON dfs (dt);
+			CREATE TABLE users(
+				id INT AUTO_INCREMENT PRIMARY KEY,
+				email VARCHAR(255) NOT NULL UNIQUE,
+				password VARCHAR(255),
+				settings TEXT
+			);
+			CREATE INDEX email_index ON users(email);
+			CREATE TABLE setups(
+				user_id INT NOT NULL,
+				name VARCHAR(255) NOT NULL,
+				setup_id INT AUTO_INCREMENT UNIQUE,
+				tf VARCHAR(3) NOT NULL,
+				model BINARY,
+				UNIQUE(user_id, name),
+				FOREIGN KEY (user_id) REFERENCES users(id)
+			);
+			CREATE INDEX user_id_index ON setups (user_id);
+			CREATE INDEX name_index ON setups (name);
+			CREATE TABLE setup_data(
+				setup_id INT NOT NULL,
+				ticker VARCHAR(5) NOT NULL,
+				dt INT NOT NULL,
+				value BOOLEAN NOT NULL,
+				UNIQUE(ticker, dt),
+				FOREIGN KEY (setup_id) REFERENCES setups(setup_id)
+			);
+			CREATE INDEX id_index ON setup_data (setup_id);
+			CREATE TABLE full_ticker_list(ticker VARCHAR(5) NOT NULL);
+			CREATE TABLE current_ticker_list(ticker VARCHAR(5) NOT NULL);
 			"""
 			commands = [cmd.strip() for cmd in sql_commands.split(';') if cmd.strip()]
 			for command in commands:cursor.execute(command)
