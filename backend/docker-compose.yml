@@ -51,7 +51,7 @@ services:
             MYSQL_ROOT_PASSWORD: god
             #MYSQL_PASSWORD: 7+WCy76_2$%g
         ports:
-        - "3307:3306"
+        - "3306:3306"
         volumes:
         - mysql-data:/var/lib/mysql
         - ./my.cnf:/etc/mysql/my.cnf

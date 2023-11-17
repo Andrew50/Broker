@@ -281,7 +281,7 @@ class Database:
 				print('assumed that data is being run outside of container')
 				self._conn = mysql.connector.connect(
 				host='172.24.0.4',  # Service name as hostname
-				port='3307',
+				port='3306',
 				user='root',  # or any other user you have created
 				password='7+WCy76_2$%g',  # Corresponding password
 				database='broker'  # Database name
@@ -297,6 +297,7 @@ class Database:
 				}
 				self._conn = mysql.connector.connect(**dbconfig)
 				self.setup()
+				
 
 
 	def close_connection(self):
