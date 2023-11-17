@@ -1,0 +1,38 @@
+name: Code Stats
+
+on: [pull_request]
+
+jobs:
+  comment-stats:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Get PR stats
+        id: pr-stats
+        run: |
+          # Get stats for what has changed with this PR
+          stats=$(git diff --stat ${{ github.event.before }} ${{ github.event.after }})
+          stats="${stats//'%'/'%25'}"
+          stats="${stats//$'\n'/'%0A'}"
+          stats="${stats//$'\r'/'%0D'}"
+          echo "::set-output name=stats::$stats"
+      
+      - name: Comment PR stats
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const output = `
+            **Code Statistics:**
+            \`\`\`
+            ${{ steps.pr-stats.outputs.stats }}
+            \`\`\`
+            `;
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
