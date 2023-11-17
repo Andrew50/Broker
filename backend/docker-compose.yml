@@ -1,49 +1,22 @@
 version: '3.6'
 
 services:
-    redis-master-1:
+    redis:
         image: redis:latest
-        command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
         ports:
-          - "7001:6379"
+          - 6379:6379
         networks:
           - my-network
-
-    redis-master-2:
-        image: redis:latest
-        command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
-        ports:
-            - "7002:6379"
-        networks:
-            - my-network
-
-    redis-master-3:
-        image: redis:latest
-        command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
-        ports:
-            - "7003:6379"
-        networks:
-            - my-network
-    # myproj_redis:
-    #     container_name: myproj_redis
-    #     hostname: redis
-    #     image: redis:latest
-    #     #command: --port 6379
-    #     command: ["redis-server", "--maxmemory 6gb", "--port 6379"]
-    #     ports:
-    #         - "6379:6379"
-    #     expose:
-    #         - "6379"
-    #     restart: always
-    #     networks:
-    #     - my-network
+        hostname: redis
+       # volumes:
+       #   - ./790:/redis
+        command: redis-server #./redis/redis.conf    
+  
 
     myproj_api:
         depends_on:
             - mysql
-            - redis-master-3
-            - redis-master-2
-            - redis-master-1
+            - redis
         container_name: my_api
         build:
             context: ./
@@ -53,8 +26,6 @@ services:
         working_dir: /home/myproj
         volumes:
             - ./:/home/myproj
-       # links:
-      #      - myproj_redis
         command: 
             python startup.py
         networks:
@@ -65,9 +36,7 @@ services:
             context: ./
             dockerfile: ./Dockerfile
         working_dir: /home/myproj
-      #  links:
-      #      - myproj_redis
-        command: rq worker --url redis://myproj_redis:6379 my_queue
+        command: rq worker --url redis://redis:6379 my_queue
         networks:
         - my-network
 
@@ -75,8 +44,8 @@ services:
         container_name: mysql
         image: mysql:latest
         environment:
-            MYSQL_ROOT_PASSWORD: god
-            #MYSQL_PASSWORD: 7+WCy76_2$%g
+            #MYSQL_ROOT_PASSWORD: god
+            MYSQL_ROOT_PASSWORD: 7+WCy76_2$%g
         ports:
         - "3307:3306"
         volumes:
@@ -90,3 +59,4 @@ volumes:
 
 networks:
     my-network:    
+        driver: bridge

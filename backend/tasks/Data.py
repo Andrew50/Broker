@@ -1,67 +1,104 @@
 
 import numpy as np
-import  pandas as pd, numpy as np, datetime, mysql.connector, pytz, redis, pickle, time, multiprocessing, concurrent
+import  pandas as pd, numpy as np, datetime, mysql.connector, pytz, redis, pickle,  multiprocessing
 from tqdm import tqdm
 from collections import defaultdict
 import yfinance as yf
-from rediscluster import RedisCluster
-from concurrent.futures import ThreadPoolExecutor
 
 class Cache:
-	
-	
 
 	def get_hash(self, parent_key,child_key = None):
+		print(parent_key,flush=True)
 		if child_key: hash_data = self.r.hget(parent_key,child_key)
 		else:  hash_data = self.r.hgetall(parent_key)
 		return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
-		
 
-	# def set_hash(self, data, parent_key):
-	# 	#if not isintance(data,list):
-	# 	for item, child_key in data:
-	# 		serialized_item = pickle.dumps(item)
-	# 		self.r.hset(parent_key, child_key, serialized_item)
 	def set_hash(self, data, parent_key):
 		for child_key, item in data.items():
 			serialized_item = pickle.dumps(item)
 			self.r.hset(parent_key, child_key, serialized_item)
 
-
 	def get(self, key):
 		serialized_data = self.r.get(key)
-		#if serialized_data:
 		return pickle.loads(serialized_data)
-		#else:
-			#return None
 
 	def set(self, data, key):
 		serialized_data = pickle.dumps(data)
 		self.r.set(key, serialized_data)
 
 	def __init__(self):
-		
-		try: 
-			startup_nodes = [
-				{"host": "redis-master-1", "port": "6379"},
-				{"host": "redis-master-2", "port": "6379"},
-				{"host": "redis-master-3", "port": "6379"}
-			]
-			self.r = RedisCluster(startup_nodes=startup_nodes, decode_responses=True)
-			#self.r = redis.Redis(host='myproj_redis', port=6379)
+		try:
+			self.r = redis.Redis(host='redis', port=6379, decode_responses=True)
 			self.r.ping()
-		except:
-			startup_nodes = [
-				{"host": "127.0.0.1", "port": "7001"},
-				{"host": "127.0.0.1", "port": "7002"},
-				{"host": "127.0.0.1", "port": "7003"}
-			]
-			self.r = RedisCluster(startup_nodes=startup_nodes, decode_responses=True)
-			print('assuming that redis being accessed from outside class')
-			#self.r = redis.Redis(host='localhost', port=6379)
+		except Exception as e:
+			try:
+				self.r = redis.Redis(host='127.0.0.1', port=6379, decode_responses=True)
+				self.r.ping()
+				print('External Redis')
+			except Exception as e:
+				raise Exception('Redis Connection Failed')
 
 class Database:
 	
+	def __init__(self):
+		try:
+			self._conn = mysql.connector.connect(host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
+		except:
+			try:
+				self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g',database='broker')
+				print('External Data')
+			except:
+				print('broker database doesnt exist so trying to setup')
+				self._conn = mysql.connector.connect(host='localhost',port='3308',user='root',password='7+WCy76_2$%g')
+				self.setup()
+	
+	def get_ticker_list(self, type='full'):
+		cursor = self._conn.cursor(buffered=True)
+		if type == 'full':
+			query = "SELECT ticker FROM full_ticker_list"
+			cursor.execute(query)
+			data = cursor.fetchall()
+			cursor.close()
+			data = [item[0] for item in data]
+			return data
+		elif type == 'current':
+			raise Exception('need current func. has to pull from tv or something god')###################################################################################################################################
+	
+	def get_df(self, ticker, tf='1d', dt=None, bars=0, pm=True):
+		cursor = self._conn.cursor(buffered=True)
+		if dt != None:
+			dt = Database.format_datetime(dt)
+			query = "SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s AND tf = %s AND dt <= %s ORDER BY dt ASC"
+			cursor.execute(query, (ticker, tf, dt))
+		else:
+			query = "SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s AND tf = %s ORDER BY dt ASC"
+			cursor.execute(query, (ticker, tf))
+		
+		data = cursor.fetchall()
+		if bars != 0:
+			return np.array(data[-bars:])
+		return np.array(data)#####new
+
+	def get_ds(self):
+		cursor = self._conn.cursor(buffered=True)
+		query = "SELECT ticker, dt, open, high, low, close, volume FROM dfs ORDER BY ticker, dt ASC"
+		cursor.execute(query)
+		data = cursor.fetchall()
+
+		organized_data = defaultdict(list)
+		for row in data:
+			organized_data[row[0]].append(row[1:])
+
+		with multiprocessing.Pool() as pool:
+			results = pool.starmap(Database.process_ticker_data, [(ticker, organized_data[ticker]) for ticker in organized_data])
+			data_dict = dict(zip(organized_data.keys(), results))
+
+		return data_dict
+
+	def process_ticker_data(ticker, data):
+		np_array = np.array(data)
+		return np_array
+
 	def get_user(self,email,password):
 		with self._conn.cursor(buffered=True) as cursor:
 			cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
@@ -134,100 +171,10 @@ class Database:
 			cursor.execute("INSERT IGNORE INTO setup_data VALUES (%s, %s, %s)", (setup_id,ticker,dt))
 			
 		self._conn.commit()
-	def get_ticker_list(self, type='full'):
-		cursor = self._conn.cursor(buffered=True)
-		if type == 'full':
-			query = "SELECT ticker FROM full_ticker_list"
-			cursor.execute(query)
-			data = cursor.fetchall()
-			cursor.close()
-			data = [item[0] for item in data]
-			return data
-		elif type == 'current':
-			raise Exception('need current func. has to pull from tv or something god')###################################################################################################################################
-	
-	def get_df(self, ticker, tf='1d', dt=None, bars=0, pm=True):
-		cursor = self._conn.cursor(buffered=True)
-		if dt != None:
-			dt = Database.format_datetime(dt)
-			query = "SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s AND tf = %s AND dt <= %s ORDER BY dt ASC"
-			cursor.execute(query, (ticker, tf, dt))
-		else:
-			query = "SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s AND tf = %s ORDER BY dt ASC"
-			cursor.execute(query, (ticker, tf))
-		
-		data = cursor.fetchall()
-		if bars != 0:
-			return np.array(data[-bars:])
-		return np.array(data)#####new
-		###
 
-	def get_ds(self):
-		cursor = self._conn.cursor(buffered=True)
-		query = "SELECT ticker, dt, open, high, low, close, volume FROM dfs ORDER BY ticker, dt ASC"
-		cursor.execute(query)
-		data = cursor.fetchall()
-
-		# Organize data by ticker using a defaultdict
-		organized_data = defaultdict(list)
-		for row in data:
-			organized_data[row[0]].append(row[1:])
-
-		# Process each ticker's data in parallel using multiprocessing
-		with multiprocessing.Pool() as pool:
-			# Map process_ticker_data function to the data of each ticker
-			results = pool.starmap(Database.process_ticker_data, [(ticker, organized_data[ticker]) for ticker in organized_data])
-
-			# Combine tickers and their processed data into a dictionary
-			data_dict = dict(zip(organized_data.keys(), results))
-
-		return data_dict
-
-	def process_ticker_data(ticker, data):
-		# Data is already filtered for the specific ticker
-		np_array = np.array(data)
-		return np_array
-	# def get_ds(self):
-	# 	cursor = self._conn.cursor(buffered=True)
-	# 	query = "SELECT ticker, dt, open, high, low, close, volume FROM dfs ORDER BY ticker, dt ASC"
-	# 	cursor.execute(query)
-	# 	data = cursor.fetchall()
-	# 	with ThreadPoolExecutor() as executor:
-	# 		unique_tickers = set([row[0] for row in data])
-	# 		futures = {executor.submit(self.process_ticker_data, ticker, data): ticker for ticker in unique_tickers}
-
-	# 		# Collect the results into a dictionary as they complete
-	# 		data_dict = {}
-	# 		for future in concurrent.futures.as_completed(futures):
-	# 			ticker = futures[future]
-	# 			data_dict[ticker] = future.result()
-
-	# 	return data_dict
-
-	# def process_ticker_data(self, ticker, data):
-	# 	# Filter data for the specific ticker
-	# 	filtered_data = [row[1:] for row in data if row[0] == ticker]
-
-	# 	# Convert to NumPy array
-	# 	np_array = np.array(filtered_data)
-	# 	return np_array
-
-		
-	
 	def update(self,force_retrain=False):
 
 		with self._conn.cursor(buffered=True) as cursor:
-			
-			#update full ticker list
-			
-			# current_ticker_list = self.get_ticker_list('current')
-			# for ticker in current_ticker_list:
-			# 	cursor.executemany('INSERT IGNORE INTO full_ticker_list VALUES (%s)',(ticker,))
-		
-			# self._conn.commit()
-
-			#update data
-
 
 			def findex(df, dt):
 				dt = Database.format_datetime(dt)
@@ -295,59 +242,13 @@ class Database:
 						print(f'{ticker} failed: {e}')
 						print(ydf)
 
-			#update models
-			# if datetime.datetime.now().day == 4 or force_retrain:
-				
-			# 	cursor.execute('SELECT * from setups')
-			# 	setups = cursor.fetchall()
-			# 	for setup_id, st, tf, model in setups:
-			# 		cursor.execute('SELECT * from')
-			#backup
-	
-	
-	def __init__(self):
-		try:   #inside container
-			self._conn = mysql.connector.connect(
-			host='mysql',  # Service name as hostname
-			port='3306',
-			user='root',  # or any other user you have created
-			password='7+WCy76_2$%g',  # Corresponding password
-			database='broker'  # Database name
-)
-		except:  #outside container
-			try:
-				print('assumed that data is being run outside of container')
-				self._conn = mysql.connector.connect(
-				host='localhost',  # Service name as hostname
-				port='3307',
-				user='root',  # or any other user you have created
-				password='7+WCy76_2$%g',  # Corresponding password
-				database='broker'  # Database name
-				)
-			
-			except: #outside container and broker doesnt exist
-				print('broker database doesnt exist so trying to setup')
-				dbconfig = {
-					"host": "localhost",
-					"port": '3307',
-					"user": "root",
-					"password": "7+WCy76_2$%g",#TODO
-				}
-				self._conn = mysql.connector.connect(**dbconfig)
-				self.setup()
-				
-
-
 	def close_connection(self):
 		self._conn.close()
-		
-	
 
 	def setup(self):
 		if input('Override database data? y/n') != 'y':
 			return
 		with self._conn.cursor(buffered=True) as cursor:
-			##configure tables
 			cursor.execute("CREATE DATABASE IF NOT EXISTS broker DEFAULT CHARACTER SET 'utf8';")
 			self._conn.commit()
 			cursor.execute("USE broker;")
@@ -405,14 +306,12 @@ class Database:
 			"""
 			commands = [cmd.strip() for cmd in sql_commands.split(';') if cmd.strip()]
 			for command in commands:cursor.execute(command)
-			##transfer full_ticker_list
 			df = pd.read_feather("C:/dev/Broker/old/sync/files/full_scan.feather")
 			df = df['ticker'].tolist()
 			df = [[x] for x in df]
 			insert_query = "INSERT INTO full_ticker_list VALUES (%s)"
 			cursor.executemany(insert_query, df)
 			self._conn.commit()
-			##transfer data from backend/d/
 			if True:
 				
 				for tf in ['1d']:
@@ -428,14 +327,11 @@ class Database:
 							self._conn.commit()
 						except Exception as e: #if d doesnt exist or theres no data then this gets hit every loop
 							print(e)
-							#pass
 		self.update()
-
-
 	
-	def is_market_open(self=None):  # Change to a boolean at some point
+	def is_market_open(self=None):
 		if (datetime.datetime.now().weekday() >= 5):
-			return False  # If saturday or sunday
+			return False
 		dt = datetime.datetime.now(pytz.timezone('US/Eastern'))
 		hour = dt.hour
 		minute = dt.minute
@@ -481,20 +377,16 @@ class Dataset:
 			requestLists[i % num_cores].append(request[i])
 		# TEMP CODE ENDS HERE '''
 		self.dfs = []
-		i_max = len(request)
 		i = 0
-		ii = 0
 		for ticker,dt in request:
 			self.dfs.append(Data(db,ticker, tf, dt, bars, value, pm))
-			
-				
 			i += 1
 		self.bars = bars
 		self.len = len(self.dfs)
 		
 	def init_worker(lis):
 		return Data
-	##def score(self
+
 	def formatDataframesForMatch(self):
 		for df in self:
 			df.formatDataframeForMatch()
@@ -554,10 +446,7 @@ class Dataset:
 class Data:
 
 	def __init__(self, db, ticker='QQQ', tf='d', dt=None, bars=0,value=None, pm=True):
-		# try:
 		self.df = db.get_df(ticker,tf,dt,bars,pm)
-		# except:
-		# 	self.df = []
 		self.len = len(self.df)
 		self.ticker = ticker
 		self.tf = tf
@@ -592,36 +481,7 @@ class Data:
 			if not obj:
 				return d
 			self.df = d
-			
-		
 
 if __name__ == '__main__':
-	start = datetime.datetime.now()
 	db = Database()
-	db.setup()
-	print(datetime.datetime.now() - start)
-	#db.setup()
-	#print(db.get_ticker_list('full'))
-	start = datetime.datetime.now()
-
-	print(db.get_df('AAPL'))
-	print(datetime.datetime.now() - start)
-	
-
-
-
-
-
-
-	#print(datetime.datetime.now() - start)
-	#db.update()
-	# db.set_user(email = 'billingsandrewjohn@gmail.com',password = 'password')
-	# # except:
-	# # 	pass
-	# # #except: pass
-	# user_id = db.get_user('billingsandrewjohn@gmail.com','password')
-	# db.set_setup(user_id,'EP','1d')
-	# db.set_sample(user_id,'EP','AAPL',10)
-	# #db.set_user(user_id,delete=True)
-
-	
+	print(db.get_d('AAPL'))

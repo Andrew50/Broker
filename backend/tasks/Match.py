@@ -32,7 +32,6 @@ class Match:
 
     def formatArray(data, onlyCloseAndVol = True, yValue = False, whichColumn=4):
         if yValue:
-            #print(data)
             newDf = np.zeros(len(data)-1)
             for i in range(1, len(data)):
                 newDf[i-1] = data[i, 4]/data[i-1, 4] - 1
