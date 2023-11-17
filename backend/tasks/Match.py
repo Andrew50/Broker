@@ -10,7 +10,7 @@ import math
 np_bars = 10
 class Match: 
             
-    def compute(db,ticker,tf,dt,ds):
+    def compute(ds,ticker,tf,dt):
         dt = Database.format_datetime(dt)
         y = Match.formatArray(Data(db,ticker, tf, dt,bars=np_bars+1).df, yValue=True)
         radius = math.ceil(np_bars/10)
@@ -62,10 +62,11 @@ def get(args):
     ticker = args[0]
     dt = args[2]
     tf = args[1]
-    db = Database()
+ 
     cache = Cache()
     ds = cache.get_hash('ds')
-    match_data = Match.compute(db,ticker,tf,dt, ds)
+    y = cache.get_hash('ds','ticker')
+    match_data = Match.compute(ds,ticker,tf,dt)
     for i in range(len(match_data)):
         match_data[i][1] = match_data[i][1][:10]
     print(datetime.datetime.now() - start)

@@ -19,8 +19,6 @@
 # 		try:
 # 			df = pd.read_feather(path)
 
-import time
-def get(args):
-    ticker = args[0]
-    time.sleep(1)
-    return ticker
+from Data import Cache
+
+print(Cache().get_hash('ds','AAPL'))
