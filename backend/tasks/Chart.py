@@ -1,23 +1,22 @@
 import json
 import pandas as pd
 
-try:
-    from Data import Data, Database
-except:
-    from .Data import Data, Database
+#try:
+from Data import Data, Database, Cache
+#except:
+    #from .Data import Data, Database, Cache
     
     #god
 
 def get(args):
-
     args += ['MSFT','1d',None][len(args):]
     ticker = args[0]
     
     tf = args[1]
     dt = Database.format_datetime(args[2])
-    db = Database()
-    df = db.get_df(ticker,tf,dt)
-    print('god')
+    #db = Database()
+    #df = db.get_df(ticker,tf,dt)
+    df = Cache().get_hash('ds',ticker)
     list_of_lists = df.tolist()[:]
 
     # Convert the first column (Unix timestamps) to string datetimes

@@ -1,15 +1,9 @@
 import time,importlib,sys,traceback, redis, pickle
 sys.path.append('./tasks')
 
-
-
-
-
-
 def run_task(request='Test_get'):
 
 	try:
-		print('god')
 		#print('Some message', flush=True)
 		split = request.split('_')
 		func = split[0]
@@ -19,6 +13,7 @@ def run_task(request='Test_get'):
 		func = getattr(module, function_name, None)
 		return func(args)
 	except Exception as e:
-		return str(traceback.format_exc()) + str(e)
+		print(traceback.format_exc() + str(e),flush=True)
+		return 'failed'
 	#except TimeoutError:
 		#return 'failed'

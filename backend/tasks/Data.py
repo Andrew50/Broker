@@ -8,10 +8,12 @@ import yfinance as yf
 class Cache:
 
 	def get_hash(self, parent_key,child_key = None):
-		print(parent_key,flush=True)
-		if child_key: hash_data = self.r.hget(parent_key,child_key)
-		else:  hash_data = self.r.hgetall(parent_key)
-		return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
+		if child_key: 
+			hash_data = self.r.hget(parent_key,child_key)
+			return pickle.loads(hash_data)
+		else:  
+			hash_data = self.r.hgetall(parent_key)
+			return {field.decode(): pickle.loads(value) for field, value in pickle.loads(hash_data).items()}
 
 	def set_hash(self, data, parent_key):
 		for child_key, item in data.items():
@@ -28,11 +30,11 @@ class Cache:
 
 	def __init__(self):
 		try:
-			self.r = redis.Redis(host='redis', port=6379, decode_responses=True)
+			self.r = redis.Redis(host='redis', port=6379)
 			self.r.ping()
 		except Exception as e:
 			try:
-				self.r = redis.Redis(host='127.0.0.1', port=6379, decode_responses=True)
+				self.r = redis.Redis(host='127.0.0.1', port=6379)
 				self.r.ping()
 				print('External Redis')
 			except Exception as e:
