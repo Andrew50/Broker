@@ -1,10 +1,13 @@
 
 import numpy as np
-import  pandas as pd, numpy as np, datetime, mysql.connector, pytz, redis, pickle, time
+import  pandas as pd, numpy as np, datetime, mysql.connector, pytz, redis, pickle, time, multiprocessing
 from tqdm import tqdm
 import yfinance as yf
+from concurrent.futures import ThreadPoolExecutor
 
 class Cache:
+	
+	
 
 	def get_hash(self, parent_key,child_key = None):
 		if child_key: hash_data = self.r.hget(parent_key,child_key)
@@ -36,31 +39,6 @@ class Cache:
 		except:
 			print('assuming that redis being accessed from outside class')
 			self.r = redis.Redis(host='localhost', port=6379)
-
-
-
-
-# class Cache:
-
-# 	def get(self,key):
-
-# 		serialized_data = self.r.get(key)
-# 		if serialized_data:
-# 			return pickle.loads(serialized_data)
-# 		else:
-# 			return None
-
-# 	def set(self,data,key):
-# 		serialized_data = pickle.dumps(data)
-# 		self.r.set(key, serialized_data)
-
-# 	def __init__(self):
-# 		try: 
-# 			self.r = redis.Redis(host='myproj_redis', port=6379)
-# 			self.r.ping()
-# 		except:
-# 			print('assuming that redis being accessed from outside class')
-# 			self.r = redis.Redis(host='localhost', port=6379)
 
 class Database:
 	
@@ -159,11 +137,44 @@ class Database:
 			cursor.execute(query, (ticker, tf))
 		
 		data = cursor.fetchall()
-		
-		data = np.array(data)#####new
+		if bars != 0:
+			return np.array(data[-bars:])
+		return np.array(data)#####new
 		###
+
+
+	def get_ds(self):
+		# Pull the entire table
+		cursor = self._conn.cursor(buffered=True)
+		query = "SELECT ticker, dt, open, high, low, close, volume FROM dfs ORDER BY ticker, dt ASC"
+		cursor.execute(query)
+
+		# Fetch all data
+		data = cursor.fetchall()
+
+		# Create a thread pool executor
+		with ThreadPoolExecutor() as executor:
+			# Distribute the work of processing each ticker
+			unique_tickers = set([row[0] for row in data])
+			futures = {executor.submit(self.process_ticker_data, ticker, data): ticker for ticker in unique_tickers}
+
+			# Collect the results into a dictionary as they complete
+			data_dict = {}
+			for future in concurrent.futures.as_completed(futures):
+				ticker = futures[future]
+				data_dict[ticker] = future.result()
+
+		return data_dict
+
+	def process_ticker_data(self, ticker, data):
+		# Filter data for the specific ticker
+		filtered_data = [row[1:] for row in data if row[0] == ticker]
+
+		# Convert to NumPy array
+		np_array = np.array(filtered_data)
+		return np_array
+
 		
-		return data
 	
 	def update(self,force_retrain=False):
 
@@ -265,47 +276,28 @@ class Database:
 			password='7+WCy76_2$%g',  # Corresponding password
 			database='broker'  # Database name
 )
-			#dbconfig = {"host": "localhost","port": 3306,"user": "root","password": "7+WCy76_2$%g","database": 'broker'}
-			#self._conn = mysql.connector.connect(**dbconfig)
-			
-			# with self._conn.cursor(buffered=True) as cursor:
-			# 	cursor.execute("SELECT COUNT(*) FROM dfs;")
-			# 	count = cursor.fetchall()[0][0]
-			# 	assert count > 0
-			# 	if count < 8000*300:
-					#pass#rint(f'WARNING: DATA ISNT COMPLETE! ONLY {count} DAILY DATAPOINTS!')
-
-
 		except: 
 			try:
 				print('assumed that data is being run outside of container')
 				self._conn = mysql.connector.connect(
-				host='localhost',  # Service name as hostname
+				host='172.24.0.4',  # Service name as hostname
 				port='3307',
 				user='root',  # or any other user you have created
 				password='7+WCy76_2$%g',  # Corresponding password
 				database='broker'  # Database name
 				)
 			
-			
 			except:
 				print('broker database doesnt exist so trying to setup')
 				dbconfig = {
 					"host": "localhost",
-					"port": '3307',
+					"port": '3306',
 					"user": "root",
 					"password": "7+WCy76_2$%g",#TODO
 				}
 				self._conn = mysql.connector.connect(**dbconfig)
 				self.setup()
-				#with self._conn.cursor(buffered=True) as cursor:
-			
-				#	cursor.execute("USE broker;")
-					#self._conn.commit()
-				
-				
-			#except Exception as e:
-			#self.load_from_legacy()
+
 
 	def close_connection(self):
 		self._conn.close()
@@ -322,55 +314,55 @@ class Database:
 			cursor.execute("USE broker;")
 			self._conn.commit()
 			sql_commands = """
-DROP TABLE IF EXISTS setup_data;
-DROP TABLE IF EXISTS setups;
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS dfs;
-DROP TABLE IF EXISTS full_ticker_list;
-DROP TABLE IF EXISTS current_ticker_list;
-CREATE TABLE dfs(
-	ticker VARCHAR(5) NOT NULL,
-	tf VARCHAR(3) NOT NULL,
-	dt INT NOT NULL,
-	open FLOAT,
-	high FLOAT,
-	low FLOAT,
-	close FLOAT,
-	volume FLOAT,
-	PRIMARY KEY (ticker, tf, dt)
-);
-CREATE INDEX ticker_index ON dfs (ticker);
-CREATE INDEX tf_index ON dfs (tf);
-CREATE INDEX dt_index ON dfs (dt);
-CREATE TABLE users(
-	id INT AUTO_INCREMENT PRIMARY KEY,
-	email VARCHAR(255) NOT NULL UNIQUE,
-	password VARCHAR(255),
-	settings TEXT
-);
-CREATE INDEX email_index ON users(email);
-CREATE TABLE setups(
-	user_id INT NOT NULL,
-	name VARCHAR(255) NOT NULL,
-	setup_id INT AUTO_INCREMENT UNIQUE,
-	tf VARCHAR(3) NOT NULL,
-	model BINARY,
-	UNIQUE(user_id, name),
-	FOREIGN KEY (user_id) REFERENCES users(id)
-);
-CREATE INDEX user_id_index ON setups (user_id);
-CREATE INDEX name_index ON setups (name);
-CREATE TABLE setup_data(
-	setup_id INT NOT NULL,
-	ticker VARCHAR(5) NOT NULL,
-	dt INT NOT NULL,
-	value BOOLEAN NOT NULL,
-	UNIQUE(ticker, dt),
-	FOREIGN KEY (setup_id) REFERENCES setups(setup_id)
-);
-CREATE INDEX id_index ON setup_data (setup_id);
-CREATE TABLE full_ticker_list(ticker VARCHAR(5) NOT NULL);
-CREATE TABLE current_ticker_list(ticker VARCHAR(5) NOT NULL);
+			DROP TABLE IF EXISTS setup_data;
+			DROP TABLE IF EXISTS setups;
+			DROP TABLE IF EXISTS users;
+			DROP TABLE IF EXISTS dfs;
+			DROP TABLE IF EXISTS full_ticker_list;
+			DROP TABLE IF EXISTS current_ticker_list;
+			CREATE TABLE dfs(
+				ticker VARCHAR(5) NOT NULL,
+				tf VARCHAR(3) NOT NULL,
+				dt INT NOT NULL,
+				open FLOAT,
+				high FLOAT,
+				low FLOAT,
+				close FLOAT,
+				volume FLOAT,
+				PRIMARY KEY (ticker, tf, dt)
+			);
+			CREATE INDEX ticker_index ON dfs (ticker);
+			CREATE INDEX tf_index ON dfs (tf);
+			CREATE INDEX dt_index ON dfs (dt);
+			CREATE TABLE users(
+				id INT AUTO_INCREMENT PRIMARY KEY,
+				email VARCHAR(255) NOT NULL UNIQUE,
+				password VARCHAR(255),
+				settings TEXT
+			);
+			CREATE INDEX email_index ON users(email);
+			CREATE TABLE setups(
+				user_id INT NOT NULL,
+				name VARCHAR(255) NOT NULL,
+				setup_id INT AUTO_INCREMENT UNIQUE,
+				tf VARCHAR(3) NOT NULL,
+				model BINARY,
+				UNIQUE(user_id, name),
+				FOREIGN KEY (user_id) REFERENCES users(id)
+			);
+			CREATE INDEX user_id_index ON setups (user_id);
+			CREATE INDEX name_index ON setups (name);
+			CREATE TABLE setup_data(
+				setup_id INT NOT NULL,
+				ticker VARCHAR(5) NOT NULL,
+				dt INT NOT NULL,
+				value BOOLEAN NOT NULL,
+				UNIQUE(ticker, dt),
+				FOREIGN KEY (setup_id) REFERENCES setups(setup_id)
+			);
+			CREATE INDEX id_index ON setup_data (setup_id);
+			CREATE TABLE full_ticker_list(ticker VARCHAR(5) NOT NULL);
+			CREATE TABLE current_ticker_list(ticker VARCHAR(5) NOT NULL);
 			"""
 			commands = [cmd.strip() for cmd in sql_commands.split(';') if cmd.strip()]
 			for command in commands:cursor.execute(command)
@@ -455,9 +447,7 @@ class Dataset:
 		ii = 0
 		for ticker,dt in request:
 			self.dfs.append(Data(db,ticker, tf, dt, bars, value, pm))
-			if _print and round(100 * i/i_max) > ii:
-				ii = round(100*i/i_max)
-				print(str(ii) + '%',flush=True)
+			
 				
 			i += 1
 		self.bars = bars
@@ -545,19 +535,31 @@ class Data:
 		self.score = returns
 		return returns
 
-	def formatDataframeForMatch(self, onlyCloseAndVol = True): 
-		if onlyCloseAndVol:
-			if(self.len > 2):
-				d = np.zeros((self.len-1, 3))
-				for i in range(1, self.len):
-					close = self.df[i, 4]
-					d[i-1] = [float(close), float(close/self.df[i-1, 4] - 1), self.df[i, 5]]
-				self.df = d
-
+	def formatDataframeForMatch(self, onlyCloseAndVol = True, whichColumn=4):
+		obj = False
+		if isinstance(self,Data):
+			obj = True
+			df = self.df
+		else:
+			df = self
+		length = len(df)
+		
+		if onlyCloseAndVol: 
+			if(length < 3): return np.zeros((1, 4))
+			d = np.zeros((length-1, 4))
+			for i in range(1, length):
+				close = df[i,whichColumn]
+				d[i-1] = [close, (close/df[i-1,whichColumn]) - 1, df[i, 5], df[i, 0]]
+			if not obj:
+				return d
+			self.df = d
+			
+		
 
 if __name__ == '__main__':
 	start = datetime.datetime.now()
 	db = Database()
+	db.setup()
 	print(datetime.datetime.now() - start)
 	#db.setup()
 	#print(db.get_ticker_list('full'))

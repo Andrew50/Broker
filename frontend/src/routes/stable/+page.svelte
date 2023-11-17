@@ -1,29 +1,11 @@
 <script>
-//Varibles
-    //Global
+
     import { writable } from 'svelte/store';
     import {onMount} from 'svelte';
-    let innerWidth;
-    let innerHeight;
-
-    //Charts
     import {ColorType, CrosshairMode} from 'lightweight-charts';
     import {Chart, CandlestickSeries,TimeScale} from 'svelte-lightweight-charts';
 
-    let chart_data;
-    let chart_data_store = writable([{time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85}]);
-    chart_data_store.subscribe((value) => {
-        console.log(value)
-        try{chart_data = JSON.parse(value)}
-        catch{chart_data = value}
-    });
 
-    const options = {
-        layout: {background: {type: ColorType.Solid,color: '#000000',},textColor: 'rgba(255, 255, 255, 0.9)',},
-        grid: {vertLines: {color: 'rgba(197, 203, 206, 0.5)',},horzLines: {color: 'rgba(197, 203, 206, 0.5)',},},
-        crosshair: {mode: CrosshairMode.Magnet,},
-        rightPriceScale: {borderColor: 'rgba(197, 203, 206, 0.8)',},timeScale: {borderColor: 'rgba(197, 203, 206, 0.8)',},
-    }
 
      export let match_data_store = writable([])
     export let match_data = [];
@@ -32,16 +14,40 @@
     catch{match_data = value}
      });
     
-    //Screener
-    let key;
-    let isScreener = false;
+
+
     let screener_data_store = writable()
     let screener_data;
     screener_data_store.subscribe((value) => {
-        screener_data = value
+    screener_data = value
     });
-    
-    //Ticker
+
+
+
+
+    export let chart_data_store = writable([
+        {time: '2018-10-19', open: 180.34, high: 180.99, low: 178.57, close: 179.85}
+    ]);
+
+
+    export let chart_data;
+
+
+
+
+    chart_data_store.subscribe((value) => {
+    console.log(value)
+    try{chart_data = JSON.parse(value)}
+    catch{chart_data = value}
+    });
+
+
+
+    let innerWidth;
+    let innerHeight;
+    let isMatch = false;
+    let isScreener = false;
+
     let TickerBox;
 	let popup = false;
 	let TickerBoxValue = '';
@@ -49,58 +55,25 @@
 	let TickerBoxVisible = "none";
     let value = 'An input.';
 
-//Funcitons
-    //Global
-    async function startTask(bind_variable,func=false,args = false) {
-        if (!args){
-
-            event.preventDefault(); // Prevent the default form submission
-            const formData = new FormData(event.target);
-            args = Array.from(formData.values()).join('_');
-        }
-        if (func){
-            args = `${func}_${args}`;
-        }
-        const url = `http://localhost:5057/fetch/${args}`;
-        try{
-        console.log('request sent',url)
-        const response = await fetch(url, {method: 'POST',headers: {'Content-Type': 'application/json'},});
-        if (!response.ok) {throw new Error('POST response not ok')}
-        const responseData = await response.json();
-        const task_id = responseData.task_id;
-        const checkStatus = async () => {
-            const response = await fetch(`http://localhost:5057/poll/${task_id}`);
-            if (!response.ok){throw new Error('GET response not ok')}
-                const responseData = await response.json();
-                const status = responseData.status
-                if (responseData.status === 'done') {
-                    clearInterval(intervalId);
-                    console.log(responseData.result);
-
-                    bind_variable.set(responseData.result);
-                }else if(status === 'failed'){
-                    clearInterval(intervalId);
-                    bind_variable.set('failed')
-                }
-        };
-        const intervalId = setInterval(checkStatus, 200); // Check every 2 seconds
-        }catch{
-        bind_variable.set(null);
-        }
-    }
-    //Charts
-
-    //Match
     function toggleMatch() {
-        isMatch = !isMatch;
-        isScreener = false; 
+    isMatch = !isMatch;
+    isScreener = false; 
     }
-    //Screener
     function toggleScreener() {
-        isScreener = !isScreener;
-        isMatch = false; 
+    isScreener = !isScreener;
+    isMatch = false; 
     }
-    //Ticker
+
+    let ticker = "AAPL";
+    let tf = "1d";
+    let dt = "2023-10-03";
+    // let chart_ticker = "AAPL";
+    // let chart_tf = "1d";
+    // let chart_dt = "";
+    // let timeScale;
+    let key;
+
+	
 	function resizeInputOnDynamicContent(node) {
 		
 		const measuringElement = document.createElement('div');
@@ -142,13 +115,61 @@
 		}
 	}
 
+
+
+    async function startTask(bind_variable,func=false,args = false) {
+        if (!args){
+
+            event.preventDefault(); // Prevent the default form submission
+            const formData = new FormData(event.target);
+            args = Array.from(formData.values()).join('_');
+        }
+        if (func){
+            args = `${func}_${args}`;
+        }
+        const url = `http://localhost:5057/fetch/${args}`;
+        try{
+        console.log('request sent',url)
+        const response = await fetch(url, {method: 'POST',headers: {'Content-Type': 'application/json'},});
+        if (!response.ok) {throw new Error('POST response not ok')}
+        const responseData = await response.json();
+        const task_id = responseData.task_id;
+        const checkStatus = async () => {
+            const response = await fetch(`http://localhost:5057/poll/${task_id}`);
+            if (!response.ok){throw new Error('GET response not ok')}
+                const responseData = await response.json();
+                const status = responseData.status
+                if (responseData.status === 'done') {
+                    clearInterval(intervalId);
+                    console.log(responseData.result);
+
+                    bind_variable.set(responseData.result);
+                }else if(status === 'failed'){
+                    clearInterval(intervalId);
+                    bind_variable.set('failed')
+                }
+        };
+        const intervalId = setInterval(checkStatus, 200); // Check every 2 seconds
+        }catch{
+        bind_variable.set(null);
+        }
+    }
+
+    
+    const options = {
+        layout: {background: {type: ColorType.Solid,color: '#000000',},textColor: 'rgba(255, 255, 255, 0.9)',},
+        grid: {vertLines: {color: 'rgba(197, 203, 206, 0.5)',},horzLines: {color: 'rgba(197, 203, 206, 0.5)',},},
+        crosshair: {mode: CrosshairMode.Magnet,},
+        rightPriceScale: {borderColor: 'rgba(197, 203, 206, 0.8)',},timeScale: {borderColor: 'rgba(197, 203, 206, 0.8)',},
+    }
+    
     function onKeydown(event) {
 			if (/^[a-zA-Z]$/.test(event.key.toLowerCase()) && popup == false) {
-			    TickerBoxVisible = "block"
-			    popup = true;
-			    TickerBoxValue += event.key.toUpperCase();
-			    event.preventDefault();
-			    TickerBox.focus();
+			TickerBoxVisible = "block"
+			popup = true;
+			TickerBoxValue += event.key.toUpperCase();
+			event.preventDefault();
+			TickerBox.focus();
 			}
 			if(event.key == "Enter"){
 
@@ -162,7 +183,6 @@
 			} 
 			TickerBox.focus();
 	}
-
 </script>
 
 <svelte:window 
@@ -187,44 +207,43 @@
         text-transform:uppercase;
     }
     .match-button {
-        position: fixed;
-        right: 20px;
-        top: 20px; /* You can adjust the top position as needed */
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        cursor: pointer;
+    position: fixed;
+    right: 20px;
+    top: 20px; /* You can adjust the top position as needed */
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
     }
     .screener-button {
-        position: fixed;
-        right: 20px;
-        top: 120px; /* You can adjust the top position as needed */
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        cursor: pointer;
+    position: fixed;
+    right: 20px;
+    top: 120px; /* You can adjust the top position as needed */
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
     }
     .container {
-        margin-right: 20px;
-        margin-right: 20px;
+    margin-right: 20px;
     }
-    .table {
-        width: 100%;
-        border-collapse: collapse;
+    table {
+    width: 100%;
+    border-collapse: collapse;
     }
     .popout-menu {
-        display: none;
-        position: fixed;
-        right: 70px; /* Offset from the right side */
-        top: 0; /* You can adjust the top position as needed */
-        background-color: #f9f9f9;
-        min-width: 3px;
-        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    display: none;
+    position: fixed;
+    right: 70px; /* Offset from the right side */
+    top: 0; /* You can adjust the top position as needed */
+    background-color: #f9f9f9;
+    min-width: 3px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
     }
     .popout-menu.visible {
-        display: block;
+    display: block;
     }
 </style>
 
@@ -321,10 +340,9 @@
         wickUpColor="rgba(0,255, 0, 1)"
     />
 </Chart>
-
+{chartTicker}
 <a href="/test">test</a>
 
-<!-- Ticker -->
 <input class = 'input-overlay' 
 	bind:this={TickerBox} 
 	bind:value={TickerBoxValue} 
