@@ -7,11 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from worker import run_task
 
-#wokring
-#test
-
-#really workingk
-#hotfix
+#stats
+#is it working
 
 app = FastAPI()
 

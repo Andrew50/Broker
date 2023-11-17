@@ -6,7 +6,7 @@ try:
 except:
     from .Data import Data, Database
     
-
+    #god
 
 def get(args):
 
