@@ -1,0 +1,9 @@
+frontend:
+  - frontend/**/*
+
+backend:
+  - backend/**/*
+
+documentation:
+  - docs/**/*
+  - README.md
