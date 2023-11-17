@@ -1,18 +1,22 @@
-name: Pull Request Description
+# This workflow will triage pull requests and apply a label based on the
+# paths that are modified in the pull request.
+#
+# To use this workflow, you will need to set up a .github/labeler.yml
+# file with configuration.  For more information, see:
+# https://github.com/actions/labeler
 
-on:
-  pull_request:
-    types: [opened, reopened, synchronize]
+name: Labeler
+on: [pull_request_target]
 
 jobs:
-  update-pr-description:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+  label:
 
-      - name: Generate pull request description
-        uses: octue/generate-pull-request-description@1.0.0.beta-2
-        with:
-          # You may need to provide additional inputs as required by the action
-          token: ${{ secrets.GITHUB_TOKEN }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+    - uses: actions/labeler@v4
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
