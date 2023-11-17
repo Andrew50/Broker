@@ -15,3 +15,4 @@ pytz==2023.3
 tqdm==4.65.0
 yfinance==0.2.18
 msgpack==1.0.7
+redis_py_cluster==2.1.3

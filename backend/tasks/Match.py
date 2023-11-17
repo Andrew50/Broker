@@ -26,6 +26,7 @@ class Match:
             returns += heapq.nsmallest(2, Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius, ticker), key=lambda x: x[2])
         top_scores = heapq.nsmallest(20, returns, key=lambda x: x[2])
         print(datetime.datetime.now() - start)
+        print(top_scores)
         return [[ticker,str(Database.format_datetime(timestamp, True)),round(score,2)] for ticker,timestamp, score in top_scores]
        
 
@@ -60,8 +61,8 @@ class Match:
 def get(args):
     start = datetime.datetime.now()
     ticker = args[0]
-    dt = args[1]
-    tf = args[2]
+    dt = args[2]
+    tf = args[1]
     db = Database()
     cache = Cache()
     ds = cache.get_hash('ds')
@@ -72,4 +73,4 @@ def get(args):
     return json.dumps(match_data)
 
 if __name__ == '__main__':
-    print(get(['CELH','2023-08-10','1d']))
+    print(get(['CELH','1d','2023-08-10']))

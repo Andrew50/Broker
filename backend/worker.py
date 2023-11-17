@@ -18,7 +18,7 @@ def run_task(request='Test_get'):
 		module = importlib.import_module(module_name)
 		func = getattr(module, function_name, None)
 		return func(args)
-	#except Exception as e:
-		#return str(traceback.format_exc()) + str(e)
-	except TimeoutError:
-		return 'failed'
+	except Exception as e:
+		return str(traceback.format_exc()) + str(e)
+	#except TimeoutError:
+		#return 'failed'

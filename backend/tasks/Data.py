@@ -1,8 +1,10 @@
 
 import numpy as np
-import  pandas as pd, numpy as np, datetime, mysql.connector, pytz, redis, pickle, time, multiprocessing
+import  pandas as pd, numpy as np, datetime, mysql.connector, pytz, redis, pickle, time, multiprocessing, concurrent
 from tqdm import tqdm
+from collections import defaultdict
 import yfinance as yf
+from rediscluster import RedisCluster
 from concurrent.futures import ThreadPoolExecutor
 
 class Cache:
@@ -15,11 +17,16 @@ class Cache:
 		return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
 		
 
+	# def set_hash(self, data, parent_key):
+	# 	#if not isintance(data,list):
+	# 	for item, child_key in data:
+	# 		serialized_item = pickle.dumps(item)
+	# 		self.r.hset(parent_key, child_key, serialized_item)
 	def set_hash(self, data, parent_key):
-		#if not isintance(data,list):
-		for item, child_key in data:
+		for child_key, item in data.items():
 			serialized_item = pickle.dumps(item)
 			self.r.hset(parent_key, child_key, serialized_item)
+
 
 	def get(self, key):
 		serialized_data = self.r.get(key)
@@ -33,12 +40,25 @@ class Cache:
 		self.r.set(key, serialized_data)
 
 	def __init__(self):
+		
 		try: 
-			self.r = redis.Redis(host='myproj_redis', port=6379)
+			startup_nodes = [
+				{"host": "redis-master-1", "port": "6379"},
+				{"host": "redis-master-2", "port": "6379"},
+				{"host": "redis-master-3", "port": "6379"}
+			]
+			self.r = RedisCluster(startup_nodes=startup_nodes, decode_responses=True)
+			#self.r = redis.Redis(host='myproj_redis', port=6379)
 			self.r.ping()
 		except:
+			startup_nodes = [
+				{"host": "127.0.0.1", "port": "7001"},
+				{"host": "127.0.0.1", "port": "7002"},
+				{"host": "127.0.0.1", "port": "7003"}
+			]
+			self.r = RedisCluster(startup_nodes=startup_nodes, decode_responses=True)
 			print('assuming that redis being accessed from outside class')
-			self.r = redis.Redis(host='localhost', port=6379)
+			#self.r = redis.Redis(host='localhost', port=6379)
 
 class Database:
 	
@@ -142,37 +162,55 @@ class Database:
 		return np.array(data)#####new
 		###
 
-
 	def get_ds(self):
-		# Pull the entire table
 		cursor = self._conn.cursor(buffered=True)
 		query = "SELECT ticker, dt, open, high, low, close, volume FROM dfs ORDER BY ticker, dt ASC"
 		cursor.execute(query)
-
-		# Fetch all data
 		data = cursor.fetchall()
 
-		# Create a thread pool executor
-		with ThreadPoolExecutor() as executor:
-			# Distribute the work of processing each ticker
-			unique_tickers = set([row[0] for row in data])
-			futures = {executor.submit(self.process_ticker_data, ticker, data): ticker for ticker in unique_tickers}
+		# Organize data by ticker using a defaultdict
+		organized_data = defaultdict(list)
+		for row in data:
+			organized_data[row[0]].append(row[1:])
 
-			# Collect the results into a dictionary as they complete
-			data_dict = {}
-			for future in concurrent.futures.as_completed(futures):
-				ticker = futures[future]
-				data_dict[ticker] = future.result()
+		# Process each ticker's data in parallel using multiprocessing
+		with multiprocessing.Pool() as pool:
+			# Map process_ticker_data function to the data of each ticker
+			results = pool.starmap(Database.process_ticker_data, [(ticker, organized_data[ticker]) for ticker in organized_data])
+
+			# Combine tickers and their processed data into a dictionary
+			data_dict = dict(zip(organized_data.keys(), results))
 
 		return data_dict
 
-	def process_ticker_data(self, ticker, data):
-		# Filter data for the specific ticker
-		filtered_data = [row[1:] for row in data if row[0] == ticker]
-
-		# Convert to NumPy array
-		np_array = np.array(filtered_data)
+	def process_ticker_data(ticker, data):
+		# Data is already filtered for the specific ticker
+		np_array = np.array(data)
 		return np_array
+	# def get_ds(self):
+	# 	cursor = self._conn.cursor(buffered=True)
+	# 	query = "SELECT ticker, dt, open, high, low, close, volume FROM dfs ORDER BY ticker, dt ASC"
+	# 	cursor.execute(query)
+	# 	data = cursor.fetchall()
+	# 	with ThreadPoolExecutor() as executor:
+	# 		unique_tickers = set([row[0] for row in data])
+	# 		futures = {executor.submit(self.process_ticker_data, ticker, data): ticker for ticker in unique_tickers}
+
+	# 		# Collect the results into a dictionary as they complete
+	# 		data_dict = {}
+	# 		for future in concurrent.futures.as_completed(futures):
+	# 			ticker = futures[future]
+	# 			data_dict[ticker] = future.result()
+
+	# 	return data_dict
+
+	# def process_ticker_data(self, ticker, data):
+	# 	# Filter data for the specific ticker
+	# 	filtered_data = [row[1:] for row in data if row[0] == ticker]
+
+	# 	# Convert to NumPy array
+	# 	np_array = np.array(filtered_data)
+	# 	return np_array
 
 		
 	
@@ -268,7 +306,7 @@ class Database:
 	
 	
 	def __init__(self):
-		try:
+		try:   #inside container
 			self._conn = mysql.connector.connect(
 			host='mysql',  # Service name as hostname
 			port='3306',
@@ -276,22 +314,22 @@ class Database:
 			password='7+WCy76_2$%g',  # Corresponding password
 			database='broker'  # Database name
 )
-		except: 
+		except:  #outside container
 			try:
 				print('assumed that data is being run outside of container')
 				self._conn = mysql.connector.connect(
-				host='172.24.0.4',  # Service name as hostname
-				port='3306',
+				host='localhost',  # Service name as hostname
+				port='3307',
 				user='root',  # or any other user you have created
 				password='7+WCy76_2$%g',  # Corresponding password
 				database='broker'  # Database name
 				)
 			
-			except:
+			except: #outside container and broker doesnt exist
 				print('broker database doesnt exist so trying to setup')
 				dbconfig = {
 					"host": "localhost",
-					"port": '3306',
+					"port": '3307',
 					"user": "root",
 					"password": "7+WCy76_2$%g",#TODO
 				}
