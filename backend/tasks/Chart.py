@@ -19,7 +19,7 @@ def get(args):
     df = db.get_df(ticker,tf,dt)
     print('god')
     list_of_lists = df.tolist()[:]
-
+    # dd
     # Convert the first column (Unix timestamps) to string datetimes
     if 'd' in tf or 'w' in tf:
         list_of_lists = [{
