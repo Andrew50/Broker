@@ -7,7 +7,15 @@
 from Data import Database, Dataset
 
 
-
+def load_score(self, st, model=None):
+	if model == None:
+		model = Main.load_model(st)
+	returns = []
+	for df, index in self.np:
+		score = model.predict(df)
+		returns.append([self.ticker, self.df.index[index], st, score])
+	self.score = returns
+	return returns
 
 
 

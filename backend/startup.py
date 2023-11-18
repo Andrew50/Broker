@@ -1,13 +1,12 @@
-from tasks.Data import Database, Cache, Data
+from tasks.Data import Database, Cache, Data, Dataset
 import uvicorn, traceback, multiprocessing, datetime
        
     
 if __name__ == '__main__':
     try:
-        #print('starting backend',flush = True)
         start = datetime.datetime.now()
-        ds = Database().get_ds()
-        Cache().set_hash(ds,'ds')
+        ds = Dataset()
+        Cache().set_hash(ds,'1d')
         print(f'started backend in {datetime.datetime.now() - start}',flush = True)
         
     except Exception as e:
