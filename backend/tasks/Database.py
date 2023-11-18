@@ -71,25 +71,41 @@ class Database:
 			return data
 		elif type == 'current':
 			raise Exception('need current func. has to pull from tv or something god')###################################################################################################################################
+	# def get_df(self, ticker, tf='1d', dt=None, bars=0, pm=True):
+	# 	cursor = self._conn.cursor(buffered=True)
+	# 	if dt != None:
+	# 		dt = Database.format_datetime(dt)
+	# 		query = "SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s AND tf = %s ORDER BY dt ASC"
+	# 		cursor.execute(query, (ticker, tf, dt))
+	# 	else:
+	# 		query = "SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s AND tf = %s ORDER BY dt ASC"
+	# 		cursor.execute(query, (ticker, tf))
+		
+	# 	data = cursor.fetchall()
+	# 	if bars != 0:
+	# 		return np.array(data[-bars:])
+	# 	return np.array(data)#####new
 	
+
 	def get_df(self, tf,ticker):#, tf='1d', dt=None, bars=0, pm=True):
 
 		cursor = self._conn.cursor(buffered=True)
-		dt = Database.format_datetime(dt)
 		query = "SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s AND tf = %s"
+		print(ticker,tf)
 		cursor.execute(query, (ticker, tf))
-		data = cursor.fetchall()
+		data = np.array(cursor.fetchall())
+		print(data)
+		#data = data[data[:, 0].argsort()]
 		#data = Database.process_ticker_data(ticker,tf,dt,data)
 		#if bars != 0:
 			#return np.array(data[-bars:])
-		return np.array(data)#####new
+		return data
 
-	def get_ds(self):
+	def get_ds(self,tf):
 		cursor = self._conn.cursor(buffered=True)
-		query = "SELECT ticker, dt, open, high, low, close, volume FROM dfs ORDER BY ticker, dt ASC"
-		cursor.execute(query)
+		query = "SELECT ticker, dt, open, high, low, close, volume FROM dfs WHERE tf = %s"
+		cursor.execute(query,(tf,))
 		data = cursor.fetchall()
-
 		organized_data = defaultdict(list)
 		for row in data:
 			organized_data[row[0]].append(row[1:])
@@ -101,9 +117,9 @@ class Database:
 		return data_dict
 
 	def process_ticker_data(dt, data):
-		np_array = np.array(data)
+		data = np.array(data)
+		return data[data[:, 0].argsort()]
 		
-		return np_array
 
 	def get_user(self,email,password):
 		with self._conn.cursor(buffered=True) as cursor:

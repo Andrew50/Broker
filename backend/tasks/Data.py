@@ -9,29 +9,29 @@ from Database import Database, Cache
 
 class Dataset:
 	
-	def __init__(self, db, request='full',tf='1d', bars=0, value=None, pm=True,debug = 0,_print=False):
-		if request == 'full':
-			request = [[ticker,None] for ticker in db.get_ticker_list('full')]#fix goodsfsdisdfosdo
+	def __init__(self, db, request='full',tf='1d', bars=0, debug = 0, format = 'normalized'):
+		
+		if request == 'full' and format == 'normalized':
+			
+			if db.type == 'sql':
+				data = db.get_ds(tf)
+			elif db.type =='redis':
+				data = db.get_hash(tf)
+
+		else:
+			raise Exception('to be coded')
 		if debug:
-			request = request[:debug]
+			request = request[:debug,:,:]
 		if db.type == 'sql':
 			Data
-		'''# TEMP CODE STARTS HERE
-		num_cores = 6
-		requestLists = [[] for i in range(num_cores)]
-		for i in range(len(request)):
-			requestLists[i % num_cores].append(request[i])
-		# TEMP CODE ENDS HERE '''
+	
 		self.dfs = []
 		i = 0
 		for ticker,dt in request:
 			self.dfs.append(Data(db,ticker, tf, dt, bars, value, pm))
 			i += 1
 		self.bars = bars
-		self.len = len(self.dfs)
 		
-	def init_worker(lis):
-		return Data
 
 	def formatDataframesForMatch(self):
 		for df in self:
@@ -58,11 +58,12 @@ class Data:
 			i -= 1
 		return i
 
-	def __init__(self, db, ticker='QQQ', tf='d', dt=None, bars=0,value=None, pm=True, normalize = False):
+	def __init__(self, db, ticker='QQQ', tf='1d', dt=None, bars=0,value=None, pm=True, format = 'normal'):
 		if db.type == 'sql':
 			data = db.get_df(tf,ticker)
 		elif db.type == 'redis':
 			data = db.get_hash(tf,ticker)
+		print(data)
 		if dt:
 			index = Data.findex(data,dt)
 			data = data[:index+1]
@@ -80,8 +81,7 @@ class Data:
 			raise Exception('godgogogd ging ging')
 		self.data = data
 			
-		self.data = data
-		self.len = len(self.df)
+		self.len = len(self.data)
 		self.ticker = ticker
 		self.tf = tf
 		self.dt = dt
@@ -90,3 +90,4 @@ class Data:
 if __name__ == '__main__':
 	db = Database()
 	df = Data(db,'AAPL')
+	print(df.data)
