@@ -1,5 +1,4 @@
-from tasks.Data import Dataset
-from tasks.Database import Database, Cache
+from tasks.Data import Data
 import uvicorn, traceback, datetime, mysql, time
 from rq.local import LocalStack
 from rq.worker import Worker as _Worker
@@ -26,7 +25,7 @@ class Worker(_Worker):
 		while not is_redis_ready(redis_conn):
 			print("Waiting for Redis to load data...",flush = True)
 			time.sleep(1)
-		_pools.push({
+		_pools.push({ 
 			'mysql': Database(self.mysql_conn()),
 			'redis': Cache(redis_conn)
 		})
@@ -50,14 +49,9 @@ def get_pool():
 
 	
 if __name__ == '__main__':
-	try:
-		start = datetime.datetime.now()
-		db = Database()
-		ds = Dataset(db).data
-		Cache().set_hash(ds,'1dnormalized')
-		print(f'started backend in {datetime.datetime.now() - start}',flush = True)
-		
-	except Exception as e:
-		print(traceback.format_exc() + str(e),flush=True)
 
+	start = datetime.datetime.now()
+	db = Data()
+	db.init_cache()
+	print(f'started backend in {datetime.datetime.now() - start}',flush = True)
 	uvicorn.run("api:app", host="0.0.0.0", port=5057, reload=True)

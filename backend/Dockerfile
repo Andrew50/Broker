@@ -3,6 +3,7 @@ WORKDIR /home/myproj
 RUN pip install --upgrade pip
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
+ENV AM_I_IN_A_DOCKER_CONTAINER Yes
 COPY api.py ./
 COPY worker.py ./
 COPY worker_init.py ./
