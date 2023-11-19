@@ -1,6 +1,11 @@
 version: '3.6'
 
 services:
+
+
+
+
+
     redis:
         image: redis:latest
         ports:
@@ -25,7 +30,8 @@ services:
         - "5057:5057"
         working_dir: /home/myproj
         volumes:
-            - ./:/home/myproj
+            - ./:/home/myproj/tasks
+           # - ./:/home/myproj
         command: 
             python api.py
         networks:
@@ -37,6 +43,8 @@ services:
             dockerfile: ./Dockerfile
         working_dir: /home/myproj
         command: rq worker --url redis://redis:6379 my_queue
+        volumes: 
+            - ./:/home/myproj/models
         #command: python worker.py
         depends_on:
             - mysql

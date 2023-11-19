@@ -70,20 +70,25 @@ class Data:
 		def match_format(data):
 			close_prices = data[:, 4]
 			close_price_changes = (close_prices[1:] / close_prices[:-1]) - 1
-			volume = data[1:, 5]
+			#volume = data[1:, 5]
 			dt = data[1:, 0]
-			#return np.column_stack((close_prices[1:], close_price_changes, volume, dt))
 			return np.column_stack((dt, close_price_changes))
-			# length = len(data)
-			# d = np.zeros((length-1, 4))
-			# for i in range(1, length):
-			# 	close = data[i,4]
-			# 	d[i-1] = [close, (close/data[i-1,4]) - 1, data[i, 5], data[i, 0]]
-			# return d
+		
+		def screener_format(data):
+			dt = data[1:,0]
+			data = (data[1:,:5] / data[:-1,:5]) - 1
+			return np.column_stack((dt,data))
+
 		def set_hash(data, tf, form):
 			for ticker, df in data.items():
 				if tf in df:  # Check if tf data exists for the ticker
-					formatted_data = match_format(np.array(df[tf])) if form == 'match' else np.array(df[tf])
+					
+					if form == 'match':
+						formatted_data = match_format(np.array(df[tf])) 
+					elif form == 'screener':
+						formatted_data = screener_format(np.array(df[tf]))
+					elif form =='chart':
+						formatted_data = np.array(df[tf])
 					self.r.hset(tf + form, ticker, pickle.dumps(formatted_data))
 
 		
@@ -107,7 +112,7 @@ class Data:
 				organized_data[ticker][tf] = np.array(organized_data[ticker][tf], dtype=float)
 		#self.wait_for_redis()
 		for tf in ('1d',):#'1'):
-			for typ in ('chart', 'match'):
+			for typ in ('chart', 'match','screener'):
 				set_hash(organized_data, tf, typ)
 
 	def get_df(self, form='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
