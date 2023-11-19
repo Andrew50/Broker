@@ -1,5 +1,5 @@
 from re import L
-from Data import Database, Data, Cache
+from Data import Data, Dataset, Main
 import numpy as np
 import json
 import math, heapq
@@ -11,10 +11,12 @@ np_bars = 10
 class Match: 
             
     def compute(ds,ticker,tf,dt):
-        dt = Database.format_datetime(dt)
-        db = Database()
+        dt = Main.format_datetime(dt)
         y = Match.formatArray(Data(db,ticker, tf, dt,bars=np_bars+1).df, yValue=True)
         radius = math.ceil(np_bars/10)
+        
+
+
 
         upper, lower = Odtw.calcBounds(y, radius)
         cutoff = 0.02*100
@@ -25,7 +27,7 @@ class Match:
         top_scores = heapq.nsmallest(20, returns, key=lambda x: x[2])
         print(datetime.datetime.now() - start)
         print(top_scores)
-        return [[ticker,str(Database.format_datetime(timestamp, True)),round(score,2)] for ticker,timestamp, score in top_scores]
+        return [[ticker,str(Main.format_datetime(timestamp, True)),round(score,2)] for ticker,timestamp, score in top_scores]
        
 
     def formatArray(data, onlyCloseAndVol = True, yValue = False, whichColumn=4):
@@ -55,15 +57,14 @@ class Match:
         raise AttributeError
         return d 
 
-def get(args):
+def get(args,redis_conn,mysql_conn=None):
     start = datetime.datetime.now()
     ticker = args[0]
     dt = args[2]
     tf = args[1]
  
-    cache = Cache()
-    ds = cache.get_hash('ds')
-    y = cache.get_hash('ds','ticker')
+    ds = Dataset(redis_conn)
+    y = Data(redis_conn,ticker)
     match_data = Match.compute(ds,ticker,tf,dt)
     for i in range(len(match_data)):
         match_data[i][1] = match_data[i][1][:10]
@@ -71,4 +72,6 @@ def get(args):
     return json.dumps(match_data)
 
 if __name__ == '__main__':
-    print(get(['CELH','1d','2023-08-10']))
+    from Database import Cache
+    db = Cache()
+    print(get(['CELH','1d','2023-08-10'],db))

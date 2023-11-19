@@ -1,66 +1,120 @@
 
 import numpy as np
 import  pandas as pd, numpy as np, datetime, mysql.connector, pytz, redis, pickle,  multiprocessing
+import numpy as np
+import  pandas as pd, os, numpy as np, datetime, mysql.connector, pytz, redis, pickle,  multiprocessing
 from tqdm import tqdm
 from collections import defaultdict
 import yfinance as yf
+try:
+	from Database import Database
+except:
+	from .Database import Database
+#ben
 
-class Cache:
-
-	def get_hash(self, parent_key,child_key = None):
-		if child_key: 
-			hash_data = self.r.hget(parent_key,child_key)
-			return pickle.loads(hash_data)
-		else:  
-			hash_data = self.r.hgetall(parent_key)
-			return {field.decode(): pickle.loads(value) for field, value in pickle.loads(hash_data).items()}
-
-	def set_hash(self, data, parent_key):
-		for child_key, item in data.items():
-			serialized_item = pickle.dumps(item)
-			self.r.hset(parent_key, child_key, serialized_item)
-
-	def get(self, key):
-		serialized_data = self.r.get(key)
-		return pickle.loads(serialized_data)
-
-	def set(self, data, key):
-		serialized_data = pickle.dumps(data)
-		self.r.set(key, serialized_data)
-
-	def __init__(self,conn=None):
-		self.type = 'redis'
-		if conn:
-			self.r = conn
-		else:
-			try:
-				self.r = redis.Redis(host='redis', port=6379)
-				self.r.ping()
-			except Exception as e:
-				try:
-					self.r = redis.Redis(host='127.0.0.1', port=6379)
-					self.r.ping()
-					print('External Redis')
-				except Exception as e:
-					raise Exception('Redis Connection Failed')
-
-class Database:
+class Data:
 	
-	def __init__(self,conn=None):
-		self.type = 'sql'
-		if conn:
-			self._conn = conn
+	def __init__(self):
+		SECRET_KEY = os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False)
+		if SECRET_KEY: #inside container
+			self.r = redis.Redis(host='redis', port=6379)
+			self._conn = mysql.connector.connect(host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
 		else:
-			try:
-				self._conn = mysql.connector.connect(host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
-			except:
-				try:
-					self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g',database='broker')
-					print('External Data')
-				except:
-					print('broker database doesnt exist so trying to setup')
-					self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g')
-					self.setup()
+			self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g',database='broker')
+			self.r = redis.Redis(host='127.0.0.1', port=6379)
+
+	def formatDataframeForMatch(self, onlyCloseAndVol = True, whichColumn=4):
+		obj = False
+		if isinstance(self,Data):
+			obj = True
+			df = self.df
+		else:
+			df = self
+		length = len(df)
+		
+		if onlyCloseAndVol: 
+			if(length < 3): return np.zeros((1, 4))
+			d = np.zeros((length-1, 4))
+			for i in range(1, length):
+				close = df[i,whichColumn]
+				d[i-1] = [close, (close/df[i-1,whichColumn]) - 1, df[i, 5], df[i, 0]]
+			if not obj:
+				return d
+			self.df = d
+
+
+
+	def init_cache(self):
+		def match_format(data):
+			close_prices = data[:, 4]
+			close_price_changes = (close_prices[1:] / close_prices[:-1]) - 1
+			volume = data[1:, 5]
+			dt = data[1:, 0]
+			return np.column_stack((close_prices[1:], close_price_changes, volume, dt))
+			# length = len(data)
+			# d = np.zeros((length-1, 4))
+			# for i in range(1, length):
+			# 	close = data[i,4]
+			# 	d[i-1] = [close, (close/data[i-1,4]) - 1, data[i, 5], data[i, 0]]
+			# return d
+		def set_hash(data,tf,format):
+			for ticker, df in data:
+				self.r.hset(tf+format,ticker,pickle.dumps(df))
+		cursor = self._conn.cursor(buffered=True)
+		cursor.execute("SELECT * FROM dfs")
+		data = cursor.fetchall()
+		
+		organized_data = defaultdict(lambda: defaultdict(list))
+		for row in data:
+			ticker, tf, *rest = row
+			organized_data[ticker][tf].append(np.array(rest))
+			
+		set_hash(organized_data if tf == '1d','1d','chart')
+		set_hash(organized_data if tf == '1','1','chart')
+		roganized_data = match_format(organized_data)
+		set_hash(organized_data if tf == '1d','1d','match')
+		set_hash(organized_data if tf == '1','1','match')
+		
+
+	
+
+	def get_df(self, format='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
+		data = self.r.hget(tf+format,ticker)
+		data = pickle.loads(data)
+		if dt:
+			index = Data.findex(data,dt)
+			data = data[:index+1]
+		if bars:
+			data = data[-bars:]
+		if pm:
+			raise Exception('to code')
+		return data
+	
+	def get_ds(self,format = 'match',request='full',tf='1d', bars=0):
+		if bars != 0:
+			raise Exception('to code')
+		if request == 'full':
+			hash_data = self.r.hgetall(tf+format)
+			return {field.decode(): pickle.loads(value) for field, value in pickle.loads(hash_data).items()}
+		else:
+			raise Exception('to be coded')
+	
+	def findex(df, dt):
+		dt = Data.format_datetime(dt)
+		i = int(len(df)/2)		
+		k = int(i/2)
+		while k != 0:
+			date = df.index[i]
+			if date > dt:
+				i -= k
+			elif date < dt:
+				i += k
+			k = int(k/2)
+		while df.index[i] < dt:
+			i += 1
+		while df.index[i] > dt:
+			i -= 1
+		return i
 	
 	def get_ticker_list(self, type='full'):
 		cursor = self._conn.cursor(buffered=True)
@@ -73,68 +127,39 @@ class Database:
 			return data
 		elif type == 'current':
 			raise Exception('need current func. has to pull from tv or something god')###################################################################################################################################
-	# def get_df(self, ticker, tf='1d', dt=None, bars=0, pm=True):
-	# 	cursor = self._conn.cursor(buffered=True)
-	# 	if dt != None:
-	# 		dt = Database.format_datetime(dt)
-	# 		query = "SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s AND tf = %s ORDER BY dt ASC"
-	# 		cursor.execute(query, (ticker, tf, dt))
-	# 	else:
-	# 		query = "SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s AND tf = %s ORDER BY dt ASC"
-	# 		cursor.execute(query, (ticker, tf))
-		
-	# 	data = cursor.fetchall()
-	# 	if bars != 0:
-	# 		return np.array(data[-bars:])
-	# 	return np.array(data)#####new
-	def match_format(data):
-		length = len(data)
-		d = np.zeros((length-1, 4))
-		for i in range(1, length):
-			close = data[i,4]
-			d[i-1] = [close, (close/data[i-1,4]) - 1, data[i, 5], data[i, 0]]
-		return d
-
-	def get_df(self, tf,ticker,format='normal'):#, tf='1d', dt=None, bars=0, pm=True):
-
-		cursor = self._conn.cursor(buffered=True)
-		query = "SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s AND tf = %s"
-		print(ticker,tf)
-		cursor.execute(query, (ticker, tf))
-		data = np.array(cursor.fetchall())
-		if format == 'match':
-			data = Database.match_format(data)
-		#print(data)
-		#data = data[data[:, 0].argsort()]
-		#data = Database.process_ticker_data(ticker,tf,dt,data)
-		#if bars != 0:
-			#return np.array(data[-bars:])
-		return data
-
-	def get_ds(self,tf,format='normal'):
-		start = datetime.datetime.now()
-		cursor = self._conn.cursor(buffered=True)
-		query = "SELECT ticker, dt, open, high, low, close, volume FROM dfs WHERE tf = %s"
-		cursor.execute(query,(tf,))
-		data = cursor.fetchall()
-		print(datetime.datetime.now() - start, flush = True)
-		organized_data = defaultdict(list)
-		for row in data:
-			organized_data[row[0]].append(row[1:])
-
-		with multiprocessing.Pool() as pool:
-			results = pool.starmap(Database.process_ticker_data, [(format, organized_data[ticker]) for ticker in organized_data])
-			data_dict = dict(zip(organized_data.keys(), results))
-
-		return data_dict
-
-	def process_ticker_data(format, data):
-		data = np.array(data)
-		if format == 'match':
-			data = Database.match_format(data)
+	
+	def format_datetime(self,dt,reverse=False):
+		if reverse:
+			return datetime.datetime.fromtimestamp(dt)
 			
-		#return data[data[:, 0].argsort()]
-		
+		if type(dt) == int or type(dt) == float:
+			return dt
+		if dt is None: return None
+		if dt == 'current': return datetime.datetime.now(pytz.timezone('EST'))
+		if isinstance(dt, str):
+			try: dt = datetime.datetime.strptime(dt, '%Y-%m-%d')
+			except: dt = datetime.datetime.strptime(dt, '%Y-%m-%d %H:%M:%S')
+		time = datetime.time(dt.hour, dt.minute, 0)
+		dt = datetime.datetime.combine(dt.date(), time)
+		if dt.hour == 0 and dt.minute == 0:
+			time = datetime.time(9, 30, 0)
+			dt = datetime.datetime.combine(dt.date(), time)
+		#return dt
+		dt = dt.timestamp()
+		return dt
+
+	def is_market_open(self=None):
+		if (datetime.datetime.now().weekday() >= 5):
+			return False
+		dt = datetime.datetime.now(pytz.timezone('US/Eastern'))
+		hour = dt.hour
+		minute = dt.minute
+		if hour >= 10 and hour <= 16:
+			return True
+		elif hour == 9 and minute >= 30:
+			return True
+		return False
+
 
 	def get_user(self,email,password):
 		with self._conn.cursor(buffered=True) as cursor:
@@ -366,41 +391,6 @@ class Database:
 							print(e)
 		self.update()
 	
-	def is_market_open(self=None):
-		if (datetime.datetime.now().weekday() >= 5):
-			return False
-		dt = datetime.datetime.now(pytz.timezone('US/Eastern'))
-		hour = dt.hour
-		minute = dt.minute
-		if hour >= 10 and hour <= 16:
-			return True
-		elif hour == 9 and minute >= 30:
-			return True
-		return False
-
-
-	
-	def format_datetime(dt,reverse=False):
-		if reverse:
-			return datetime.datetime.fromtimestamp(dt)
-			
-		if type(dt) == int or type(dt) == float:
-			return dt
-		if dt is None: return None
-		if dt == 'current': return datetime.datetime.now(pytz.timezone('EST'))
-		if isinstance(dt, str):
-			try: dt = datetime.datetime.strptime(dt, '%Y-%m-%d')
-			except: dt = datetime.datetime.strptime(dt, '%Y-%m-%d %H:%M:%S')
-		time = datetime.time(dt.hour, dt.minute, 0)
-		dt = datetime.datetime.combine(dt.date(), time)
-		if dt.hour == 0 and dt.minute == 0:
-			time = datetime.time(9, 30, 0)
-			dt = datetime.datetime.combine(dt.date(), time)
-		#return dt
-		dt = dt.timestamp()
-		return dt
-	
-
 	def train(self, st, use, epochs): 
 		db.consolidate_database()
 		allsetups = pd.read_feather('local/data/' + st + '.feather').sort_values(
