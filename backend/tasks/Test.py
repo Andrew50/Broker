@@ -19,6 +19,6 @@
 # 		try:
 # 			df = pd.read_feather(path)
 
-from Data import Cache
+from Data import Data
 
-print(Cache().get_hash('ds','AAPL'))
+print(Data().get_ds(form='match'))

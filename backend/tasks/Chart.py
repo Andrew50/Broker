@@ -2,21 +2,18 @@ import json
 import pandas as pd
 
 #try:
-from Data import Data, Database, Cache
+from Data import Data
 #except:
     #from .Data import Data, Database, Cache
     
     #god
 
-def get(args):
+def get(args,data):
     args += ['MSFT','1d',None][len(args):]
     ticker = args[0]
-    
     tf = args[1]
-    dt = Database.format_datetime(args[2])
-    #db = Database()
-    #df = db.get_df(ticker,tf,dt)
-    df = Cache().get_hash('ds',ticker)
+    dt = args[2]
+    df = data.get_df('chart',ticker,tf,dt)
     list_of_lists = df.tolist()[:]
 
     # Convert the first column (Unix timestamps) to string datetimes

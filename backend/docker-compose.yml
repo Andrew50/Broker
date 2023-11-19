@@ -27,7 +27,7 @@ services:
         volumes:
             - ./:/home/myproj
         command: 
-            python startup.py
+            python api.py
         networks:
             - my-network
 
@@ -36,7 +36,11 @@ services:
             context: ./
             dockerfile: ./Dockerfile
         working_dir: /home/myproj
-        command: rq worker --url redis://redis:6379 my_queue
+        #command: rq worker --url redis://redis:6379 my_queue
+        command: python worker.py
+        depends_on:
+            - mysql
+            - redis
         networks:
         - my-network
 
