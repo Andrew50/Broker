@@ -10,9 +10,7 @@ from Data import Data
 
 def get(args,data):
     args += ['MSFT','1d',None][len(args):]
-    ticker = args[0]
-    tf = args[1]
-    dt = args[2]
+    ticker,tf,dt = args
     df = data.get_df('chart',ticker,tf,dt)
     list_of_lists = df.tolist()[:]
 
