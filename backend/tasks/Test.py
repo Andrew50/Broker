@@ -19,6 +19,6 @@
 # 		try:
 # 			df = pd.read_feather(path)
 
-from Database import Cache
+from Data import Data
 
-print(Cache().get_hash('1dnormalized'))
+print(Data().get_ds(form='match'))

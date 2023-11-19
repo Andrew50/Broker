@@ -1,18 +1,24 @@
-import time,importlib,sys,traceback, redis, pickle
-sys.path.append('./tasks')
-from startup import get_pool
+from tasks.Data import Data
+import time
+from rq.local import LocalStack
+from rq.worker import Worker as _Worker
+from redis import Redis, RedisError
+from rq import Connection, Queue
+from redis import Redis
 
-def run_task(request='Test_get'):
-	data = get_pool()
-	#data = pool['data']
-	try:
-		split = request.split('_')
-		func = split[0]
-		args = split[1:]
-		module_name, function_name = func.split('-')
-		module = importlib.import_module(module_name)
-		func = getattr(module, function_name, None)
-		return func(args,data)
-	except Exception as e:
-		print(traceback.format_exc() + str(e),flush=True)
-		return 'failed'
+#_pools = LocalStack()
+
+class Worker(_Worker):
+	def work(self, *args, **kwargs):
+		Data()
+		#_pools.push({'data':Data()})
+		return super(Worker, self).work(*args, **kwargs)
+
+def get_pool():
+	return _pools.top
+
+if __name__ == '__main__':
+	with Connection(Redis(host='redis', port=6379)):
+		qs = [Queue('my_queue')]  # List your queues
+		w = Worker(qs)
+		w.work()

@@ -2,10 +2,11 @@
 import numpy as np
 import  pandas as pd, numpy as np, datetime, mysql.connector, pytz, redis, pickle,  multiprocessing
 import numpy as np
-import  pandas as pd, os, numpy as np, datetime, mysql.connector, pytz, redis, pickle,  multiprocessing
+import  pandas as pd, os, numpy as np, time,datetime, mysql.connector, pytz, redis, pickle,  multiprocessing
 from tqdm import tqdm
 from collections import defaultdict
 import yfinance as yf
+from mysql.connector import errorcode
 
 #ben
 
@@ -15,10 +16,33 @@ class Data:
 		SECRET_KEY = os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False)
 		if SECRET_KEY: #inside container
 			self.r = redis.Redis(host='redis', port=6379)
-			self._conn = mysql.connector.connect(host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
+			while True: #wait for redis to be ready
+				try:
+					if not self.r.info()['loading'] == 0:
+						raise Exception('gosh')
+					break
+				except:
+					print('waiting for redis',flush=True)
+					time.sleep(1)
+			while True:
+				try:
+					self._conn = mysql.connector.connect(host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
+					break
+				except mysql.connector.errors.DatabaseError as e:
+					if (e.errno != errorcode.ER_ACCESS_DENIED_ERROR
+					and e.errno != errorcode.ER_BAD_DB_ERROR):
+						print('waiting for mysql',flush=True)
+						time.sleep(1)
+					else:
+						raise Exception(e)
+			
 		else:
 			self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g',database='broker')
 			self.r = redis.Redis(host='127.0.0.1', port=6379)
+				
+
+
+		
 
 	def formatDataframeForMatch(self, onlyCloseAndVol = True, whichColumn=4):
 		obj = False
@@ -40,29 +64,36 @@ class Data:
 			self.df = d
 
 
-
-	def init_cache(self):
+	def init_cache(self,debug = False):
+		
 		def match_format(data):
 			close_prices = data[:, 4]
 			close_price_changes = (close_prices[1:] / close_prices[:-1]) - 1
 			volume = data[1:, 5]
 			dt = data[1:, 0]
-			return np.column_stack((close_prices[1:], close_price_changes, volume, dt))
+			#return np.column_stack((close_prices[1:], close_price_changes, volume, dt))
+			return np.column_stack((dt, close_price_changes))
 			# length = len(data)
 			# d = np.zeros((length-1, 4))
 			# for i in range(1, length):
 			# 	close = data[i,4]
 			# 	d[i-1] = [close, (close/data[i-1,4]) - 1, data[i, 5], data[i, 0]]
 			# return d
-		def set_hash(self, data, tf, format):
+		def set_hash(data, tf, form):
 			for ticker, df in data.items():
 				if tf in df:  # Check if tf data exists for the ticker
-					formatted_data = self.match_format(np.array(df[tf])) if format == 'match' else np.array(df[tf])
-					self.r.hset(tf + format, ticker, pickle.dumps(formatted_data))
+					formatted_data = match_format(np.array(df[tf])) if form == 'match' else np.array(df[tf])
+					self.r.hset(tf + form, ticker, pickle.dumps(formatted_data))
 
-					
+		
 		cursor = self._conn.cursor(buffered=True)
-		cursor.execute("SELECT * FROM dfs")
+		if debug:
+			cursor.execute("SELECT COUNT(*) FROM dfs")
+			total_count = cursor.fetchone()[0]
+			limit = int(total_count * 0.05)
+			cursor.execute(f"SELECT * FROM dfs LIMIT {limit}")
+		else:
+			cursor.execute("SELECT * FROM dfs")
 		data = cursor.fetchall()
 		
 		organized_data = defaultdict(lambda: defaultdict(list))
@@ -70,34 +101,32 @@ class Data:
 			ticker, tf, *rest = row
 			organized_data[ticker][tf].append(rest)
 
-
 		for ticker in organized_data:
 			for tf in organized_data[ticker]:
 				organized_data[ticker][tf] = np.array(organized_data[ticker][tf], dtype=float)
+		#self.wait_for_redis()
 		for tf in ('1d',):#'1'):
 			for typ in ('chart', 'match'):
 				set_hash(organized_data, tf, typ)
 
-	
-
-	def get_df(self, format='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
-		data = self.r.hget(tf+format,ticker)
+	def get_df(self, form='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
+		data = self.r.hget(tf+form,ticker)
 		data = pickle.loads(data)
 		if dt:
 			index = Data.findex(data,dt)
 			data = data[:index+1]
 		if bars:
 			data = data[-bars:]
-		if pm:
+		if not pm:
 			raise Exception('to code')
 		return data
 	
-	def get_ds(self,format = 'match',request='full',tf='1d', bars=0):
+	def get_ds(self,form = 'match',request='full',tf='1d', bars=0):
 		if bars != 0:
 			raise Exception('to code')
 		if request == 'full':
-			hash_data = self.r.hgetall(tf+format)
-			return {field.decode(): pickle.loads(value) for field, value in pickle.loads(hash_data).items()}
+			hash_data = self.r.hgetall(tf+form)
+			return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
 		else:
 			raise Exception('to be coded')
 	
@@ -105,16 +134,18 @@ class Data:
 		dt = Data.format_datetime(dt)
 		i = int(len(df)/2)		
 		k = int(i/2)
+		print(df,flush = True)
+		print(dt,flush = True)
 		while k != 0:
-			date = df.index[i]
+			date = df[i,0]
 			if date > dt:
 				i -= k
 			elif date < dt:
 				i += k
 			k = int(k/2)
-		while df.index[i] < dt:
+		while df[i,0] < dt:
 			i += 1
-		while df.index[i] > dt:
+		while df[i,0] > dt:
 			i -= 1
 		return i
 	
@@ -130,7 +161,7 @@ class Data:
 		elif type == 'current':
 			raise Exception('need current func. has to pull from tv or something god')###################################################################################################################################
 	
-	def format_datetime(self,dt,reverse=False):
+	def format_datetime(dt,reverse=False):
 		if reverse:
 			return datetime.datetime.fromtimestamp(dt)
 			
@@ -305,6 +336,8 @@ class Data:
 					except Exception as e:
 						print(f'{ticker} failed: {e}')
 						print(ydf)
+						
+		self.init_cache()
 
 	def close_connection(self):
 		self._conn.close()
