@@ -1,4 +1,4 @@
-import heapq
+import heapq, json
 
 class Screener:
 
@@ -25,7 +25,7 @@ class Screener:
 				results.append([ticker,score])
 			i += 1
 		results = heapq.nsmallest(20, results, key=lambda x: x[0])
-		return 
+		return json.dumps(results)
 			
 if __name__ == '__main__':
 	from Data import Data

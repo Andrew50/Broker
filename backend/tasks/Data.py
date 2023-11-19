@@ -7,6 +7,7 @@ from tqdm import tqdm
 from collections import defaultdict
 import yfinance as yf
 from mysql.connector import errorcode
+from tensorflow.keras.models import Sequential, load_model
 
 #ben
 
@@ -241,7 +242,8 @@ class Data:
 				cursor.execute('SELECT tf,model from setups WHERE user_id = %s AND name = %s',(user_id,st))
 			else:
 				cursor.execute('SELECT tf,model from setups WHERE user_id = %s',(user_id,))
-			return cursor.fetchone()[0]
+			cursor.fetchone()[0]
+			return
 		
 	def set_model(self,user_id):
 		pass
