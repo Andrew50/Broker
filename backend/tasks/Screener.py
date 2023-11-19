@@ -1,53 +1,28 @@
 
 
+class Screener:
+
+	def load_score(self, st, model=None):
+		if model == None:
+			model = Main.load_model(st)
+		returns = []
+		for df, index in self.np:
+			score = model.predict(df)
+			returns.append([self.ticker, self.df.index[index], st, score])
+		self.score = returns
+		return returns
 
 
 
 
-from Data import Database, Dataset
-
-
-def load_score(self, st, model=None):
-	if model == None:
-		model = Main.load_model(st)
-	returns = []
-	for df, index in self.np:
-		score = model.predict(df)
-		returns.append([self.ticker, self.df.index[index], st, score])
-	self.score = returns
-	return returns
-
-
-
-
-
-# class Screener:
-	
-
-# 	def score(ds):
+	def get(args,data):
+		args += ['current',1,None][len(args):]
+		dt = args[0]
+		user_id = args[1]
+		dt = args[2]
 		
-
-
-
-
-# 		if model == None:
-# 			model = Main.load_model(st)
-# 		returns = []
-# 		for df, index in self.np:
-# 			score = model.predict(df)
-# 			returns.append([self.ticker, self.df.index[index], st, score])
-# 		self.score = returns
-# 		return returns
-		
-
-# 	#def get(dt = None, ticker = None, tf = 'd',browser = None, fpath = None):
-# 	def get(user_id,tf = '1d',dt = None):
-# 		db = Database()
-# 		ds = Dataset(db, dt = db.format_date(dt))
-# 		table = None
-# 		st = main.get_config('Screener active_setup_list').split(',')
-# 		setups = main.score_dataset(df,st)
-		
-# 		for ticker, dt, st, score in setups:
 			
-
+if __name__ == '__main__':
+	from Data import Data
+	data = Data()
+	print(Screener.get(['current',1],data))
