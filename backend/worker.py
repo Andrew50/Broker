@@ -3,8 +3,8 @@ sys.path.append('./tasks')
 from startup import get_pool
 
 def run_task(request='Test_get'):
-	pool = get_pool()
-	data = pool['data']
+	data = get_pool()
+	#data = pool['data']
 	try:
 		split = request.split('_')
 		func = split[0]

@@ -12,7 +12,7 @@ def is_redis_ready(redis_conn):
         return False
 
 # Replace 'your_redis_host' and 'your_redis_port' with your actual Redis host and port
-redis_conn = Redis(host='your_redis_host', port='your_redis_port')
+#redis_conn = Redis(host='your_redis_host', port='your_redis_port')
 
 # Wait for Redis to become ready before proceeding
 
@@ -24,21 +24,10 @@ class Worker(_Worker):
 		redis_conn = self.redis_conn()
 		while not is_redis_ready(redis_conn):
 			print("Waiting for Redis to load data...",flush = True)
-			time.sleep(1)
-		_pools.push({ 
-			'mysql': Database(self.mysql_conn()),
-			'redis': Cache(redis_conn)
-		})
+			time.sleep(.5)
+		#_pools.push({ 'data':Data()})
+		_pools.push(Data())
 		return super(Worker, self).work(*args, **kwargs)
-
-	@staticmethod
-	def mysql_conn():
-		return mysql.connector.connect(
-			host='mysql',
-			port='3306',
-			user='root',
-			password='7+WCy76_2$%g',
-			database='broker')
 
 	@staticmethod
 	def redis_conn():
