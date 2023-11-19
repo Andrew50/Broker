@@ -2,21 +2,23 @@ import json
 import pandas as pd
 
 #try:
-from Data import Data, Database, Cache
+from Data import Data
 #except:
     #from .Data import Data, Database, Cache
     
     #god
 
-def get(args):
+def get(args,redis_conn,mysql_conn):
     args += ['MSFT','1d',None][len(args):]
     ticker = args[0]
-    
     tf = args[1]
-    dt = Database.format_datetime(args[2])
+    dt = args[2]
+    #dt = Database.format_datetime(args[2])
     #db = Database()
     #df = db.get_df(ticker,tf,dt)
-    df = Cache().get_hash('ds',ticker)
+    #df = Cache().get_hash('ds',ticker)
+    try: df = Data(redis_conn,ticker,tf,dt)
+    except: df = Data(mysql_conn,ticker,tf,dt)
     list_of_lists = df.tolist()[:]
 
     # Convert the first column (Unix timestamps) to string datetimes

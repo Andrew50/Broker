@@ -19,6 +19,6 @@
 # 		try:
 # 			df = pd.read_feather(path)
 
-from Data import Cache
+from Database import Cache
 
-print(Cache().get_hash('ds','AAPL'))
+print(Cache().get_hash('1dnormalized'))
