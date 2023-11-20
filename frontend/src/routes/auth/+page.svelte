@@ -1,29 +1,37 @@
 <script>
   import { goto } from '$app/navigation';
   import { writable } from 'svelte/store';
-  import {backend_request} from '../store.js'
-    import Chart from '../chart/Chart.svelte';
+  import {data_request,auth_data} from '../store.js'
+  
 
   let username = '';
   let password = '';
   const errorMessage = writable('');
 
-  async function signIn() {
-    // Placeholder for actual sign-in logic
-    back
-    const isValid = username === 'user' && password === 'pass'; // Example validation, replace with real logic
+  async function signIn(username, password) {
+    try {
+        const response = await data_request('signin', username, password);
 
-    if (isValid) {
-      await goto('/chart');
-    } else {
-      errorMessage.set('Invalid credentials');
-      password = ''; // Clear the password field
+        if (response && response.access_token) {
+            auth_data.set(response.access_token); // Store the received token
+            await goto('/chart');
+        } else {
+            throw new Error('Invalid response from server');
+        }
+    } catch (error) {
+        errorMessage.set(error.message || 'Failed to sign in');
+        password = ''; // Clear the password field
     }
-  }
+}
 
-  function navigateToCreateAccount() {
-    goto('/create-account'); // Navigate to the create account page
-  }
+  async function createAccount(username, password) {
+    try {
+        await data_request('signup', username, password);
+        await signIn(username, password); // Automatically sign in after account creation
+    } catch (error) {
+        errorMessage.set(error.message || 'Failed to create account');
+    }
+}
 </script>
 
 <main>
@@ -32,7 +40,7 @@
     <input type="text" placeholder="Username" bind:value={username} />
     <input type="password" placeholder="Password" bind:value={password} />
     <button on:click={signIn}>Sign In</button>
-    <button on:click={navigateToCreateAccount} class="create-account-btn">Create Account</button>
+    <button on:click={createAccount} class="create-account-btn">Create Account</button>
     <p class="error-message">{$errorMessage}</p>
   </div>
 </main>

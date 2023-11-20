@@ -12,19 +12,20 @@ from pydantic import BaseModel
 from typing import Optional
 import jwt
 sys.path.append('./tasks')
-#from startup import get_pool
-from worker import get_pool
+import asyncio
 from tasks.Data import Data
 
 data = Data()
 
-def run_task(request):
-    # = get_pool()['data']
+SECRET_KEY = "your_jwt_secret_key"
+
+#def run_task(request):
+def run_task(func,args):
     print(data,flush=True)
     try:
-        split = request.split('_')
-        func = split[0]
-        args = split[1:]
+        #split = request.split('_')
+        #func = split[0]
+        #args = split[1:]
         module_name, function_name = func.split('-')
         module = importlib.import_module(module_name)
         func = getattr(module, function_name, None)
@@ -35,9 +36,9 @@ def run_task(request):
     
 #async def run_data(request):
 
-class UserLogin(BaseModel):
-    username: str
-    password: str
+#class UserLogin(BaseModel):
+    #username: str
+    #password: str
     
 def create_jwt_token(user_id: str) -> str:
     payload = {
@@ -48,52 +49,56 @@ def create_jwt_token(user_id: str) -> str:
 
 def create_app():
     app = FastAPI()
+    origins = ["http://localhost:5173","http://localhost:5057",]
 
-    origins = [
-        "http://localhost:5173",
-        "http://localhost:5057",
-    ]
-
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    app.add_middleware(CORSMiddleware,allow_origins=origins,
+        allow_credentials=True,allow_methods=["*"],allow_headers=["*"],)
 
     redis_conn = Redis(host='redis', port=6379)
     q = Queue('my_queue', connection=redis_conn)
     
-    @app.post('/data/{request}')
+    @app.post('/data',status_code=201)
     async def data_request(request):
-        
-
-    @app.post("/login")
-    async def login(user_login: UserLogin):
-        #user_id = await verify_user_credentials(user_login.username, user_login.password)
-        user_id = await data.get_user(
-        if user_id is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-
-        token = create_jwt_token(user_id)
-        return {"access_token": token, "token_type": "bearer"}
-
-    @app.post('/backend/{request}', status_code=201)
-    def backend_request(request):
-        job = q.enqueue(run_task, kwargs={'request': request}, timeout=600)
+        body = await request.json()
+        func = body.get('function')
+        args = body.get('arguments', [])
+        if func == 'signup':
+            await data.set_user(email=args[0],password=args[1])
+            func = 'signin'
+        if func == 'signin':
+            user_id = await data.get_user(args)
+            if user_id is None:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+            token = create_jwt_token(user_id)
+            return {"access_token": token, "token_type": "bearer"}
+        else:
+            raise Exception('to code')
+            
+    @app.post('/backend', status_code=201)
+    async def backend_request(request):
+        body = await request.json()
+        func = body.get('function')
+        args = body.get('arguments', [])
+        job = q.enqueue(run_task, kwargs={'func': func, 'args': args}, timeout=600)
         return {'task_id': job.get_id()}
+    
+    
+    async def fetch_job(job_id):
+        loop = asyncio.get_event_loop()
+        job = await loop.run_in_executor(None, Job.fetch, job_id, redis_conn)
+        return job
 
     @app.get('/poll/{job_id}')
-    def get_result(job_id: str):
-        job = Job.fetch(job_id, connection=redis_conn)
+    async def get_result(job_id: str):
+        job = await fetch_job(job_id)
+    
         if job.is_finished:
             return {"status": "done", "result": job.result}
         elif job.is_failed:
             return {"status": "failed"}
         else:
             return {"status": "in progress"}
-
+            
     return app
 
 app = create_app()

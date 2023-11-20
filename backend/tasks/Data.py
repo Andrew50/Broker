@@ -6,9 +6,10 @@ import  pandas as pd, os, numpy as np, time,datetime, mysql.connector, pytz, red
 from tqdm import tqdm
 from collections import defaultdict
 import yfinance as yf
+import asyncio
 from mysql.connector import errorcode
 from tensorflow.keras.models import Sequential, load_model
-#import aiomysql
+import aiomysql
 
 #ben
 
@@ -38,12 +39,17 @@ class Data:
 					else:
 						raise Exception(e)
 			
+			
 		else:
 			self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g',database='broker')
 			self.r = redis.Redis(host='127.0.0.1', port=6379)
 				
+		self.loop = asyncio.get_event_loop()
+		self.loop.run_until_complete(self.init_async_conn(SECRET_KEY))
 
-
+	async def init_async_conn(self,in_container):
+		if in_container: self._conn_async = await aiomysql.connect(host='mysql', port='3306', user='root', password='7+WCy76_2$%g', db='broker')
+		else: self._conn_async = await aiomysql.connect(host='localhost', port='3307', user='root', password='7+WCy76_2$%g', db='broker')
 		
 
 	def formatDataframeForMatch(self, onlyCloseAndVol = True, whichColumn=4):
@@ -201,16 +207,16 @@ class Data:
 		return False
 
 
-	def get_user(self,email,password):
-		with self._conn.cursor(buffered=True) as cursor:
-			cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
-			user_data = cursor.fetchone()
-			if len(user_data) > 0:
-				if password == user_data[2]:
-					return user_data[0]
+	async def get_user(self, email, password):
+		async with self._conn_async.cursor() as cursor:
+			await cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+			user_data = await cursor.fetchone()
+			if user_data and len(user_data) > 0:
+				if password == user_data[2]:  # Assuming password is at index 2
+					return user_data[0]   
 	
-	def set_user(self, user_id = None, email=None, password=None, settings_string=None,delete = False):
-		with self._conn.cursor(buffered=True) as cursor:
+	async def set_user(self, user_id=None, email=None, password=None, settings_string=None, delete=False):
+		async with self._conn_async.cursor() as cursor:
 			if user_id is not None:
 				if not delete:
 					fields = []
@@ -226,15 +232,15 @@ class Data:
 						values.append(settings_string)
 					if fields:
 						update_query = f"UPDATE users SET {', '.join(fields)} WHERE id = %s"
-						values.append(user_id)  
-						cursor.execute(update_query, values)
-						self._conn.commit()
+						values.append(user_id)
+						await cursor.execute(update_query, values)
 				else:
-					cursor.execute("DELETE FROM users WHERE id = %s",(user_id,))
+					await cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
 			else:
 				insert_query = "INSERT INTO users (email, password, settings) VALUES (%s, %s, %s)"
-				cursor.execute(insert_query, (email, password, settings_string if settings_string is not None else ''))
-				self._conn.commit()
+				await cursor.execute(insert_query, (email, password, settings_string if settings_string is not None else ''))
+
+			await self._conn_async.commit()
 				
 	def get_settings(self,user_id):
 		with self._conn.cursor(buffered=True) as cursor:
@@ -280,7 +286,7 @@ class Data:
 		with self._conn.cursor(buffered=True) as cursor:
 
 			def findex(df, dt):
-				dt = Database.format_datetime(dt)
+				dt = Data.format_datetime(dt)
 				i = int(len(df)/2)		
 				k = int(i/2)
 				while k != 0:
