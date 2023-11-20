@@ -11,7 +11,7 @@ services:
         hostname: redis
        # volumes:
        #   - ./790:/redis
-        command: redis-server #./redis/redis.conf    
+        #command: redis-server #./redis/redis.conf    
   
 
     myproj_api:

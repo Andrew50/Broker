@@ -1,4 +1,3 @@
-
 import numpy as np
 import  pandas as pd, numpy as np, datetime, mysql.connector, pytz, redis, pickle,  multiprocessing
 import numpy as np
@@ -8,10 +7,8 @@ from collections import defaultdict
 import yfinance as yf
 import asyncio
 from mysql.connector import errorcode
-from tensorflow.keras.models import Sequential, load_model
 import aiomysql
 
-#ben
 
 class Data:
 	

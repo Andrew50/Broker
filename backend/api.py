@@ -8,13 +8,12 @@ import importlib
 import sys
 import traceback
 from fastapi import FastAPI, HTTPException, status
-from pydantic import BaseModel
-from typing import Optional
 import jwt
 sys.path.append('./tasks')
-import asyncio
+import asyncio, time
 from tasks.Data import Data
 
+time.sleep(5)
 data = Data()
 
 SECRET_KEY = "your_jwt_secret_key"
