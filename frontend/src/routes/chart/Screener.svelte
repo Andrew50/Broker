@@ -2,7 +2,7 @@
     let innerWidth; 
     let innerHeight
     export let visible = false;
-    import {screener_data, backend_request, chart_data} from './store.js';
+    import {screener_data, backend_request, chart_data} from '../store.js';
 </script>
 
 <div class="popout-menu"  style="min-height: {innerHeight}px;" class:visible={visible}>

@@ -1,5 +1,5 @@
 <script>
-    import { chart_data,  backend_request, match_data} from './store.js';
+    import { chart_data,  backend_request, match_data} from '../store.js';
     let ticker = 'JBL'
     let tf = '1d' 
     let dt = '2023-10-03'

@@ -8,7 +8,7 @@
 
 	import {ColorType, CrosshairMode} from 'lightweight-charts';
     import {Chart, CandlestickSeries} from 'svelte-lightweight-charts';
-	import {chart_data, backend_request} from './store.js';
+	import {chart_data, backend_request} from '../store.js';
 
 	let innerWidth;
     let innerHeight;
