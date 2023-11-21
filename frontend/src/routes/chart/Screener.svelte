@@ -20,29 +20,7 @@
 
 
 <style>
-    /* .screener-button {
-    position: fixed;
-    right: 20px;
-    top: 120px;  You can adjust the top position as needed 
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    cursor: pointer;
-    } */
-    .popout-menu {
-    display: none;
-    position: fixed;
-    right: 70px; /* Offset from the right side */
-    top: 0; /* You can adjust the top position as needed */
-    background-color: #f9f9f9;
-    min-width: 3px;
-    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-    }
-    .popout-menu.visible {
-    display: block;
-    }
-
+@import './style.css';
 </style>
 
 

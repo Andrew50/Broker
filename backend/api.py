@@ -1,9 +1,11 @@
-from fastapi import FastAPI, HTTPException, status, Request as FastAPIRequest
+from fastapi import FastAPI, HTTPException, status, Request as FastAPIRequest, Depends, Header
 import datetime, uvicorn, importlib, sys, traceback, jwt, asyncio, time, json
 from redis import Redis
 from rq import Queue
 from rq.job import Job
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 from pydantic import BaseModel
 sys.path.append('./tasks')
 SECRET_KEY = "god"
@@ -12,6 +14,18 @@ from Data import data
 class Request(BaseModel):
     function: str
     arguments: list
+    
+
+
+async def validate_auth(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_id = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        return user_id
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
 
 def run_task(func,args):
     try:
@@ -40,8 +54,9 @@ def create_app():
     async def startup_event():
         app.state.data = data
         await app.state.data.init_async_conn()
-    
-    @app.post('/data',status_code=201)
+        
+
+    @app.post('/public',status_code=201)
     async def data_request(request_model: Request, request: FastAPIRequest):
         data = request.app.state.data
         func, args = request_model.function, request_model.arguments
@@ -53,17 +68,37 @@ def create_app():
             if user_id is None:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
             token = create_jwt_token(user_id)
-            return {"access_token": token, "token_type": "bearer"}
-        elif func == 'chart':
+            setups = await data.get_setups(user_id)
+            settings = await data.get_settings(user_id)
+            return {"access_token": token, "token_type": "bearer","setups":setups,"settings":settings}
+        
+        else:
+            raise Exception('to code' + func)
+
+
+
+    
+    @app.post('/data',status_code=201)
+    async def data_request(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
+        data = request.app.state.data
+        func, args = request_model.function, request_model.arguments
+
+        if func == 'chart':
             args += ['MSFT','1d',None][len(args):]
             ticker,tf,dt = args
             val = await data.get_df('chart',ticker,tf,dt)
             return val
+        elif func == 'create setup':
+            st, tf = args
+            await data.set_setup(user_id,st,tf)
+        elif func == 'delete setup':
+            st, = args
+            await data.set_setup(user_id,st,delete =True)
         else:
-            raise Exception('to code')
+            raise Exception('to code' + func)
             
     @app.post('/backend', status_code=201)
-    async def backend_request(request_model: Request, request: FastAPIRequest):
+    async def backend_request(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
         func, args = request_model.function, request_model.arguments
         job = q.enqueue(run_task, kwargs={'func': func, 'args': args}, timeout=600)
         return {'task_id': job.get_id()}

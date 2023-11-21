@@ -1,20 +1,28 @@
 <script>
   import { goto } from '$app/navigation';
   import { writable } from 'svelte/store';
-  import {data_request,auth_data} from '../store.js'
+  import {auth_data,setups_list,settings,public_request} from '../store.js'
   
 
   let username = '';
   let password = '';
   const errorMessage = writable('');
 
+  function handleKeydown(event) {
+    if (event.key === 'Enter') {
+      signIn(username, password);
+    }
+  }
+
   async function signIn(username, password) {
     try {
 
-        const response = await data_request(null,'signin', username, password);
+        const response = await public_request(null,'signin', username, password);
 
         if (response && response.access_token) {
             auth_data.set(response.access_token);
+            settings.set(response.settings);
+            setups_list.set(response.setups);
             await goto('/chart');
         } else {
             throw new Error('Invalid Credentials');
@@ -35,13 +43,23 @@
 }
 </script>
 
-<main>
+<!-- <main>
   <div class="container">
     <h1>Sign In</h1>
     <input type="text" placeholder="Username" bind:value={username} />
     <input type="password" placeholder="Password" bind:value={password} />
     <button on:click={signIn(username,password)}>Sign In</button>
     <button on:click={signUp(username,password)} class="create-account-btn">Create Account</button>
+    <p class="error-message">{$errorMessage}</p>
+  </div>
+</main> -->
+<main>
+  <div class="container">
+    <h1>Sign In</h1>
+    <input type="text" placeholder="Username" bind:value={username} on:keydown={handleKeydown} />
+    <input type="password" placeholder="Password" bind:value={password} on:keydown={handleKeydown} />
+    <button on:click={() => signIn(username, password)}>Sign In</button>
+    <button on:click={() => signUp(username, password)} class="create-account-btn">Create Account</button>
     <p class="error-message">{$errorMessage}</p>
   </div>
 </main>

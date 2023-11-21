@@ -109,7 +109,7 @@ function closePopup() {
 
 </script>
 
-<Chart width={innerWidth - 300} height={innerHeight - 40} {...options} on:click={onChartClick} 
+<Chart width={innerWidth - 400} height={innerHeight - 20} {...options} on:click={onChartClick} 
     on:blur={onChartBlur}>
     <CandlestickSeries
         data={$chart_data}

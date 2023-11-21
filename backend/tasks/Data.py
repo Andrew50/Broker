@@ -18,8 +18,7 @@ class Data:
 			self.r = redis.Redis(host='redis', port=6379)
 			while True: #wait for redis to be ready
 				try:
-					if not self.r.info()['loading'] == 0:
-						raise Exception('gosh')
+					if not self.r.info()['loading'] == 0: raise Exception('gosh')
 					break
 				except:
 					print('waiting for redis',flush=True)
@@ -35,21 +34,15 @@ class Data:
 						time.sleep(1)
 					else:
 						raise Exception(e)
-			
-			
 		else:
 			self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g',database='broker')
 			self.r = redis.Redis(host='127.0.0.1', port=6379)
-		#self.init_async_conn(SECRET_KEY)
-		#self.loop = asyncio.get_event_loop()
-		#self.loop.run_until_complete(self.init_async_conn(SECRET_KEY))
 
 	async def init_async_conn(self):
 		if self.inside_container: self._conn_async = await aiomysql.connect(host='mysql', port=3306, user='root', password='7+WCy76_2$%g', db='broker')
 		else: self._conn_async = await aiomysql.connect(host='localhost', port=3307, user='root', password='7+WCy76_2$%g', db='broker')
 		redis_host = 'redis' if self.inside_container else '127.0.0.1'
 		self.r_async = aioredis.Redis(host=redis_host, port=6379)
-		
 
 	def init_cache(self,debug = False,force = True):
 		if not force and self.r.exists('working'):
@@ -89,6 +82,7 @@ class Data:
 	
 			r = json.dumps(list_of_lists)
 			return r
+		
 		def set_hash(data, tf, form):
 			for ticker, df in data.items():
 				if tf in df:  # Check if tf data exists for the ticker
@@ -102,7 +96,6 @@ class Data:
 						self.r.hset(tf + form, ticker, formatted_data)
 					except Exception as e:
 						print(e + ' _ ' + form)
-
 		
 		cursor = self._conn.cursor(buffered=True)
 		if debug:
@@ -122,7 +115,6 @@ class Data:
 		for ticker in organized_data:
 			for tf in organized_data[ticker]:
 				organized_data[ticker][tf] = np.array(organized_data[ticker][tf], dtype=float)
-		#self.wait_for_redis()
 		for tf in ('1d',):#'1'):
 			for typ in ('chart', 'match','screener'):
 				set_hash(organized_data, tf, typ)
@@ -132,7 +124,6 @@ class Data:
 	async def get_df(self, form='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
 		print(tf+form,ticker,flush=True)
 		data = await self.r_async.hget(tf+form,ticker)
-		#print(data,flush=True)
 		if not form == 'chart': data = pickle.loads(data)
 		if dt:
 			index = Data.findex(data,dt)
@@ -223,6 +214,8 @@ class Data:
 			if user_data and len(user_data) > 0:
 				if password == user_data[2]:  # Assuming password is at index 2
 					return user_data[0]   
+				
+	
 	
 	async def set_user(self, user_id=None, email=None, password=None, settings_string=None, delete=False):
 		async with self._conn_async.cursor() as cursor:
@@ -251,10 +244,16 @@ class Data:
 
 			await self._conn_async.commit()
 				
-	def get_settings(self,user_id):
-		with self._conn.cursor(buffered=True) as cursor:
-			cursor.execute("SELECT settings FROM users WHERE id = %s", (user_id,))
-			return cursor.fetchone()[0]
+	async def get_settings(self,user_id):
+		async with self._conn_async.cursor() as cursor:
+			await cursor.execute("SELECT settings FROM users WHERE id = %s", (user_id,))
+			settings = await cursor.fetchone()
+			return settings[0]
+		
+	async def get_setups(self,user_id):
+		async with self._conn_async.cursor() as cursor:
+			await cursor.execute("SELECT name, tf from setups WHERE user_id = %s",(user_id,))
+			return await cursor.fetchall()
 
 
 	def get_model(self,user_id,st=None):
@@ -267,12 +266,16 @@ class Data:
 			return
 		
 	def set_model(self,user_id):
+		raise('to code')
 		pass
 
-	def set_setup(self,user_id,st,tf):
-		with self._conn.cursor(buffered=True) as cursor:
-			insert_query = "INSERT INTO setups (user_id, name, tf, model) VALUES (%s, %s, %s, %s)"
-			cursor.execute(insert_query, (user_id,st,tf,''))
+	async def set_setup(self,user_id,st,tf=None,delete=False):
+		async with self._conn_async.cursor() as cursor:
+			if delete:
+				await cursor.execute("DELETE FROM setups WHERE user_id = %s AND name = %s", (user_id,st))
+			else:
+				insert_query = "INSERT INTO setups (user_id, name, tf, model) VALUES (%s, %s, %s, %s)"
+				await cursor.execute(insert_query, (user_id,st,tf,''))
 		self._conn.commit()
 		
 	def get_sample(self,user_id,st):
