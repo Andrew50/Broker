@@ -10,6 +10,7 @@
 
   async function signIn(username, password) {
     try {
+
         const response = await data_request('signin', username, password);
 
         if (response && response.access_token) {
@@ -39,7 +40,7 @@
     <h1>Sign In</h1>
     <input type="text" placeholder="Username" bind:value={username} />
     <input type="password" placeholder="Password" bind:value={password} />
-    <button on:click={signIn}>Sign In</button>
+    <button on:click={signIn(username,password)}>Sign In</button>
     <button on:click={createAccount} class="create-account-btn">Create Account</button>
     <p class="error-message">{$errorMessage}</p>
   </div>

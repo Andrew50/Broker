@@ -11,16 +11,33 @@ from fastapi import FastAPI, HTTPException, status
 import jwt
 sys.path.append('./tasks')
 import asyncio, time
-from tasks.Data import Data
+from Data import Data
+import logging
 
-time.sleep(5)
-data = Data()
+logging.basicConfig(filename='myapi.log', level=logging.INFO)  # This will log to a file named 'myapi.log'
 
-SECRET_KEY = "your_jwt_secret_key"
+# Create a logger
+logger = logging.getLogger('myapi')
+
+# Function to log messages
+
+def log(message):
+    
+    logger.info(str(message))
+
+from pydantic import BaseModel
+
+class Request(BaseModel):
+    function: str
+    arguments: list
+
+time.sleep(10)
+#data = Data()
+
+SECRET_KEY = "god"
 
 #def run_task(request):
 def run_task(func,args):
-    print(data,flush=True)
     try:
         #split = request.split('_')
         #func = split[0]
@@ -55,12 +72,21 @@ def create_app():
 
     redis_conn = Redis(host='redis', port=6379)
     q = Queue('my_queue', connection=redis_conn)
+
+
+    def convert_request(request):
+        request = str(request)
+        parts = request.split()
+        func = parts[0].split('=')[1].strip("'")
+        args = parts[1].split('=')[1].strip("[]").split(',')
+        return func, args
     
     @app.post('/data',status_code=201)
-    async def data_request(request):
-        body = await request.json()
-        func = body.get('function')
-        args = body.get('arguments', [])
+    async def data_request(request:Request):
+        func, args = convert_request(request)
+
+        #func = body.get('function')
+        #args = body.get('arguments', [])
         if func == 'signup':
             await data.set_user(email=args[0],password=args[1])
             func = 'signin'
@@ -74,10 +100,8 @@ def create_app():
             raise Exception('to code')
             
     @app.post('/backend', status_code=201)
-    async def backend_request(request):
-        body = await request.json()
-        func = body.get('function')
-        args = body.get('arguments', [])
+    async def backend_request(request: Request):
+        func, args = convert_request(request)
         job = q.enqueue(run_task, kwargs={'func': func, 'args': args}, timeout=600)
         return {'task_id': job.get_id()}
     
@@ -102,8 +126,11 @@ def create_app():
 
 app = create_app()
 
+
+
 if __name__ == '__main__':
-    db = Data()
+    global data
+    data = Data()
     #db.init_cache(debug=True)#load 5% of data for testing
-    db.init_cache()
+    data.init_cache(force=False)
     uvicorn.run("api:app", host="0.0.0.0", port=5057, reload=True)

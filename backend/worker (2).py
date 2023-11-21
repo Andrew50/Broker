@@ -1,4 +1,4 @@
-from tasks.Data import Data
+from Data import Data
 import time
 from rq.local import LocalStack
 from rq.worker import Worker as _Worker

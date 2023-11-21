@@ -9,9 +9,13 @@ services:
         networks:
           - my-network
         hostname: redis
-       # volumes:
-       #   - ./790:/redis
-        #command: redis-server #./redis/redis.conf    
+        volumes:
+          #  - redis-data:/data
+          - ./790:/redis
+        command: redis-server #./redis/redis.conf    
+        #command: python worker.py
+        mem_limit: 4G
+        #redis-server #
   
 
     myproj_api:
@@ -38,7 +42,9 @@ services:
             context: ./
             dockerfile: ./Dockerfile
         working_dir: /home/myproj
-        command: rq worker --url redis://redis:6379 my_queue
+        #command: rq worker --url redis://redis:6379 my_queue
+        #command: /bin/sh -c "sleep 10 && rq worker --url redis://redis:6379 my_queue"
+        command: python worker.py
         volumes: 
             - ./:/home/myproj/models
         #command: python worker.py

@@ -7,7 +7,7 @@ import pandas as pd
     
     #god
 
-def get(args,data):
+def get(data,args):
     args += ['MSFT','1d',None][len(args):]
     ticker,tf,dt = args
     df = data.get_df('chart',ticker,tf,dt)

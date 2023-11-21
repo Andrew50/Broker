@@ -28,12 +28,13 @@ export async function data_request(func, ...args) {
         if (!response.ok) {
             throw new Error('POST response not ok');
         }
-            let result = response.result;
-            try {
-                result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
-            } catch {
-                // Result might already be in a proper JSON format or another parsing error occurred
-        }
+        let result = response.json();
+            return result
+        //    try {
+        //        result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
+        //    } catch {
+        //        // Result might already be in a proper JSON format or another parsing error occurred
+        //}
         return result
         
     }

@@ -45,31 +45,17 @@ class Data:
 		self.loop.run_until_complete(self.init_async_conn(SECRET_KEY))
 
 	async def init_async_conn(self,in_container):
-		if in_container: self._conn_async = await aiomysql.connect(host='mysql', port='3306', user='root', password='7+WCy76_2$%g', db='broker')
-		else: self._conn_async = await aiomysql.connect(host='localhost', port='3307', user='root', password='7+WCy76_2$%g', db='broker')
+		if in_container: self._conn_async = await aiomysql.connect(host='mysql', port=3306, user='root', password='7+WCy76_2$%g', db='broker')
+		else: self._conn_async = await aiomysql.connect(host='localhost', port=3307, user='root', password='7+WCy76_2$%g', db='broker')
 		
 
-	def formatDataframeForMatch(self, onlyCloseAndVol = True, whichColumn=4):
-		obj = False
-		if isinstance(self,Data):
-			obj = True
-			df = self.df
-		else:
-			df = self
-		length = len(df)
-		
-		if onlyCloseAndVol: 
-			if(length < 3): return np.zeros((1, 4))
-			d = np.zeros((length-1, 4))
-			for i in range(1, length):
-				close = df[i,whichColumn]
-				d[i-1] = [close, (close/df[i-1,whichColumn]) - 1, df[i, 5], df[i, 0]]
-			if not obj:
-				return d
-			self.df = d
+	
 
 
-	def init_cache(self,debug = False):
+	def init_cache(self,debug = False,force = True):
+		if not force and self.r.exists('working'):
+			print('assuming redis already populated',flush = True)
+			return
 		
 		def match_format(data):
 			close_prices = data[:, 4]
@@ -86,14 +72,16 @@ class Data:
 		def set_hash(data, tf, form):
 			for ticker, df in data.items():
 				if tf in df:  # Check if tf data exists for the ticker
-					
-					if form == 'match':
-						formatted_data = match_format(np.array(df[tf])) 
-					elif form == 'screener':
-						formatted_data = screener_format(np.array(df[tf]))
-					elif form =='chart':
-						formatted_data = np.array(df[tf])
-					self.r.hset(tf + form, ticker, pickle.dumps(formatted_data))
+					try:
+						if form == 'match':
+							formatted_data = match_format(np.array(df[tf])) 
+						elif form == 'screener':
+							formatted_data = screener_format(np.array(df[tf]))
+						elif form =='chart':
+							formatted_data = np.array(df[tf])
+						self.r.hset(tf + form, ticker, pickle.dumps(formatted_data))
+					except Exception as e:
+						print(e + ' _ ' + form)
 
 		
 		cursor = self._conn.cursor(buffered=True)
@@ -118,6 +106,8 @@ class Data:
 		for tf in ('1d',):#'1'):
 			for typ in ('chart', 'match','screener'):
 				set_hash(organized_data, tf, typ)
+				
+		self.r.set('working','working')
 
 	def get_df(self, form='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
 		data = self.r.hget(tf+form,ticker)
@@ -317,7 +307,7 @@ class Data:
 						ydf = yf.download(tickers = ticker, period = period, group_by='ticker', interval = ytf, ignore_tz = True, progress=False, show_errors = False, threads = True, prepost = True) 
 						ydf.drop(axis=1, labels="Adj Close",inplace = True)
 						ydf.dropna(inplace = True)
-						if Database.is_market_open() == 1: ydf.drop(ydf.tail(1).index,inplace=True)
+						if Data.is_market_open() == 1: ydf.drop(ydf.tail(1).index,inplace=True)
 						ydf.index = ydf.index.normalize() + pd.Timedelta(minutes = 570)
 						ydf.index = (ydf.index.astype(np.int64) // 10**9)
 						cursor.execute("SELECT MAX(dt) FROM dfs WHERE ticker = %s AND tf = %s", (ticker, tf))
