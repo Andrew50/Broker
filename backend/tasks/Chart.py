@@ -2,17 +2,15 @@ import json
 import pandas as pd
 
 #try:
-from Data import Data
 #except:
     #from .Data import Data, Database, Cache
     
     #god
+from Data import data
 
-def get(args,data):
+async def get(args):
     args += ['MSFT','1d',None][len(args):]
-    ticker = args[0]
-    tf = args[1]
-    dt = args[2]
+    ticker,tf,dt = args
     df = data.get_df('chart',ticker,tf,dt)
     list_of_lists = df.tolist()[:]
 

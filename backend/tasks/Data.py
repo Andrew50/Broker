@@ -1,20 +1,20 @@
-
 import numpy as np
 import  pandas as pd, numpy as np, datetime, mysql.connector, pytz, redis, pickle,  multiprocessing
 import numpy as np
-import  pandas as pd, os, numpy as np, time,datetime, mysql.connector, pytz, redis, pickle,  multiprocessing
+import  pandas as pd, os, numpy as np, time,datetime, mysql.connector, pytz, redis, pickle,  multiprocessing, json
 from tqdm import tqdm
 from collections import defaultdict
 import yfinance as yf
+import asyncio
 from mysql.connector import errorcode
+import aiomysql, aioredis
 
-#ben
 
 class Data:
 	
 	def __init__(self):
-		SECRET_KEY = os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False)
-		if SECRET_KEY: #inside container
+		self.inside_container = os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False)
+		if self.inside_container: #inside container
 			self.r = redis.Redis(host='redis', port=6379)
 			while True: #wait for redis to be ready
 				try:
@@ -36,54 +36,72 @@ class Data:
 					else:
 						raise Exception(e)
 			
+			
 		else:
 			self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g',database='broker')
 			self.r = redis.Redis(host='127.0.0.1', port=6379)
-				
+		#self.init_async_conn(SECRET_KEY)
+		#self.loop = asyncio.get_event_loop()
+		#self.loop.run_until_complete(self.init_async_conn(SECRET_KEY))
 
-
+	async def init_async_conn(self):
+		if self.inside_container: self._conn_async = await aiomysql.connect(host='mysql', port=3306, user='root', password='7+WCy76_2$%g', db='broker')
+		else: self._conn_async = await aiomysql.connect(host='localhost', port=3307, user='root', password='7+WCy76_2$%g', db='broker')
+		redis_host = 'redis' if self.inside_container else '127.0.0.1'
+		self.r_async = aioredis.Redis(host=redis_host, port=6379)
 		
 
-	def formatDataframeForMatch(self, onlyCloseAndVol = True, whichColumn=4):
-		obj = False
-		if isinstance(self,Data):
-			obj = True
-			df = self.df
-		else:
-			df = self
-		length = len(df)
-		
-		if onlyCloseAndVol: 
-			if(length < 3): return np.zeros((1, 4))
-			d = np.zeros((length-1, 4))
-			for i in range(1, length):
-				close = df[i,whichColumn]
-				d[i-1] = [close, (close/df[i-1,whichColumn]) - 1, df[i, 5], df[i, 0]]
-			if not obj:
-				return d
-			self.df = d
-
-
-	def init_cache(self,debug = False):
+	def init_cache(self,debug = False,force = True):
+		if not force and self.r.exists('working'):
+			print('assuming redis already populated',flush = True)
+			return
 		
 		def match_format(data):
 			close_prices = data[:, 4]
 			close_price_changes = (close_prices[1:] / close_prices[:-1]) - 1
-			volume = data[1:, 5]
+			#volume = data[1:, 5]
 			dt = data[1:, 0]
-			#return np.column_stack((close_prices[1:], close_price_changes, volume, dt))
-			return np.column_stack((dt, close_price_changes))
-			# length = len(data)
-			# d = np.zeros((length-1, 4))
-			# for i in range(1, length):
-			# 	close = data[i,4]
-			# 	d[i-1] = [close, (close/data[i-1,4]) - 1, data[i, 5], data[i, 0]]
-			# return d
+			return pickle.dumps(np.column_stack((dt, close_price_changes)))
+		
+		def screener_format(data):
+			dt = data[1:,0]
+			data = (data[1:,:5] / data[:-1,:5]) - 1
+			return pickle.dumps(np.column_stack((dt,data)))
+
+		def chart_format(data,tf):
+			list_of_lists = data.tolist()[:]
+			if 'd' in tf or 'w' in tf:
+				list_of_lists = [{
+				'time': pd.to_datetime(row[0], unit='s').strftime('%Y-%m-%d'),
+				'open': row[1],
+				'high': row[2],
+				'low': row[3],
+				'close': row[4]
+			} for row in list_of_lists]
+			else:
+				list_of_lists = [{
+				'time': pd.to_datetime(row[0], unit='s').strftime('%Y-%m-%d %H:%M:%S'),
+				'open': row[1],
+				'high': row[2],
+				'low': row[3],
+				'close': row[4]
+				}for row in list_of_lists]
+	
+			r = json.dumps(list_of_lists)
+			return r
 		def set_hash(data, tf, form):
 			for ticker, df in data.items():
 				if tf in df:  # Check if tf data exists for the ticker
-					formatted_data = match_format(np.array(df[tf])) if form == 'match' else np.array(df[tf])
-					self.r.hset(tf + form, ticker, pickle.dumps(formatted_data))
+					try:
+						if form == 'match':
+							formatted_data = match_format(np.array(df[tf])) 
+						elif form == 'screener':
+							formatted_data = screener_format(np.array(df[tf]))
+						elif form =='chart':
+							formatted_data = chart_format(np.array(df[tf]),tf)
+						self.r.hset(tf + form, ticker, formatted_data)
+					except Exception as e:
+						print(e + ' _ ' + form)
 
 		
 		cursor = self._conn.cursor(buffered=True)
@@ -106,12 +124,16 @@ class Data:
 				organized_data[ticker][tf] = np.array(organized_data[ticker][tf], dtype=float)
 		#self.wait_for_redis()
 		for tf in ('1d',):#'1'):
-			for typ in ('chart', 'match'):
+			for typ in ('chart', 'match','screener'):
 				set_hash(organized_data, tf, typ)
+				
+		self.r.set('working','working')
 
-	def get_df(self, form='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
-		data = self.r.hget(tf+form,ticker)
-		data = pickle.loads(data)
+	async def get_df(self, form='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
+		print(tf+form,ticker,flush=True)
+		data = await self.r_async.hget(tf+form,ticker)
+		#print(data,flush=True)
+		if not form == 'chart': data = pickle.loads(data)
 		if dt:
 			index = Data.findex(data,dt)
 			data = data[:index+1]
@@ -194,16 +216,16 @@ class Data:
 		return False
 
 
-	def get_user(self,email,password):
-		with self._conn.cursor(buffered=True) as cursor:
-			cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
-			user_data = cursor.fetchone()
-			if len(user_data) > 0:
-				if password == user_data[2]:
-					return user_data[0]
+	async def get_user(self, email, password):
+		async with self._conn_async.cursor() as cursor:
+			await cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+			user_data = await cursor.fetchone()
+			if user_data and len(user_data) > 0:
+				if password == user_data[2]:  # Assuming password is at index 2
+					return user_data[0]   
 	
-	def set_user(self, user_id = None, email=None, password=None, settings_string=None,delete = False):
-		with self._conn.cursor(buffered=True) as cursor:
+	async def set_user(self, user_id=None, email=None, password=None, settings_string=None, delete=False):
+		async with self._conn_async.cursor() as cursor:
 			if user_id is not None:
 				if not delete:
 					fields = []
@@ -219,15 +241,15 @@ class Data:
 						values.append(settings_string)
 					if fields:
 						update_query = f"UPDATE users SET {', '.join(fields)} WHERE id = %s"
-						values.append(user_id)  
-						cursor.execute(update_query, values)
-						self._conn.commit()
+						values.append(user_id)
+						await cursor.execute(update_query, values)
 				else:
-					cursor.execute("DELETE FROM users WHERE id = %s",(user_id,))
+					await cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
 			else:
 				insert_query = "INSERT INTO users (email, password, settings) VALUES (%s, %s, %s)"
-				cursor.execute(insert_query, (email, password, settings_string if settings_string is not None else ''))
-				self._conn.commit()
+				await cursor.execute(insert_query, (email, password, settings_string if settings_string is not None else ''))
+
+			await self._conn_async.commit()
 				
 	def get_settings(self,user_id):
 		with self._conn.cursor(buffered=True) as cursor:
@@ -238,10 +260,11 @@ class Data:
 	def get_model(self,user_id,st=None):
 		with self._conn.cursor(buffered=True) as cursor:
 			if st is None:
-				cursor.execute('SELECT model from setups WHERE user_id = %s AND name = %s',(user_id,st))
+				cursor.execute('SELECT tf,model from setups WHERE user_id = %s AND name = %s',(user_id,st))
 			else:
-				cursor.execute('SELECT model from setups WHERE user_id = %s',(user_id,))
-			return cursor.fetchone()[0]
+				cursor.execute('SELECT tf,model from setups WHERE user_id = %s',(user_id,))
+			cursor.fetchone()[0]
+			return
 		
 	def set_model(self,user_id):
 		pass
@@ -272,7 +295,7 @@ class Data:
 		with self._conn.cursor(buffered=True) as cursor:
 
 			def findex(df, dt):
-				dt = Database.format_datetime(dt)
+				dt = Data.format_datetime(dt)
 				i = int(len(df)/2)		
 				k = int(i/2)
 				while k != 0:
@@ -306,7 +329,7 @@ class Data:
 						ydf = yf.download(tickers = ticker, period = period, group_by='ticker', interval = ytf, ignore_tz = True, progress=False, show_errors = False, threads = True, prepost = True) 
 						ydf.drop(axis=1, labels="Adj Close",inplace = True)
 						ydf.dropna(inplace = True)
-						if Database.is_market_open() == 1: ydf.drop(ydf.tail(1).index,inplace=True)
+						if Data.is_market_open() == 1: ydf.drop(ydf.tail(1).index,inplace=True)
 						ydf.index = ydf.index.normalize() + pd.Timedelta(minutes = 570)
 						ydf.index = (ydf.index.astype(np.int64) // 10**9)
 						cursor.execute("SELECT MAX(dt) FROM dfs WHERE ticker = %s AND tf = %s", (ticker, tf))
@@ -426,54 +449,11 @@ class Data:
 							print(e)
 		self.update()
 	
-	def train(self, st, use, epochs): 
-		db.consolidate_database()
-		allsetups = pd.read_feather('local/data/' + st + '.feather').sort_values(
-			by='dt', ascending=False).reset_index(drop=True)
-		yes = []
-		no = []
-		groups = allsetups.groupby(pd.Grouper(key='ticker'))
-		dfs = [group for _, group in groups]
-		for df in dfs:
-			df = df.reset_index(drop=True)
-			for i in range(len(df)):
-				bar = df.iloc[i]
-				if bar['value'] == 1:
-					for ii in [i + ii for ii in [-2, -1, 1, 2]]:
-						if abs(ii) < len(df):
-							bar2 = df.iloc[ii]
-							if bar2['value'] == 0:
-								no.append(bar2)
-					yes.append(bar)
-		yes = pd.DataFrame(yes)
-		no = pd.DataFrame(no)
-		required = int(len(yes) - ((len(no)+len(yes)) * use))
-		if required < 0:
-			no = no[:required]
-		while True:
-			no = no.drop_duplicates(subset=['ticker', 'dt'])
-			required = int(len(yes) - ((len(no)+len(yes)) * use))
-			sample = allsetups[allsetups['value'] == 0].sample(frac=1)
-			if required < 0 or len(sample) == len(no):
-				break
-			sample = sample[:required + 1]
-			no = pd.concat([no, sample])
-		df = pd.concat([yes, no]).sample(frac=1).reset_index(drop=True)
-		df['tf'] = st.split('_')[0]
-		df = df[['ticker', 'dt', 'tf']]
-		
-		return df
-		df = pd.read_feather('local/data/' + st + '.feather')
-		ones = len(df[df['value'] == 1])
-		if ones < 150:
-			return
-		x = self.raw_np
-		y = self.y_np
+#start = datetime.datetime.now()
 
-		model = Sequential([Bidirectional(LSTM(64, input_shape=(x.shape[1], x.shape[2]), return_sequences=True,),), Dropout(
-			0.2), Bidirectional(LSTM(32)), Dense(3, activation='softmax'),])
-		model.compile(loss='sparse_categorical_crossentropy',
-					  optimizer=Adam(learning_rate=1e-3), metrics=['accuracy'])
-		model.fit(x, y, epochs=epochs, batch_size=64, validation_split=.2,)
-		model.save('sync/models/model_' + st)
-		tensorflow.keras.backend.clear_session()
+data = Data()
+#asyncio.run(data.init_async_conn())
+#data.init_async_conn()
+
+#await data.get_user()
+#print(datetime.datetime.now() - start,flush=True)
