@@ -6,10 +6,13 @@ from rq.job import Job
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 sys.path.append('./tasks')
-from Data import data
 
 #time.sleep(10)#########+==========================
 SECRET_KEY = "god"
+
+from Data import data
+
+
 
 class Request(BaseModel):
     function: str
@@ -34,6 +37,7 @@ def create_jwt_token(user_id: str) -> str:
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
 def create_app():
+    
     app = FastAPI()
     origins = ["http://localhost:5173","http://localhost:5057",]
 
@@ -50,9 +54,15 @@ def create_app():
     #     func = parts[0].split('=')[1].strip("'")
     #     args = parts[1].split('=')[1].strip("[]'").split(',')
     #     return func, args
+
+    @app.on_event("startup")
+    async def startup_event():
+        app.state.data = data
+        await app.state.data.init_async_conn()
     
     @app.post('/data',status_code=201)
     async def data_request(request:Request):
+        data = request.app.state.data
         #func, args = convert_request(request)
         func, args = request.function, request.arguments
         print(args,flush=True)
@@ -100,5 +110,7 @@ app = create_app()
 
 if __name__ == '__main__':
     #db.init_cache(debug=True)#load 5% of data for testing
+   # from Data import data
+    
     data.init_cache(force=False)
     uvicorn.run("api:app", host="0.0.0.0", port=5057, reload=True)

@@ -13,8 +13,8 @@ import aiomysql
 class Data:
 	
 	def __init__(self):
-		SECRET_KEY = os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False)
-		if SECRET_KEY: #inside container
+		self.inside_container = os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False)
+		if self.inside_container: #inside container
 			self.r = redis.Redis(host='redis', port=6379)
 			while True: #wait for redis to be ready
 				try:
@@ -40,17 +40,14 @@ class Data:
 		else:
 			self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g',database='broker')
 			self.r = redis.Redis(host='127.0.0.1', port=6379)
-				
-		self.loop = asyncio.get_event_loop()
-		self.loop.run_until_complete(self.init_async_conn(SECRET_KEY))
+		#self.init_async_conn(SECRET_KEY)
+		#self.loop = asyncio.get_event_loop()
+		#self.loop.run_until_complete(self.init_async_conn(SECRET_KEY))
 
-	async def init_async_conn(self,in_container):
-		if in_container: self._conn_async = await aiomysql.connect(host='mysql', port=3306, user='root', password='7+WCy76_2$%g', db='broker')
+	async def init_async_conn(self):
+		if self.inside_container: self._conn_async = await aiomysql.connect(host='mysql', port=3306, user='root', password='7+WCy76_2$%g', db='broker')
 		else: self._conn_async = await aiomysql.connect(host='localhost', port=3307, user='root', password='7+WCy76_2$%g', db='broker')
 		
-
-	
-
 
 	def init_cache(self,debug = False,force = True):
 		if not force and self.r.exists('working'):
@@ -429,6 +426,11 @@ class Data:
 							print(e)
 		self.update()
 	
-start = datetime.datetime.now()
+#start = datetime.datetime.now()
+
 data = Data()
-print(datetime.datetime.now() - start,flush=True)
+#asyncio.run(data.init_async_conn())
+#data.init_async_conn()
+
+#await data.get_user()
+#print(datetime.datetime.now() - start,flush=True)
