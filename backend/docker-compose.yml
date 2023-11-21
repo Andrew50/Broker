@@ -42,9 +42,9 @@ services:
             context: ./
             dockerfile: ./Dockerfile
         working_dir: /home/myproj
-        #command: rq worker --url redis://redis:6379 my_queue
+        command: rq worker --url redis://redis:6379 my_queue
         #command: /bin/sh -c "sleep 10 && rq worker --url redis://redis:6379 my_queue"
-        command: python worker.py
+        #command: python worker.py
         volumes: 
             - ./:/home/myproj/models
         #command: python worker.py

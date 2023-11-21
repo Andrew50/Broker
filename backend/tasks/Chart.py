@@ -6,8 +6,10 @@ import pandas as pd
     #from .Data import Data, Database, Cache
     
     #god
+try: import data
+except: from . import data
 
-def get(data,args):
+def get(args):
     args += ['MSFT','1d',None][len(args):]
     ticker,tf,dt = args
     df = data.get_df('chart',ticker,tf,dt)

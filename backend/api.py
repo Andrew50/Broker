@@ -42,10 +42,12 @@ def run_task(func,args):
         #split = request.split('_')
         #func = split[0]
         #args = split[1:]
+        global data
+
         module_name, function_name = func.split('-')
         module = importlib.import_module(module_name)
         func = getattr(module, function_name, None)
-        return func(args, data)
+        return func(data,args)
     except Exception as e:
         print(traceback.format_exc() + str(e), flush=True)
         return 'failed'
