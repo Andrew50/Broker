@@ -1,62 +1,30 @@
+from fastapi import FastAPI, HTTPException, status
+import datetime, uvicorn, importlib, sys, traceback, jwt, asyncio, time
 from redis import Redis
 from rq import Queue
 from rq.job import Job
 from fastapi.middleware.cors import CORSMiddleware
-import datetime
-import uvicorn
-import importlib
-import sys
-import traceback
-from fastapi import FastAPI, HTTPException, status
-import jwt
-sys.path.append('./tasks')
-import asyncio, time
-from Data import Data
-import logging
-
-logging.basicConfig(filename='myapi.log', level=logging.INFO)  # This will log to a file named 'myapi.log'
-
-# Create a logger
-logger = logging.getLogger('myapi')
-
-# Function to log messages
-
-def log(message):
-    
-    logger.info(str(message))
-
 from pydantic import BaseModel
+sys.path.append('./tasks')
+from Data import data
+
+#time.sleep(10)#########+==========================
+SECRET_KEY = "god"
 
 class Request(BaseModel):
     function: str
     arguments: list
 
-time.sleep(10)
-#data = Data()
 
-SECRET_KEY = "god"
-
-#def run_task(request):
 def run_task(func,args):
     try:
-        #split = request.split('_')
-        #func = split[0]
-        #args = split[1:]
-        global data
-
         module_name, function_name = func.split('-')
         module = importlib.import_module(module_name)
         func = getattr(module, function_name, None)
-        return func(data,args)
+        return func(args)
     except Exception as e:
         print(traceback.format_exc() + str(e), flush=True)
         return 'failed'
-    
-#async def run_data(request):
-
-#class UserLogin(BaseModel):
-    #username: str
-    #password: str
     
 def create_jwt_token(user_id: str) -> str:
     payload = {
@@ -76,24 +44,23 @@ def create_app():
     q = Queue('my_queue', connection=redis_conn)
 
 
-    def convert_request(request):
-        request = str(request)
-        parts = request.split()
-        func = parts[0].split('=')[1].strip("'")
-        args = parts[1].split('=')[1].strip("[]").split(',')
-        return func, args
+    # def convert_request(request):
+    #     request = str(request)
+    #     parts = request.split()
+    #     func = parts[0].split('=')[1].strip("'")
+    #     args = parts[1].split('=')[1].strip("[]'").split(',')
+    #     return func, args
     
     @app.post('/data',status_code=201)
     async def data_request(request:Request):
-        func, args = convert_request(request)
-
-        #func = body.get('function')
-        #args = body.get('arguments', [])
+        #func, args = convert_request(request)
+        func, args = request.function, request.arguments
+        print(args,flush=True)
         if func == 'signup':
             await data.set_user(email=args[0],password=args[1])
             func = 'signin'
         if func == 'signin':
-            user_id = await data.get_user(args)
+            user_id = await data.get_user(args[0],args[1])
             if user_id is None:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
             token = create_jwt_token(user_id)
@@ -103,7 +70,8 @@ def create_app():
             
     @app.post('/backend', status_code=201)
     async def backend_request(request: Request):
-        func, args = convert_request(request)
+        #func, args = convert_request(request)
+        func, args = request.function, request.arguments
         job = q.enqueue(run_task, kwargs={'func': func, 'args': args}, timeout=600)
         return {'task_id': job.get_id()}
     
@@ -131,8 +99,6 @@ app = create_app()
 
 
 if __name__ == '__main__':
-    global data
-    data = Data()
     #db.init_cache(debug=True)#load 5% of data for testing
     data.init_cache(force=False)
     uvicorn.run("api:app", host="0.0.0.0", port=5057, reload=True)

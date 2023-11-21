@@ -110,7 +110,9 @@ class Data:
 		self.r.set('working','working')
 
 	def get_df(self, form='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
+		print(tf+form,ticker,flush=True)
 		data = self.r.hget(tf+form,ticker)
+		#print(data,flush=True)
 		data = pickle.loads(data)
 		if dt:
 			index = Data.findex(data,dt)
@@ -427,4 +429,6 @@ class Data:
 							print(e)
 		self.update()
 	
-	
+start = datetime.datetime.now()
+data = Data()
+print(datetime.datetime.now() - start,flush=True)

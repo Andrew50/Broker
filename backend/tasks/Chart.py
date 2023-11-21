@@ -6,8 +6,7 @@ import pandas as pd
     #from .Data import Data, Database, Cache
     
     #god
-try: import data
-except: from . import data
+from Data import data
 
 def get(args):
     args += ['MSFT','1d',None][len(args):]
