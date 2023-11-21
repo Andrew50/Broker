@@ -8,7 +8,7 @@
 
 	import {ColorType, CrosshairMode} from 'lightweight-charts';
     import {Chart, CandlestickSeries} from 'svelte-lightweight-charts';
-	import {chart_data, backend_request} from '../store.js';
+	import {chart_data, backend_request, data_request} from '../store.js';
 
 	let innerWidth;
     let innerHeight;
@@ -82,7 +82,7 @@
         if (popup) {
             if (event.key == "Enter") {
                 ticker = TickerBoxValue;
-                backend_request(chart_data, 'Chart-get', ticker);
+                chart_data = data_request('chart', ticker);
                 closePopup();
             }else{
                 TickerBoxVisible = "block"

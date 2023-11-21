@@ -1,23 +1,17 @@
-from fastapi import FastAPI, HTTPException, status
-import datetime, uvicorn, importlib, sys, traceback, jwt, asyncio, time
+from fastapi import FastAPI, HTTPException, status, Request as FastAPIRequest
+import datetime, uvicorn, importlib, sys, traceback, jwt, asyncio, time, json
 from redis import Redis
 from rq import Queue
 from rq.job import Job
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 sys.path.append('./tasks')
-
-#time.sleep(10)#########+==========================
 SECRET_KEY = "god"
-
 from Data import data
-
-
 
 class Request(BaseModel):
     function: str
     arguments: list
-
 
 def run_task(func,args):
     try:
@@ -37,23 +31,10 @@ def create_jwt_token(user_id: str) -> str:
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
 def create_app():
-    
     app = FastAPI()
-    origins = ["http://localhost:5173","http://localhost:5057",]
-
-    app.add_middleware(CORSMiddleware,allow_origins=origins,
-        allow_credentials=True,allow_methods=["*"],allow_headers=["*"],)
-
+    app.add_middleware(CORSMiddleware,allow_origins=["http://localhost:5173","http://localhost:5057",],allow_credentials=True,allow_methods=["*"],allow_headers=["*"],)
     redis_conn = Redis(host='redis', port=6379)
     q = Queue('my_queue', connection=redis_conn)
-
-
-    # def convert_request(request):
-    #     request = str(request)
-    #     parts = request.split()
-    #     func = parts[0].split('=')[1].strip("'")
-    #     args = parts[1].split('=')[1].strip("[]'").split(',')
-    #     return func, args
 
     @app.on_event("startup")
     async def startup_event():
@@ -61,10 +42,9 @@ def create_app():
         await app.state.data.init_async_conn()
     
     @app.post('/data',status_code=201)
-    async def data_request(request:Request):
+    async def data_request(request_model: Request, request: FastAPIRequest):
         data = request.app.state.data
-        #func, args = convert_request(request)
-        func, args = request.function, request.arguments
+        func, args = request_model.function, request_model.arguments
         print(args,flush=True)
         if func == 'signup':
             await data.set_user(email=args[0],password=args[1])
@@ -75,16 +55,18 @@ def create_app():
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
             token = create_jwt_token(user_id)
             return {"access_token": token, "token_type": "bearer"}
+        elif func == 'chart':
+            args += ['MSFT','1d',None][len(args):]
+            ticker,tf,dt = args
+            return await data.get_df('chart',ticker,tf,dt)
         else:
             raise Exception('to code')
             
     @app.post('/backend', status_code=201)
-    async def backend_request(request: Request):
-        #func, args = convert_request(request)
-        func, args = request.function, request.arguments
+    async def backend_request(request_model: Request, request: FastAPIRequest):
+        func, args = request_model.function, request_model.arguments
         job = q.enqueue(run_task, kwargs={'func': func, 'args': args}, timeout=600)
         return {'task_id': job.get_id()}
-    
     
     async def fetch_job(job_id):
         loop = asyncio.get_event_loop()
@@ -94,23 +76,17 @@ def create_app():
     @app.get('/poll/{job_id}')
     async def get_result(job_id: str):
         job = await fetch_job(job_id)
-    
         if job.is_finished:
             return {"status": "done", "result": job.result}
         elif job.is_failed:
             return {"status": "failed"}
         else:
             return {"status": "in progress"}
-            
     return app
 
 app = create_app()
 
-
-
 if __name__ == '__main__':
-    #db.init_cache(debug=True)#load 5% of data for testing
-   # from Data import data
-    
-    data.init_cache(force=False)
+    data.init_cache()#use when redis_init changed and old format/data needs to be overwriten
+    #data.init_cache(force=False)#default for quikc loading
     uvicorn.run("api:app", host="0.0.0.0", port=5057, reload=True)

@@ -1,7 +1,7 @@
 import numpy as np
 import  pandas as pd, numpy as np, datetime, mysql.connector, pytz, redis, pickle,  multiprocessing
 import numpy as np
-import  pandas as pd, os, numpy as np, time,datetime, mysql.connector, pytz, redis, pickle,  multiprocessing
+import  pandas as pd, os, numpy as np, time,datetime, mysql.connector, pytz, redis, pickle,  multiprocessing, json
 from tqdm import tqdm
 from collections import defaultdict
 import yfinance as yf
@@ -59,13 +59,34 @@ class Data:
 			close_price_changes = (close_prices[1:] / close_prices[:-1]) - 1
 			#volume = data[1:, 5]
 			dt = data[1:, 0]
-			return np.column_stack((dt, close_price_changes))
+			return pickle.dumps(np.column_stack((dt, close_price_changes)))
 		
 		def screener_format(data):
 			dt = data[1:,0]
 			data = (data[1:,:5] / data[:-1,:5]) - 1
-			return np.column_stack((dt,data))
+			return pickle.dumps(np.column_stack((dt,data)))
 
+		def chart_format(data,tf):
+			list_of_lists = data.tolist()[:]
+			if 'd' in tf or 'w' in tf:
+				list_of_lists = [{
+				'time': pd.to_datetime(row[0], unit='s').strftime('%Y-%m-%d'),
+				'open': row[1],
+				'high': row[2],
+				'low': row[3],
+				'close': row[4]
+			} for row in list_of_lists]
+			else:
+				list_of_lists = [{
+				'time': pd.to_datetime(row[0], unit='s').strftime('%Y-%m-%d %H:%M:%S'),
+				'open': row[1],
+				'high': row[2],
+				'low': row[3],
+				'close': row[4]
+				}for row in list_of_lists]
+    
+			r = json.dumps(list_of_lists)
+			return r
 		def set_hash(data, tf, form):
 			for ticker, df in data.items():
 				if tf in df:  # Check if tf data exists for the ticker
@@ -75,8 +96,8 @@ class Data:
 						elif form == 'screener':
 							formatted_data = screener_format(np.array(df[tf]))
 						elif form =='chart':
-							formatted_data = np.array(df[tf])
-						self.r.hset(tf + form, ticker, pickle.dumps(formatted_data))
+							formatted_data = chart_format(np.array(df[tf]),tf)
+						self.r.hset(tf + form, ticker, formatted_data)
 					except Exception as e:
 						print(e + ' _ ' + form)
 
