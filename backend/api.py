@@ -45,7 +45,6 @@ def create_app():
     async def data_request(request_model: Request, request: FastAPIRequest):
         data = request.app.state.data
         func, args = request_model.function, request_model.arguments
-        print(args,flush=True)
         if func == 'signup':
             await data.set_user(email=args[0],password=args[1])
             func = 'signin'
@@ -58,7 +57,8 @@ def create_app():
         elif func == 'chart':
             args += ['MSFT','1d',None][len(args):]
             ticker,tf,dt = args
-            return await data.get_df('chart',ticker,tf,dt)
+            val = await data.get_df('chart',ticker,tf,dt)
+            return val
         else:
             raise Exception('to code')
             
@@ -87,6 +87,6 @@ def create_app():
 app = create_app()
 
 if __name__ == '__main__':
-    data.init_cache()#use when redis_init changed and old format/data needs to be overwriten
-    #data.init_cache(force=False)#default for quikc loading
+    #data.init_cache()#use when redis_init changed and old format/data needs to be overwriten
+    data.init_cache(force=False)#default for quikc loading
     uvicorn.run("api:app", host="0.0.0.0", port=5057, reload=True)

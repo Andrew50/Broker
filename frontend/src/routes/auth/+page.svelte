@@ -11,17 +11,17 @@
   async function signIn(username, password) {
     try {
 
-        const response = await data_request('signin', username, password);
+        const response = await data_request(null,'signin', username, password);
 
         if (response && response.access_token) {
-            auth_data.set(response.access_token); // Store the received token
+            auth_data.set(response.access_token);
             await goto('/chart');
         } else {
-            throw new Error('Invalid response from server');
+            throw new Error('Invalid Credentials');
         }
     } catch (error) {
         errorMessage.set(error.message || 'Failed to sign in');
-        password = ''; // Clear the password field
+        password = '';
     }
 }
 

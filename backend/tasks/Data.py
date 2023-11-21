@@ -7,7 +7,7 @@ from collections import defaultdict
 import yfinance as yf
 import asyncio
 from mysql.connector import errorcode
-import aiomysql
+import aiomysql, aioredis
 
 
 class Data:
@@ -47,6 +47,8 @@ class Data:
 	async def init_async_conn(self):
 		if self.inside_container: self._conn_async = await aiomysql.connect(host='mysql', port=3306, user='root', password='7+WCy76_2$%g', db='broker')
 		else: self._conn_async = await aiomysql.connect(host='localhost', port=3307, user='root', password='7+WCy76_2$%g', db='broker')
+		redis_host = 'redis' if self.inside_container else '127.0.0.1'
+		self.r_async = aioredis.Redis(host=redis_host, port=6379)
 		
 
 	def init_cache(self,debug = False,force = True):
@@ -84,7 +86,7 @@ class Data:
 				'low': row[3],
 				'close': row[4]
 				}for row in list_of_lists]
-    
+	
 			r = json.dumps(list_of_lists)
 			return r
 		def set_hash(data, tf, form):
@@ -127,11 +129,11 @@ class Data:
 				
 		self.r.set('working','working')
 
-	def get_df(self, form='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
+	async def get_df(self, form='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
 		print(tf+form,ticker,flush=True)
-		data = self.r.hget(tf+form,ticker)
+		data = await self.r_async.hget(tf+form,ticker)
 		#print(data,flush=True)
-		data = pickle.loads(data)
+		if not form == 'chart': data = pickle.loads(data)
 		if dt:
 			index = Data.findex(data,dt)
 			data = data[:index+1]

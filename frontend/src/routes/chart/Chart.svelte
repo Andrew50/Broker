@@ -21,6 +21,8 @@
 	let TickerBoxValue = '';
 	let TickerBoxVisible = "none";
 
+    
+
 	const options = {
         layout: {background: {type: ColorType.Solid,color: '#000000',},textColor: 'rgba(255, 255, 255, 0.9)',},
         grid: {vertLines: {color: 'rgba(197, 203, 206, 0.5)',},horzLines: {color: 'rgba(197, 203, 206, 0.5)',},},
@@ -82,7 +84,8 @@
         if (popup) {
             if (event.key == "Enter") {
                 ticker = TickerBoxValue;
-                chart_data = data_request('chart', ticker);
+                data_request(chart_data,'chart', ticker);
+
                 closePopup();
             }else{
                 TickerBoxVisible = "block"
