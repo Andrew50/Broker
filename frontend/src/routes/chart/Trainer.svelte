@@ -6,15 +6,17 @@
 
     let setupName = '';
     let setupTimeframe = '';
+    let setupLength = 0;
     
     // Function to handle the creation of a new setup
     function createSetup() {
-    if (setupName && !$setups_list.includes(setupName)) {
+        setupLength = parseInt(setupLength);
+    if (setupName && !$setups_list.includes(setupName) && setupLength > 0 && setupTimeframe != '') {
         setups_list.update(list => {
-            list.push(setupName);
+            list.push([setupName,setupTimeframe,setupLength]);
             return list;
         });
-        data_request(null, "create setup", setupName, setupTimeframe);
+        data_request(null, "create setup", setupName, setupTimeframe, setupLength);
     }
 }
 
@@ -34,27 +36,47 @@
 
 
     // Function to autofill the control area
-    function selectSetup(name) {
-        setupName = name;
+    function selectSetup(setup) {
+        setupName= setup[0]
+        setupTimeframe= setup[1]
+        setupLength = setup[2]
         // Assuming setupTimeframe needs to be fetched or set here
     }
 </script>
 
 <div class="popout-menu" class:visible={visible}>
     {#if visible}
-        <table>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Time Frame</th>
+                <th>Length</th>
+            </tr>
+        </thead>
+        <tbody>
             {#each $setups_list as setup}
                 <tr on:click={() => selectSetup(setup)}>
-                    <td>{setup}</td>
+                    <td>{setup[0]}</td>
+                    <td>{setup[1]}</td>
+                    <td>{setup[2]}</td>
                 </tr>
             {/each}
-        </table>
+        </tbody>
+    </table>
+        
+
+
+
+
 
         <div class="controls">
             <div>
             <input class = "inp" type="text" placeholder="Setup Name" bind:value={setupName} />
             
             <input class = "inp" type="text" placeholder="Setup Timeframe" bind:value={setupTimeframe} />
+            <input class = "inp" type="text" placeholder="Setup Length" bind:value={setupLength} />
             </div>
             <div>
             <button on:click={createSetup}>Create Setup</button>
