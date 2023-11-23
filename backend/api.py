@@ -89,11 +89,11 @@ def create_app():
             val = await data.get_df('chart',ticker,tf,dt)
             return val
         elif func == 'create setup':
-            st, tf = args
-            await data.set_setup(user_id,st,tf)
+            st, tf, setup_length = args
+            await data.set_setup(user_id,st,tf,setup_length)
         elif func == 'delete setup':
             st, = args
-            await data.set_setup(user_id,st,delete =True)
+            await data.set_setup(user_id,st,delete = True)
         else:
             raise Exception('to code' + func)
             
