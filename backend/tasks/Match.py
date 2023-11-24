@@ -6,9 +6,11 @@ sqrt = math.sqrt
 import datetime
 import Odtw
 import math
+import asyncio
+import time #temp import
 np_bars = 10
 
-def format_datetime(self,dt,reverse=False):
+def format_datetime(dt,reverse=False):
 	if reverse:
 		return datetime.datetime.fromtimestamp(dt)
 			
@@ -36,11 +38,11 @@ class Match:
         start = datetime.datetime.now()
         returns = []
         for ticker, x in ds.items():
-            returns += heapq.nsmallest(2, Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius, ticker), key=lambda x: x[2])
+            returns += heapq.nsmallest(3, Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius, ticker), key=lambda x: x[2])
         top_scores = heapq.nsmallest(20, returns, key=lambda x: x[2])
-        print(datetime.datetime.now() - start)
+        print(f"time to complete match {datetime.datetime.now() - start}")
         print(top_scores)
-        return [[ticker,str(format_datetime(timestamp, True)),round(score,2)] for ticker,timestamp, score in top_scores]
+        return [[ticker,str(format_datetime(dt=timestamp, reverse=True)),round(score,2)] for ticker,timestamp, score in top_scores]
        
 
     def formatArray(data, onlyCloseAndVol = True, yValue = False, whichColumn=4):
@@ -76,13 +78,16 @@ def get(args,data):
     dt = args[2]
     tf = args[1]
     ds = data.get_ds(tf=tf,form='match')
-    y = data.get_df('match',ticker,tf,dt)
+    y = asyncio.run(data.get_df('match',ticker,tf,dt, bars=np_bars))[:, 2]
+    
     match_data = Match.compute(ds,y)
     for i in range(len(match_data)): match_data[i][1] = match_data[i][1][:10]
     print(datetime.datetime.now() - start)
     return json.dumps(match_data)
 
 if __name__ == '__main__':
-    from Data import Data
-    db = Data()
-    print(get(['CELH','1d','2023-08-10'],db))
+    from Data import data
+    asyncio.run(data.init_async_conn())
+    print('test')
+    print(get(['CELH','1d','2023-08-10'],data))
+    print('test')
