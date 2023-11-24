@@ -17,10 +17,11 @@ def calcBounds(double[:] y, int radius):
         l[i] = min(y[indexLowerBound:indexUpperBound + 1])
 
     return u, l
-# data in format [dt, closePrice, closePriceNormalized, volume]
+# data in format 
+#[dt, closePrice, openPriceNormalized, highPriceNormalized, lowPriceNormalized, closePriceNormalized, volume]
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np.ndarray[double, ndim=1] upper, np.ndarray[double, ndim=1] lower, int bars, double cutoff, int r, str ticker):
+def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=2] ySeq, np.ndarray[double, ndim=1] upper, np.ndarray[double, ndim=1] lower, int bars, double cutoff, int r, str ticker):
     scores = []
     # Variables for the Lower Bound Check
     cdef int total_length = xSeq.shape[0]
@@ -34,7 +35,7 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np
 
     #Variables for full DTW
 
-    cdef Py_ssize_t i, j, k
+    cdef Py_ssize_t i, j, k, columnIndexer
     cdef double c, x, y, z, d
     cdef double[:] cost = np.empty(2 * r + 1, dtype=np.float64)
     cdef double[:] cost_prev = np.empty(2 * r + 1, dtype=np.float64)
@@ -42,22 +43,22 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np
 
     for n in range(bars-1, total_length): # for the nth iteration, going through bars n-bars to n-1 
             
-        if xSeq[n,1]*xSeq[n, 3] < 800000: continue # Filter out low dollar volume days 
+        if xSeq[n,1]*xSeq[n, 6] < 800000: continue # Filter out low dollar volume days 
         # Lower Bound Check 
         totalLowerBound = 0.0
         zeroIndex = n-bars+1
         start = n - (bars // 5)
         terminate = False
         for b in range(start, n+1):
-            if xSeq[b, 2] > (upper[b-zeroIndex]) or xSeq[b, 2] < (lower[b-zeroIndex]):
+            if xSeq[b, 5] > (upper[b-zeroIndex]) or xSeq[b, 5] < (lower[b-zeroIndex]):
                 terminate = True
                 break
         if terminate: continue
         for b in range(zeroIndex, start):
-            if xSeq[b, 2] > upper[b-zeroIndex]:
-                totalLowerBound += (xSeq[b, 2] - upper[b-zeroIndex]) ** 2
-            elif xSeq[b, 2] < lower[b-zeroIndex]:
-                totalLowerBound += (xSeq[b, 2] - lower[b-zeroIndex]) ** 2
+            if xSeq[b, 5] > upper[b-zeroIndex]:
+                totalLowerBound += (xSeq[b, 5] - upper[b-zeroIndex]) ** 2
+            elif xSeq[b, 5] < lower[b-zeroIndex]:
+                totalLowerBound += (xSeq[b, 5] - lower[b-zeroIndex]) ** 2
         if (sqrt(totalLowerBound)*100) > cutoff: continue # Check if the lower bound is greater than the cutoff
 
         # Run full dtw 
@@ -74,17 +75,20 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=1] ySeq, np
 
             for j in range(max(0, i - r), min(bars - 1, i + r) + 1):
                 if i == 0 and j == 0:
-                    c = xSeq[zeroIndex, 2] - ySeq[0]
-                    cost[k] = c * c
+                    cost[k] = 0
+                    for columnIndexer in range(4):
+                        c = xSeq[zeroIndex, 2+columnIndexer] - ySeq[0, columnIndexer]
+                        cost[k] += c * c
                     k += 1
                     continue
 
                 y = float('inf') if j - 1 < 0 or k - 1 < 0 else cost[k - 1]
                 x = float('inf') if i < 1 or k > 2 * r - 1 else cost_prev[k + 1]
                 z = float('inf') if i < 1 or j < 1 else cost_prev[k]
-
-                d = xSeq[i+zeroIndex, 2] - ySeq[j]
-                cost[k] = min(x, y, z) + d * d
+                cost[k] = min(x, y, z)
+                for columnIndexer in range(4):
+                    d = xSeq[i+zeroIndex, 2+columnIndexer] - ySeq[j, columnIndexer]
+                    cost[k] += d * d
                 k += 1
 
             cost, cost_prev = cost_prev, cost
