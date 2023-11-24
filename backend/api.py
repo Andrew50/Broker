@@ -68,7 +68,7 @@ def create_app():
 			if user_id is None:
 				raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 			token = create_jwt_token(user_id)
-			setups = await data.get_setups(user_id)
+			setups = await data.get_user_setups(user_id)
 			settings = await data.get_settings(user_id)
 			return {"access_token": token, "token_type": "bearer","setups":setups,"settings":settings}
 		

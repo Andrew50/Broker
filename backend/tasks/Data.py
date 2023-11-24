@@ -151,7 +151,10 @@ class Data:
 			if bars != 0:
 				raise Exception('to code')
 			hash_data = self.r.hgetall(tf+form)
-			return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
+			#return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
+			return [[field.decode(), pickle.loads(value)] for field, value in hash_data.items()]
+			
+
 		else:
 			classifications = []
 			returns = []
@@ -283,10 +286,11 @@ class Data:
 			settings = await cursor.fetchone()
 			return settings[0]
 		
-	async def get_setups(self,user_id):
+	async def get_user_setups(self,user_id):
 		async with self._conn_async.cursor() as cursor:
 			await cursor.execute("SELECT name, tf, setup_length from setups WHERE user_id = %s",(user_id,))
 			return await cursor.fetchall()
+		
 
 
 	# def get_model(self,user_id,st=None):

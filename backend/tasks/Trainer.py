@@ -73,11 +73,6 @@ class Trainer:
 		model.save(f'C:/dev/broker/backend/models/{user_id}_{st}')
 		tensorflow.keras.backend.clear_session()
 
-# def get(st):
-	
-# 	return 'trainer-get'
-
-
 
 def train(args,data):
 	user_id,st = args

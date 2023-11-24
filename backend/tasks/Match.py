@@ -35,7 +35,7 @@ class Match:
         cutoff = 0.02*100
         start = datetime.datetime.now()
         returns = []
-        for ticker, x in ds.items():
+        for ticker, x in ds:
             returns += heapq.nsmallest(2, Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius, ticker), key=lambda x: x[2])
         top_scores = heapq.nsmallest(20, returns, key=lambda x: x[2])
         print(datetime.datetime.now() - start)

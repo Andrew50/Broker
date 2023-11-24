@@ -12,15 +12,17 @@ class Screener:
 
 	def get(args,data):
 		args += ['current',1,None][len(args):]
-		dt, user_id, st = args
-		st = st.split('-')
+		
+		dt, user_id, st, setup_length = args
+			
 		if dt == 'current':
 			bars = 100#to fix
 		else:
 			raise Exception('to code')
-		ds = data.get_ds('screener','full',tf,bars)
-		ticker_list = data.get_ticker_list('full')
-		for st in st:
+		ds = data.get_ds('screener','full',tf,setup_length)
+		#ticker_list = data.get_ticker_list('full')
+		for st in setup_types:
+
 			model = Screener.load_model(user_id,st)
 			tf, model = data.get_model(user_id,st)
 			scores = model.predict(ds)[:,1]
