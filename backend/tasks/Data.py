@@ -57,8 +57,16 @@ class Data:
 			return pickle.dumps(np.column_stack((dt, close_price_changes)))
 		
 		def screener_format(data):
-			dt = data[1:,0]
-			data = (data[1:,:5] / data[:-1,:5]) - 1
+			dt = data[:,0]
+
+			data = data[:,1:5]
+			mean = np.mean(data, axis=0)
+			std = np.std(data, axis=0)
+			data = (data - mean) / std
+
+			#dt = data[1:,0]
+
+			# data = (data[1:,:5] / data[:-1,:5]) - 1
 			return pickle.dumps(np.column_stack((dt,data)))
 
 		def chart_format(data,tf):
@@ -141,27 +149,30 @@ class Data:
 			hash_data = self.r.hgetall(tf+form)
 			return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
 		else:
-			
+			classifications = []
 			returns = []
-			for ticker, dt in request:
-				try:
-					value = pickle.loads(self.r.hget(tf+form,ticker))
-					index = Data.findex(value,dt)
-					value = value[index-bars+1:index+1,:]
-					#print(value.shape)
-					padding = bars - value.shape[0]
-					if padding > 0:
-						pad_width = [(0, padding)] + [(0, 0)] * (arr.ndim - 1)  # Pad only the first dimension
-						return np.pad(arr, pad_width, mode='constant', constant_values=pad_value)
-					returns.append(value)
-				except:
-					pass
-					#print(ticker,dt)
+			if form == 'screener':
+				for ticker, dt, classification in request:
+					try:
+						value = pickle.loads(self.r.hget(tf+form,ticker))
+						index = Data.findex(value,dt)
+						value = value[index-bars+1:index+1,:]
+						#print(value.shape)
+						padding = bars - value.shape[0]
+						if padding > 0:
+							raise TypeError
+							pad_width = [(0, padding)] + [(0, 0)] * (value.ndim - 1)  # Pad only the first dimension
+							value = np.pad(value, pad_width, mode='constant', constant_values=0)
+						returns.append(value)
+						classifications.append(classification)
+					except TypeError:
+						pass
+						#print(ticker,dt)
 			
 
-			returns = np.array(returns)
-			print(returns.shape)
-			return returns
+				returns = np.array(returns)
+				classifications = np.array(classifications)
+				return returns, classifications
 	
 	def findex(df, dt):
 		dt = Data.format_datetime(dt)
