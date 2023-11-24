@@ -58,15 +58,11 @@ class Data:
 		
 		def match_format(data):
 			close_prices = data[:, 4]
-			close_price_changes = (close_prices[1:] / close_prices[:-1]) - 1
-			#volume = data[1:, 5]
-			dt = data[1:, 0]
-			return pickle.dumps(np.column_stack((dt, close_price_changes)))
+			return pickle.dumps(np.column_stack((data[1:, 0], close_prices[1:], ((close_prices[1:] / close_prices[:-1]) - 1), data[1:, 5])))
 		
 		def screener_format(data):
-			dt = data[1:,0]
-			data = (data[1:,:5] / data[:-1,:5]) - 1
-			return pickle.dumps(np.column_stack((dt,data)))
+			change = np.where(data[:-1, :5] != 0, (data[1:, :5] / data[:-1, :5]) - 1, 0)
+			return pickle.dumps(np.column_stack((data[1:,0],change)))
 
 		def chart_format(data,tf):
 			list_of_lists = data.tolist()[:]
@@ -130,7 +126,7 @@ class Data:
 		self.r.set('working','working')
 
 	async def get_df(self, form='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
-		print(tf+form,ticker,flush=True)
+		#print(tf+form,ticker,flush=True)
 		data = await self.r_async.hget(tf+form,ticker)
 		#print(data,flush=True)
 		if not form == 'chart': data = pickle.loads(data)
@@ -156,8 +152,8 @@ class Data:
 		dt = Data.format_datetime(dt)
 		i = int(len(df)/2)		
 		k = int(i/2)
-		print(df,flush = True)
-		print(dt,flush = True)
+		#print(df,flush = True)
+		#print(dt,flush = True)
 		while k != 0:
 			date = df[i,0]
 			if date > dt:
