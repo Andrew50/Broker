@@ -327,7 +327,7 @@ class Data:
 		with self._conn.cursor(buffered=True) as cursor:
 			cursor.execute('SELECT setup_id from setups WHERE user_id = %s AND name = %s',(user_id,st))
 			setup_id = cursor.fetchone()[0]
-			query = [[setup_id,ticker,dt,tf] for ticker,dt,tf in data]
+			query = [[setup_id,ticker,dt,classification] for ticker,dt,classification in data]
 			cursor.executemany("INSERT IGNORE INTO setup_data VALUES (%s, %s, %s,%s)", query)
 			
 		self._conn.commit()
