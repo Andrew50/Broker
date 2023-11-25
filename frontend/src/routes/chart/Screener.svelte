@@ -1,7 +1,9 @@
 <script>
     import { onMount } from 'svelte';
+    import { dataset_dev } from 'svelte/internal';
     import { writable } from 'svelte/store';
-    import { screener_data, setups_list, backend_request } from '../store.js';
+    import { screener_data, setups_list, backend_request, chart_data, data_request } from '../store.js';
+    import Table from './Table.svelte';
 
     let ticker = '';
     let datetime = '';
@@ -42,13 +44,18 @@
             </div>
             <input type="submit" value="Screen">
         </form>
-
-        <div class="screener-data">
+        
+        <Table 
+            headers={['Ticker', 'Datetime', 'Value']} 
+            rows={$screener_data} 
+            onRowClick={data_request}
+            clickHandlerArgs={[chart_data,'chart','Ticker', '1d','Datetime']} />
+        <!-- <div class="screener-data">
             <!-- Display screener_data -->
-            {#each $screener_data as dataRow}
+       <!--      {#each $screener_data as dataRow}
                 <div>{dataRow[0]} - {dataRow[1]}</div>
-            {/each}
-        </div>
+            {/each} -->
+        <!-- </div> -->
     {/if}
 </div>
 

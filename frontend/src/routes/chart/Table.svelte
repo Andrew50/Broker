@@ -2,13 +2,14 @@
 
 <!-- usage in other scripts-->
 <!-- <script>
-    import CustomTable from './CustomTable.svelte';
+    
     import { chart_data, match_data } from '../store.js';
     import { backend_request } from '../path/to/backend_request';
 
     function getChartData(item) {
         backend_request(chart_data, 'Chart-get', item[0], item[1], '1d');
     }
+    import CustomTable from './CustomTable.svelte';
 </script>
 
 <CustomTable 
@@ -26,7 +27,12 @@
 
     function handleRowClick(item) {
         if (typeof onRowClick === 'function') {
-            onRowClick(item);
+            // Resolve dynamic arguments based on the item's values
+            const resolvedArgs = clickHandlerArgs.map(arg => 
+                headers.includes(arg) ? item[headers.indexOf(arg)] : arg
+            );
+
+            onRowClick(...resolvedArgs);
         }
     }
 </script>

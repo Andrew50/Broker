@@ -72,11 +72,12 @@ class Match:
         raise AttributeError
         return d 
 
-def get(args,data,user_id = None):
+def get(args,user_id = None):
+    from Data import data
+    asyncio.run(data.init_async_conn())
+    
     start = datetime.datetime.now()
-    ticker = args[0]
-    dt = args[2]
-    tf = args[1]
+    ticker,tf,dt = args
     ds = data.get_ds(tf=tf,form='match')
     y = asyncio.run(data.get_df('match',ticker,tf,dt, bars=np_bars))[:, 2]
     
@@ -86,8 +87,6 @@ def get(args,data,user_id = None):
     return json.dumps(match_data)
 
 if __name__ == '__main__':
-    from Data import data
-    asyncio.run(data.init_async_conn())
     print('test')
-    print(get(['CELH','1d','2023-08-10'],data))
+    print(get(['CELH','1d','2023-08-10']))
     print('test')

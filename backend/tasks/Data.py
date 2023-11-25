@@ -43,6 +43,11 @@ class Data:
 			self.setup()
 
 	async def init_async_conn(self):
+		try: 
+			self.r_async
+			return
+		except:
+			pass
 		if self.inside_container: self._conn_async = await aiomysql.connect(host='mysql', port=3306, user='root', password='7+WCy76_2$%g', db='broker')
 		else: self._conn_async = await aiomysql.connect(host='localhost', port=3307, user='root', password='7+WCy76_2$%g', db='broker')
 		redis_host = 'redis' if self.inside_container else '127.0.0.1'
