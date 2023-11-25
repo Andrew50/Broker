@@ -33,8 +33,8 @@ class Match:
             
     def compute(ds,y):
         radius = math.ceil(np_bars/10)
-        upper, lower = Odtw.calcBounds(y, radius)
-        cutoff = 0.02*100
+        upper, lower = Odtw.calcBounds(y[:, 3], radius)
+        cutoff = 100*100
         start = datetime.datetime.now()
         returns = []
         for ticker, x in ds.items():
@@ -79,7 +79,7 @@ def get(args,user_id = None):
     start = datetime.datetime.now()
     ticker,tf,dt = args
     ds = data.get_ds(tf=tf,form='match')
-    y = asyncio.run(data.get_df('match',ticker,tf,dt, bars=np_bars))[:, 2]
+    y = asyncio.run(data.get_df('match',ticker,tf,dt, bars=np_bars))[:, 2:-1]
     
     match_data = Match.compute(ds,y)
     for i in range(len(match_data)): match_data[i][1] = match_data[i][1][:10]
