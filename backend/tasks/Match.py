@@ -8,7 +8,7 @@ import Odtw
 import math
 import asyncio
 import time #temp import
-np_bars = 20
+np_bars = 10
 
 def format_datetime(dt,reverse=False):
 	if reverse:
@@ -89,5 +89,5 @@ if __name__ == '__main__':
     from Data import data
     asyncio.run(data.init_async_conn())
     print('test')
-    print(get(['PRTS','1d','2020-07-08'],data))
+    print(get(['CELH','1d','2023-08-10'],data))
     print('test')
