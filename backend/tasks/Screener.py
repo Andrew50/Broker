@@ -19,7 +19,7 @@ class Screener:
 		if ticker == '':
 			full_ticker_list = data.get_ticker_list('full')
 		else:
-			full_ticker_list = [ticker]
+			full_ticker_list = [ticker]#
 		
 		results = []
 		query = []
