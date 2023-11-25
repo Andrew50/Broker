@@ -1,49 +1,77 @@
 <script>
-    let innerWidth; 
-    let innerHeight
+    import { onMount } from 'svelte';
+    import { writable } from 'svelte/store';
+    import { screener_data, setups_list, backend_request } from '../store.js';
+
+    let ticker = '';
+    let datetime = '';
+    let selectedSetups = [];
+
     export let visible = false;
-    import {screener_data, backend_request, chart_data} from '../store.js';
+    let innerWidth;
+    let innerHeight;
+    // Function to handle checkbox changes
+    function handleCheckboxChange(setup, event) {
+        if (event.target.checked) {
+            selectedSetups.push(setup[0]);
+        } else {
+            selectedSetups = selectedSetups.filter(s => s !== setup);
+        }
+    }
+    // ... [rest of your script] ...
 </script>
 
-<div class="popout-menu"  style="min-height: {innerHeight}px;" class:visible={visible}>
-
+<div class="popout-menu" style="min-height: {innerHeight}px;" class:visible={visible}>
     {#if visible}
-        <form on:submit|preventDefault={() => backend_request(screener_data,'Screener-get')}>
-                    
-        <div class="form-group">
-        <input type="submit" value="Screen">
-        </div>
+        <!-- Display setups_list as a checklist above the inputs -->
+        {#each $setups_list as setup}
+            <label class="setup-item">
+                <input type="checkbox" on:change={(e) => handleCheckboxChange(setup, e)}>
+                {setup.join(' - ')}
+            </label>
+        {/each}
+
+        <form on:submit|preventDefault={() => backend_request(screener_data,'Screener-get',ticker,datetime,selectedSetups)} class="input-form">
+            <div class="form-group">
+                <label for="ticker">Ticker:</label>
+                <input type="text" id="ticker" bind:value={ticker} placeholder="Ticker">
+            </div>
+            <div class="form-group">
+                <label for="datetime">Datetime:</label>
+                <input type="text" id="datetime" bind:value={datetime} placeholder="YYYY-MM-DD HH:MM">
+            </div>
+            <input type="submit" value="Screen">
         </form>
+
+        <div class="screener-data">
+            <!-- Display screener_data -->
+            {#each $screener_data as dataRow}
+                <div>{dataRow[0]} - {dataRow[1]}</div>
+            {/each}
+        </div>
     {/if}
-    
 </div>
 
-
 <style>
-    /* .screener-button {
-    position: fixed;
-    right: 20px;
-    top: 120px;  You can adjust the top position as needed 
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    cursor: pointer;
-    } */
+    @import './style.css';
     .popout-menu {
-    display: none;
-    position: fixed;
-    right: 70px; /* Offset from the right side */
-    top: 0; /* You can adjust the top position as needed */
-    background-color: #f9f9f9;
-    min-width: 3px;
-    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+        /* Your existing styles */
     }
-    .popout-menu.visible {
-    display: block;
+    .screener-data {
+        overflow-y: auto;
+        max-height: 200px; /* Adjust as needed */
     }
-
+    .input-form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px; /* Spacing between form elements */
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+    .setup-item {
+        /* Add styling for checklist items here */
+    }
+    /* Add other styles as needed */
 </style>
-
-
-

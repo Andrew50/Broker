@@ -13,43 +13,40 @@ import aiomysql, aioredis
 class Data:
 	
 	def __init__(self):
-		self.inside_container = os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False)
-		if self.inside_container: #inside container
-			self.r = redis.Redis(host='redis', port=6379)
-			while True: #wait for redis to be ready
-				try:
-					if not self.r.info()['loading'] == 0:
-						raise Exception('gosh')
-					break
-				except:
-					print('waiting for redis',flush=True)
-					time.sleep(1)
-			while True:
-				try:
-					self._conn = mysql.connector.connect(host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
-					break
-				except mysql.connector.errors.DatabaseError as e:
-					if (e.errno != errorcode.ER_ACCESS_DENIED_ERROR
-					and e.errno != errorcode.ER_BAD_DB_ERROR):
-						print('waiting for mysql',flush=True)
+		try:
+			self.inside_container = os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False)
+			if self.inside_container: #inside container
+				self.r = redis.Redis(host='redis', port=6379)
+				while True: #wait for redis to be ready
+					try:
+						if not self.r.info()['loading'] == 0: raise Exception('gosh')
+						break
+					except:
+						print('waiting for redis',flush=True)
 						time.sleep(1)
-					else:
-						raise Exception(e)
-			
-			
-		else:
-			self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g',database='broker')
-			self.r = redis.Redis(host='127.0.0.1', port=6379)
-		#self.init_async_conn(SECRET_KEY)
-		#self.loop = asyncio.get_event_loop()
-		#self.loop.run_until_complete(self.init_async_conn(SECRET_KEY))
+				while True:
+					try:
+						self._conn = mysql.connector.connect(host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
+						break
+					except mysql.connector.errors.DatabaseError as e:
+						if (e.errno != errorcode.ER_ACCESS_DENIED_ERROR
+						and e.errno != errorcode.ER_BAD_DB_ERROR):
+							print('waiting for mysql',flush=True)
+							time.sleep(1)
+						else:
+							raise Exception(e)
+			else:
+				self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g',database='broker')
+				self.r = redis.Redis(host='127.0.0.1', port=6379)
+		except:
+			self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g')
+			self.setup()
 
 	async def init_async_conn(self):
 		if self.inside_container: self._conn_async = await aiomysql.connect(host='mysql', port=3306, user='root', password='7+WCy76_2$%g', db='broker')
 		else: self._conn_async = await aiomysql.connect(host='localhost', port=3307, user='root', password='7+WCy76_2$%g', db='broker')
 		redis_host = 'redis' if self.inside_container else '127.0.0.1'
 		self.r_async = aioredis.Redis(host=redis_host, port=6379)
-		
 
 	def init_cache(self,debug = False,force = True):
 		if not force and self.r.exists('working'):
@@ -61,8 +58,17 @@ class Data:
 			return pickle.dumps(np.column_stack((data[1:, 0], close_prices[1:], ((close_prices[1:] / close_prices[:-1]) - 1), data[1:, 5])))
 		
 		def screener_format(data):
-			change = np.where(data[:-1, :5] != 0, (data[1:, :5] / data[:-1, :5]) - 1, 0)
-			return pickle.dumps(np.column_stack((data[1:,0],change)))
+			dt = data[:,0]
+
+			data = data[:,1:5]
+			mean = np.mean(data, axis=0)
+			std = np.std(data, axis=0)
+			data = (data - mean) / std
+
+			#dt = data[1:,0]
+
+			# data = (data[1:,:5] / data[:-1,:5]) - 1
+			return pickle.dumps(np.column_stack((dt,data)))
 
 		def chart_format(data,tf):
 			list_of_lists = data.tolist()[:]
@@ -85,6 +91,7 @@ class Data:
 	
 			r = json.dumps(list_of_lists)
 			return r
+		
 		def set_hash(data, tf, form):
 			for ticker, df in data.items():
 				if tf in df:  # Check if tf data exists for the ticker
@@ -98,7 +105,6 @@ class Data:
 						self.r.hset(tf + form, ticker, formatted_data)
 					except Exception as e:
 						print(e + ' _ ' + form)
-
 		
 		cursor = self._conn.cursor(buffered=True)
 		if debug:
@@ -118,7 +124,6 @@ class Data:
 		for ticker in organized_data:
 			for tf in organized_data[ticker]:
 				organized_data[ticker][tf] = np.array(organized_data[ticker][tf], dtype=float)
-		#self.wait_for_redis()
 		for tf in ('1d',):#'1'):
 			for typ in ('chart', 'match','screener'):
 				set_hash(organized_data, tf, typ)
@@ -126,9 +131,7 @@ class Data:
 		self.r.set('working','working')
 
 	async def get_df(self, form='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
-		#print(tf+form,ticker,flush=True)
 		data = await self.r_async.hget(tf+form,ticker)
-		#print(data,flush=True)
 		if not form == 'chart': data = pickle.loads(data)
 		if dt:
 			index = Data.findex(data,dt)
@@ -140,20 +143,76 @@ class Data:
 		return data
 	
 	def get_ds(self,form = 'match',request='full',tf='1d', bars=0):
-		if bars != 0:
-			raise Exception('to code')
+		
 		if request == 'full':
+			if bars != 0:
+				raise Exception('to code')
 			hash_data = self.r.hgetall(tf+form)
-			return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
+			#return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
+			return [[field.decode(), pickle.loads(value)] for field, value in hash_data.items()]
+			
+
 		else:
-			raise Exception('to be coded')
+			returns = []
+			
+
+
+			if form == 'trainer':
+				classifications = []
+				
+				for ticker, dt, classification in request:
+					try:
+						value = pickle.loads(self.r.hget(tf+'screener',ticker))
+						if not dt == '' or dt == None:
+							index = Data.findex(value,dt)
+							value = value[index-bars+1:index+1,:]
+						#print(value.shape)
+						padding = bars - value.shape[0]
+						if padding > 0:
+							raise TypeError
+							pad_width = [(0, padding)] + [(0, 0)] * (value.ndim - 1)  # Pad only the first dimension
+							value = np.pad(value, pad_width, mode='constant', constant_values=0)
+						returns.append(value)
+						classifications.append(classification)
+					except TypeError:
+						pass
+						#print(ticker,dt)
+			
+
+				returns = np.array(returns)
+				classifications = np.array(classifications)
+				return returns, classifications
+			
+			elif form == 'screener':
+				tickers = []
+				for ticker, dt in request:
+					try:
+						value = pickle.loads(self.r.hget(tf+form,ticker))
+						if dt != '' and dt != None:
+							index = Data.findex(value,dt)
+							value = value[index-bars+1:index+1,:]
+						else:
+							value = value[-bars:]
+						#print(value.shape)
+						padding = bars - value.shape[0]
+						if padding > 0:
+							raise TypeError
+							pad_width = [(0, padding)] + [(0, 0)] * (value.ndim - 1)  # Pad only the first dimension
+							value = np.pad(value, pad_width, mode='constant', constant_values=0)
+						returns.append(value)
+						tickers.append(ticker)
+					except TypeError:
+						pass
+						#print(ticker,dt)
+			
+
+				returns = np.array(returns)
+				return returns, tickers
 	
 	def findex(df, dt):
 		dt = Data.format_datetime(dt)
 		i = int(len(df)/2)		
 		k = int(i/2)
-		#print(df,flush = True)
-		#print(dt,flush = True)
 		while k != 0:
 			date = df[i,0]
 			if date > dt:
@@ -179,13 +238,14 @@ class Data:
 		elif type == 'current':
 			raise Exception('need current func. has to pull from tv or something god')###################################################################################################################################
 	
+	@staticmethod
 	def format_datetime(dt,reverse=False):
 		if reverse:
 			return datetime.datetime.fromtimestamp(dt)
 			
 		if type(dt) == int or type(dt) == float:
 			return dt
-		if dt is None: return None
+		if dt is None or dt == '': return None
 		if dt == 'current': return datetime.datetime.now(pytz.timezone('EST'))
 		if isinstance(dt, str):
 			try: dt = datetime.datetime.strptime(dt, '%Y-%m-%d')
@@ -219,6 +279,8 @@ class Data:
 			if user_data and len(user_data) > 0:
 				if password == user_data[2]:  # Assuming password is at index 2
 					return user_data[0]   
+				
+	
 	
 	async def set_user(self, user_id=None, email=None, password=None, settings_string=None, delete=False):
 		async with self._conn_async.cursor() as cursor:
@@ -247,44 +309,80 @@ class Data:
 
 			await self._conn_async.commit()
 				
-	def get_settings(self,user_id):
-		with self._conn.cursor(buffered=True) as cursor:
-			cursor.execute("SELECT settings FROM users WHERE id = %s", (user_id,))
-			return cursor.fetchone()[0]
+	async def get_settings(self,user_id):
+		async with self._conn_async.cursor() as cursor:
+			await cursor.execute("SELECT settings FROM users WHERE id = %s", (user_id,))
+			settings = await cursor.fetchone()
+			return settings[0]
+		
+	async def get_user_setups(self,user_id):
+		async with self._conn_async.cursor() as cursor:
+			await cursor.execute("SELECT name, tf, setup_length from setups WHERE user_id = %s",(user_id,))
+			return await cursor.fetchall()
+		
 
 
-	def get_model(self,user_id,st=None):
-		with self._conn.cursor(buffered=True) as cursor:
-			if st is None:
-				cursor.execute('SELECT tf,model from setups WHERE user_id = %s AND name = %s',(user_id,st))
+	# def get_model(self,user_id,st=None):
+	# 	with self._conn.cursor(buffered=True) as cursor:
+	# 		if st is None:
+	# 			cursor.execute('SELECT tf,model from setups WHERE user_id = %s AND name = %s',(user_id,st))
+	# 		else:
+	# 			cursor.execute('SELECT tf,model from setups WHERE user_id = %s',(user_id,))
+	# 		cursor.fetchone()[0]
+	# 		return
+		
+
+	async def set_setup(self,user_id,st,tf=None,setup_length = None,delete=False):
+		async with self._conn_async.cursor() as cursor:
+			if delete:
+				await cursor.execute("DELETE FROM setups WHERE user_id = %s AND name = %s", (user_id,st))
+			elif tf != None and setup_length != None:
+				insert_query = "INSERT INTO setups (user_id, name, tf, setup_length) VALUES (%s, %s, %s, %s)"
+				await cursor.execute(insert_query, (user_id,st,tf,setup_length))
 			else:
-				cursor.execute('SELECT tf,model from setups WHERE user_id = %s',(user_id,))
-			cursor.fetchone()[0]
-			return
+				raise Exception('missing args')
+		await self._conn_async.commit()
 		
-	def set_model(self,user_id):
-		pass
-
-	def set_setup(self,user_id,st,tf):
+	def get_setup_length(self,user_id,st):
 		with self._conn.cursor(buffered=True) as cursor:
-			insert_query = "INSERT INTO setups (user_id, name, tf, model) VALUES (%s, %s, %s, %s)"
-			cursor.execute(insert_query, (user_id,st,tf,''))
-		self._conn.commit()
+			cursor.execute('SELECT tf,setup_length from setups WHERE user_id = %s AND name = %s',(user_id,st))
+			return cursor.fetchall()[0]
 		
-	def get_sample(self,user_id,st):
+	
+	def get_setup_sample(self,user_id,st):
 		with self._conn.cursor(buffered=True) as cursor:
-			cursor.execute('SELECT setup_id from setups WHERE user_id = %s AND name = %s',(user_id,st))
-			setup_id = cursor.fetchone()[0]
+			cursor.execute('SELECT setup_id, tf,setup_length from setups WHERE user_id = %s AND name = %s',(user_id,st))
+			setup_id, tf,setup_length = cursor.fetchall()[0]
 			cursor.execute('SELECT * from setup_data WHERE setup_id = %s',(setup_id,))
-			return cursor.fetchall()
+			values = [[ticker,dt,val] for setup_id,ticker,dt,val in cursor.fetchall()]
+			return values, tf,setup_length
 		
-	def set_sample(self,user_id,st,ticker,dt,value):##################################### ix this shit bruhhg dododosoosdodsfdsiho
+	
+		
+	def set_setup_sample(self,user_id,st,data):##################################### ix this shit bruhhg dododosoosdodsfdsiho
 		with self._conn.cursor(buffered=True) as cursor:
 			cursor.execute('SELECT setup_id from setups WHERE user_id = %s AND name = %s',(user_id,st))
 			setup_id = cursor.fetchone()[0]
-			cursor.execute("INSERT IGNORE INTO setup_data VALUES (%s, %s, %s)", (setup_id,ticker,dt))
+			query = [[setup_id,ticker,dt,classification] for ticker,dt,classification in data]
+			cursor.executemany("INSERT IGNORE INTO setup_data VALUES (%s, %s, %s,%s)", query)
 			
 		self._conn.commit()
+		
+
+
+
+	# def alter_table(self):
+	# 	with self._conn.cursor(buffered=True) as cursor:
+	# 		# SQL command to delete the 'model' column
+	# 		delete_column_query = "ALTER TABLE setups DROP COLUMN model;"
+	# 		cursor.execute(delete_column_query)
+
+	# 		# SQL command to add the 'setup_length' column
+	# 		add_column_query = "ALTER TABLE setups ADD COLUMN setup_length INT;"
+	# 		cursor.execute(add_column_query)
+
+	# 		# Commit the changes
+	# 		self._conn.commit()
 
 	def update(self,force_retrain=False):
 
@@ -402,7 +500,7 @@ class Data:
 				name VARCHAR(255) NOT NULL,
 				setup_id INT AUTO_INCREMENT UNIQUE,
 				tf VARCHAR(3) NOT NULL,
-				model BINARY,
+				setup_length INT NOT NULL,
 				UNIQUE(user_id, name),
 				FOREIGN KEY (user_id) REFERENCES users(id)
 			);
@@ -448,6 +546,8 @@ class Data:
 #start = datetime.datetime.now()
 
 data = Data()
+#if __name__ == '__main__':
+	#data.setup()
 #asyncio.run(data.init_async_conn())
 #data.init_async_conn()
 
