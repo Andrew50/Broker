@@ -2,7 +2,7 @@ import { bind } from 'svelte/internal';
 import { writable } from 'svelte/store';
 import { get } from 'svelte/store';
 
-export let screener_data = writable()
+export let screener_data = writable([])
 
 export let chart_data = writable([])
 
@@ -50,7 +50,7 @@ export async function public_request(bind_variable, func, ...args) {
         try {
             result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
         } catch (error) { }
-        if (bind_variable === null) {
+        if (bind_variable == null) {
             return result
         }
         else {
@@ -100,7 +100,7 @@ export async function data_request(bind_variable,func, ...args) {
         try {
             result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
         } catch (error){}
-        if (bind_variable === null) {
+        if (bind_variable == null) {
             return result
         }
         else {
@@ -156,6 +156,7 @@ export async function backend_request(bind_variable, func, ...args) {
                 } catch {
                     // Result might already be in a proper JSON format or another parsing error occurred
                 }
+                console.log(result)
                 bind_variable.set(result);
             } else if (statusData.status === 'failed') {
                 clearInterval(intervalId);

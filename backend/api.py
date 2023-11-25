@@ -27,12 +27,12 @@ async def validate_auth(token: str = Depends(oauth2_scheme)):
 	except jwt.PyJWTError:
 		raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
 
-def run_task(func,args):
+def run_task(func,args,user_id):
 	try:
 		module_name, function_name = func.split('-')
 		module = importlib.import_module(module_name)
 		func = getattr(module, function_name, None)
-		return func(args,data)
+		return func(args,data,user_id)
 	except Exception as e:
 		print(traceback.format_exc() + str(e), flush=True)
 		return 'failed'
@@ -105,7 +105,7 @@ def create_app():
 	@app.post('/backend', status_code=201)
 	async def backend_request(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
 		func, args = request_model.function, request_model.arguments
-		job = q.enqueue(run_task, kwargs={'func': func, 'args': args}, timeout=600)
+		job = q.enqueue(run_task, kwargs={'func': func, 'args': args, 'user_id':user_id}, timeout=600)
 		return {'task_id': job.get_id()}
 	
 	async def fetch_job(job_id):

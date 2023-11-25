@@ -156,14 +156,19 @@ class Data:
 			
 
 		else:
-			classifications = []
 			returns = []
-			if form == 'screener':
+			
+
+
+			if form == 'trainer':
+				classifications = []
+				
 				for ticker, dt, classification in request:
 					try:
-						value = pickle.loads(self.r.hget(tf+form,ticker))
-						index = Data.findex(value,dt)
-						value = value[index-bars+1:index+1,:]
+						value = pickle.loads(self.r.hget(tf+'screener',ticker))
+						if not dt == '' or dt == None:
+							index = Data.findex(value,dt)
+							value = value[index-bars+1:index+1,:]
 						#print(value.shape)
 						padding = bars - value.shape[0]
 						if padding > 0:
@@ -180,6 +185,32 @@ class Data:
 				returns = np.array(returns)
 				classifications = np.array(classifications)
 				return returns, classifications
+			
+			elif form == 'screener':
+				tickers = []
+				for ticker, dt in request:
+					try:
+						value = pickle.loads(self.r.hget(tf+form,ticker))
+						if dt != '' and dt != None:
+							index = Data.findex(value,dt)
+							value = value[index-bars+1:index+1,:]
+						else:
+							value = value[-bars:]
+						#print(value.shape)
+						padding = bars - value.shape[0]
+						if padding > 0:
+							raise TypeError
+							pad_width = [(0, padding)] + [(0, 0)] * (value.ndim - 1)  # Pad only the first dimension
+							value = np.pad(value, pad_width, mode='constant', constant_values=0)
+						returns.append(value)
+						tickers.append(ticker)
+					except TypeError:
+						pass
+						#print(ticker,dt)
+			
+
+				returns = np.array(returns)
+				return returns, tickers
 	
 	def findex(df, dt):
 		dt = Data.format_datetime(dt)
@@ -210,13 +241,14 @@ class Data:
 		elif type == 'current':
 			raise Exception('need current func. has to pull from tv or something god')###################################################################################################################################
 	
+	@staticmethod
 	def format_datetime(dt,reverse=False):
 		if reverse:
 			return datetime.datetime.fromtimestamp(dt)
 			
 		if type(dt) == int or type(dt) == float:
 			return dt
-		if dt is None: return None
+		if dt is None or dt == '': return None
 		if dt == 'current': return datetime.datetime.now(pytz.timezone('EST'))
 		if isinstance(dt, str):
 			try: dt = datetime.datetime.strptime(dt, '%Y-%m-%d')
@@ -314,7 +346,10 @@ class Data:
 				raise Exception('missing args')
 		await self._conn_async.commit()
 		
-
+	def get_setup_length(self,user_id,st):
+		with self._conn.cursor(buffered=True) as cursor:
+			cursor.execute('SELECT tf,setup_length from setups WHERE user_id = %s AND name = %s',(user_id,st))
+			return cursor.fetchall()[0]
 		
 	
 	def get_setup_sample(self,user_id,st):

@@ -1,46 +1,60 @@
-import heapq, json
+import json
 import tensorflow as tf
+import numpy as np
 
 class Screener:
 
 
 	#async def load_model(user_id,st):
 	def load_model(user_id,st):
-		return tf.keras.models.load_model(f'models/{user_id}_{st}')
-			 
+		#try: 
+		return tf.keras.models.load_model(f'{user_id}_{st}')
+		#except:
+			#return tf.keras.models.load_model(f'{user_id}_{st}')
 	
 
-	def get(args,data):
-		args += ['current',1,None][len(args):]
-		
-		dt, user_id, st, setup_length = args
-			
-		if dt == 'current':
-			bars = 100#to fix
+	def screen(user_id, ticker, dt, setup_types,data):
+		#args += ['current',1,None][len(args):]
+		dt = data.format_datetime(dt)
+		if ticker == '':
+			full_ticker_list = data.get_ticker_list('full')
 		else:
-			raise Exception('to code')
-		ds = data.get_ds('screener','full',tf,setup_length)
-		#ticker_list = data.get_ticker_list('full')
+			full_ticker_list = [ticker]
+		
+		results = []
+		query = []
+		for ticker in full_ticker_list:
+			query.append([ticker,dt])
 		for st in setup_types:
-
+			tf, setup_length = data.get_setup_length(user_id,st)
+			ds, ticker_list = data.get_ds('screener',query,tf,setup_length)
 			model = Screener.load_model(user_id,st)
-			tf, model = data.get_model(user_id,st)
-			scores = model.predict(ds)[:,1]
+			ds = ds[:,:,1:]
+			#print(ds,flush=True)
+			print(ds.shape,flush= True)
+			scores = model.predict(ds)[:,0]
 			results = []
-			threshold = .25 ####shouldnt be hard coded
+			threshold = .18 ####shouldnt be hard coded
 			i = 0
+			print(scores,flush=True)
 			for score in scores:
 				if score > threshold:
 					ticker = ticker_list[i]
-					results.append([ticker,score])
+					results.append([ticker,int(100*score)])
 				i += 1
-		results.sort(key=lambda x: x[0])
-		return json.dumps(results)
+		results.sort(key=lambda x: x[1])
+		return results
+		
+	
+def get(args,data,user_id):
+	ticker, dt, setup_types = args
+	results = Screener.screen(user_id,ticker,dt,setup_types,data)
+	return json.dumps(results)
 			
 if __name__ == '__main__':
 	from Data import Data
 	data = Data()
-	print(Screener.get(['current',1],data))
+	#print(Screener.get(['current'],data))
 	
 
 

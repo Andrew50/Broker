@@ -40,7 +40,7 @@ backend/database
 backend/old/1d
 backend/old/1min
 old/1d
-backend/models
+backend/kt
 frontend/node_modules
 frontend/.svelte-kit
 build

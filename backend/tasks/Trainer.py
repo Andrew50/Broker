@@ -43,7 +43,7 @@ class Trainer:
 		else:print("GPU detected, using GPU for training.")
 		setup_sample, tf, setup_length = data.get_setup_sample(user_id, st)
 		setup_sample = Trainer.sample(setup_sample, use)
-		ds, y = data.get_ds('screener', setup_sample, tf, setup_length)
+		ds, y = data.get_ds('trainer', setup_sample, tf, setup_length)
 		print(ds)
 		ds = ds[:, :, 1:5]
 		early_stopping = EarlyStopping(
@@ -57,7 +57,7 @@ class Trainer:
             objective=kt.Objective('val_auc_pr', direction='max'),
             max_epochs=40,
             factor=3,
-            directory='C:/dev/broker/backend/models/kt',
+            directory='C:/dev/broker/backend/kt',
             project_name='crazy_asf'
         )
 		tuner.search(ds, y, epochs=epochs, validation_split=0.2, callbacks=[early_stopping])

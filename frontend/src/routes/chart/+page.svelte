@@ -88,13 +88,14 @@
     </button>
 </div>
 
-<Match visible={active_menu == 'match'} />
-<Screener visible={active_menu == 'screener'} />
-<Chart/>
-<Trainer visible ={active_menu == 'trainer'}/>
+<Match visible = {active_menu == 'match'}/>
+<Screener visible = {active_menu == 'screener'}/>
+<Trainer visible = {active_menu == 'trainer'}/>
 <Study visible = {active_menu == 'study'}/>
 <Account visible = {active_menu == 'account'}/>
 <Settings visible = {active_menu == 'settings'}/>
+<Chart/>
+
 
 <style>
     .button-container {

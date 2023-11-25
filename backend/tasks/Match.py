@@ -70,7 +70,7 @@ class Match:
         raise AttributeError
         return d 
 
-def get(args,data):
+def get(args,data,user_id = None):
     start = datetime.datetime.now()
     ticker = args[0]
     dt = args[2]

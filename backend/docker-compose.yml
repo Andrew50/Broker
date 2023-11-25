@@ -28,10 +28,10 @@ services:
             dockerfile: ./Dockerfile
         ports:
         - "5057:5057"
-        working_dir: /home/myproj
+        working_dir: /app
         volumes:
-            - ./:/home/myproj/tasks
-           # - ./:/home/myproj
+            - ./:/app/tasks
+           # - ./:/app
         command: 
             python api.py
         networks:
@@ -41,12 +41,12 @@ services:
         build:
             context: ./
             dockerfile: ./Dockerfile
-        working_dir: /home/myproj
+        working_dir: /app
         #command: rq worker --url redis://redis:6379 my_queue
         command: /bin/sh -c "sleep 10 && rq worker --url redis://redis:6379 my_queue"
         #command: python worker.py
         volumes: 
-            - ./:/home/myproj/models
+            - ./:/app/models
         #command: python worker.py
         depends_on:
             - mysql
