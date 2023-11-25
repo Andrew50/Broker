@@ -8,7 +8,7 @@ import Odtw
 import math
 import asyncio
 import time #temp import
-np_bars = 10
+np_bars = 20
 
 def format_datetime(dt,reverse=False):
 	if reverse:
@@ -34,7 +34,7 @@ class Match:
     def compute(ds,y):
         radius = math.ceil(np_bars/10)
         upper, lower = Odtw.calcBounds(y[:, 3], radius)
-        cutoff = 0.02*100
+        cutoff = 100*100
         start = datetime.datetime.now()
         returns = []
         for ticker, x in ds.items():
@@ -89,5 +89,5 @@ if __name__ == '__main__':
     from Data import data
     asyncio.run(data.init_async_conn())
     print('test')
-    print(get(['CELH','1d','2023-08-10'],data))
+    print(get(['PRTS','1d','2020-07-08'],data))
     print('test')

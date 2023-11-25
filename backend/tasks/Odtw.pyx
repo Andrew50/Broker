@@ -53,7 +53,7 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=2] ySeq, np
             if xSeq[b, 5] > (upper[b-zeroIndex]) or xSeq[b, 5] < (lower[b-zeroIndex]):
                 terminate = True
                 break
-        if terminate: continue
+        #if terminate: continue
         for b in range(zeroIndex, start):
             if xSeq[b, 5] > upper[b-zeroIndex]:
                 totalLowerBound += (xSeq[b, 5] - upper[b-zeroIndex]) ** 2
