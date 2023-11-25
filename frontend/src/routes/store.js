@@ -1,7 +1,8 @@
 import { bind } from 'svelte/internal';
 import { writable } from 'svelte/store';
+import { get } from 'svelte/store';
 
-export let screener_data = writable()
+export let screener_data = writable([])
 
 export let chart_data = writable([])
 
@@ -9,7 +10,71 @@ export let match_data = writable([[], [], []])
 
 export let auth_data = writable(null)
 
-export let setup_list = writable([])
+export let setups_list = writable([])
+
+export let settings = writable({})
+
+
+function logout() {
+    auth_data.set(null);
+    goto('/auth');
+}
+
+function getAuthHeaders() {
+    const token = get(auth_data);
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
+
+export async function public_request(bind_variable, func, ...args) {
+    const url = `http://localhost:5057/public`;
+    const payload = {
+        function: func,
+        arguments: args
+    };
+
+    try {
+        console.log('Request sent to:', url);
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload) // Send the payload as a stringified JSON in the body
+        });
+
+        if (!response.ok) {
+            throw new Error('POST response not ok');
+        }
+        let result = await response.json();
+        try {
+            result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
+        } catch (error) { }
+        if (bind_variable == null) {
+            return result
+        }
+        else {
+            bind_variable.set(result);
+        }
+
+
+    }
+    catch (error) {
+        console.error('Error during backend request:', error);
+        bind_variable.set(null);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
 
 export async function data_request(bind_variable,func, ...args) {
     const url = `http://localhost:5057/data`;
@@ -22,7 +87,9 @@ export async function data_request(bind_variable,func, ...args) {
         console.log('Request sent to:', url);
         const response = await fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders() },
             body: JSON.stringify(payload) // Send the payload as a stringified JSON in the body
         });
 
@@ -33,7 +100,7 @@ export async function data_request(bind_variable,func, ...args) {
         try {
             result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
         } catch (error){}
-        if (bind_variable === null) {
+        if (bind_variable == null) {
             return result
         }
         else {
@@ -60,7 +127,10 @@ export async function backend_request(bind_variable, func, ...args) {
 
         const response = await fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+},
             body: JSON.stringify(payload) // Send the payload as a stringified JSON in the body
         });
 
@@ -86,6 +156,7 @@ export async function backend_request(bind_variable, func, ...args) {
                 } catch {
                     // Result might already be in a proper JSON format or another parsing error occurred
                 }
+                console.log(result)
                 bind_variable.set(result);
             } else if (statusData.status === 'failed') {
                 clearInterval(intervalId);
