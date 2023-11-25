@@ -54,8 +54,16 @@ class Data:
 			return
 		
 		def match_format(data):
-			close_prices = data[:, 4]
-			return pickle.dumps(np.column_stack((data[1:, 0], close_prices[1:], ((close_prices[1:] / close_prices[:-1]) - 1), data[1:, 5])))
+			# dt, open, high, low, close, volume 
+			# 0    1     2     3     4      5
+			ohlcData = data[1:,1:5]/data[:-1, 4].reshape(-1, 1) - 1
+			mean = np.mean(ohlcData, axis=0)
+			std = np.std(ohlcData, axis=0)
+			ohlcData = (ohlcData - mean) / std
+			
+			return pickle.dumps(np.column_stack((data[1:, 0], data[1:, 4], ohlcData[:, 0], ohlcData[:, 1], ohlcData[:, 2], ohlcData[:, 3], data[1:, 5])))
+			#close_prices = data[:, 4]
+			#return pickle.dumps(np.column_stack((data[1:, 0], close_prices[1:], (data[1:, 1] / close_prices[:-1] - 1), (data[1:, 2]/close_prices[:-1] -1), (data[1:,3]/close_prices[:-1] - 1), (close_prices[1:] / close_prices[:-1]) - 1, data[1:, 5])))
 		
 		def screener_format(data):
 			dt = data[:,0]
@@ -125,8 +133,8 @@ class Data:
 			for tf in organized_data[ticker]:
 				organized_data[ticker][tf] = np.array(organized_data[ticker][tf], dtype=float)
 		for tf in ('1d',):#'1'):
-			for typ in ('chart', 'match','screener'):
-				set_hash(organized_data, tf, typ)
+			#for typ in ('match'): # for typ in ('match', 'chart', 'screener')
+			set_hash(organized_data, tf, 'match')
 				
 		self.r.set('working','working')
 
