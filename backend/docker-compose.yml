@@ -14,7 +14,7 @@ services:
           - ./790:/redis
         command: redis-server #./redis/redis.conf    
         #command: python worker.py
-        mem_limit: 4G
+        mem_limit: 7G
         #redis-server #
   
 

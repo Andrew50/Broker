@@ -55,10 +55,7 @@ class Data:
 		
 		def match_format(data):
 			close_prices = data[:, 4]
-			close_price_changes = (close_prices[1:] / close_prices[:-1]) - 1
-			#volume = data[1:, 5]
-			dt = data[1:, 0]
-			return pickle.dumps(np.column_stack((dt, close_price_changes)))
+			return pickle.dumps(np.column_stack((data[1:, 0], close_prices[1:], ((close_prices[1:] / close_prices[:-1]) - 1), data[1:, 5])))
 		
 		def screener_format(data):
 			dt = data[:,0]
