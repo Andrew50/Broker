@@ -9,13 +9,13 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 from pydantic import BaseModel
 sys.path.append('./tasks')
 SECRET_KEY = "god"
-from Data import data
+from async_Data import Data
+from sync_Data import data
 
 class Request(BaseModel):
 	function: str
 	arguments: list
 	
-
 
 async def validate_auth(token: str = Depends(oauth2_scheme)):
 	try:
@@ -52,10 +52,8 @@ def create_app():
 
 	@app.on_event("startup")
 	async def startup_event():
-		app.state.data = data
+		app.state.data = Data()
 		await app.state.data.init_async_conn()
-		app.state.data.r_async
-		print('gisfjsodfosdisdioosdo',flush=True)
 		
 
 	@app.post('/public',status_code=201)
@@ -76,9 +74,6 @@ def create_app():
 		
 		else:
 			raise Exception('to code' + func)
-
-
-
 	
 	@app.post('/data',status_code=201)
 	async def data_request(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
