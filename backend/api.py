@@ -9,13 +9,13 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 from pydantic import BaseModel
 sys.path.append('./tasks')
 SECRET_KEY = "god"
-from Data import data
+from async_Data import Data
+from sync_Data import data
 
 class Request(BaseModel):
 	function: str
 	arguments: list
 	
-
 
 async def validate_auth(token: str = Depends(oauth2_scheme)):
 	try:
@@ -32,7 +32,7 @@ def run_task(func,args,user_id):
 		module_name, function_name = func.split('-')
 		module = importlib.import_module(module_name)
 		func = getattr(module, function_name, None)
-		return func(args,data,user_id)
+		return func(args,user_id)
 	except Exception as e:
 		print(traceback.format_exc() + str(e), flush=True)
 		return 'failed'
@@ -52,7 +52,7 @@ def create_app():
 
 	@app.on_event("startup")
 	async def startup_event():
-		app.state.data = data
+		app.state.data = Data()
 		await app.state.data.init_async_conn()
 		
 
@@ -74,30 +74,28 @@ def create_app():
 		
 		else:
 			raise Exception('to code' + func)
-
-
-
 	
 	@app.post('/data',status_code=201)
 	async def data_request(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
-		data = request.app.state.data
+		data_ = request.app.state.data
 		func, args = request_model.function, request_model.arguments
 		if func == 'chart':
 			args += ['MSFT','1d',None][len(args):]
 			ticker,tf,dt = args
-			val = await data.get_df('chart',ticker,tf,dt)
+			print(args,flush=True)
+			val = await data_.get_df('chart',ticker,tf,dt)
 			return val
 		elif func == 'create setup':
 			st, tf, setup_length = args
-			await data.set_setup(user_id,st,tf,setup_length)
+			await data_.set_setup(user_id,st,tf,setup_length)
 			return 'done'
 		elif func == 'delete setup':
 			st, = args
-			await data.set_setup(user_id,st,delete = True)
+			await data_.set_setup(user_id,st,delete = True)
 			return 'done'
 		elif func == 'set sample':
 			user_id, st, query = args
-			data.set_setup_sample(user_id,st,query)
+			data_.set_setup_sample(user_id,st,query)
 			return 'done'
 		else:
 			raise Exception('to code' + func)

@@ -1,37 +1,26 @@
 
 
-<!-- usage in other scripts-->
-<!-- <script>
-    import CustomTable from './CustomTable.svelte';
-    import { chart_data, match_data } from '../store.js';
-    import { backend_request } from '../path/to/backend_request';
-
-    function getChartData(item) {
-        backend_request(chart_data, 'Chart-get', item[0], item[1], '1d');
-    }
-</script>
-
-<CustomTable 
-    headers={['Ticker Symbol', 'Timestamp', 'Value']} 
-    rows={$match_data} 
-    onRowClick={getChartData} />
- -->
-
-
 
 <script>
     export let headers = []; // Array of header names
     export let rows = [];    // Array of row data
     export let onRowClick;   // Function to handle row click
+    export let clickHandlerArgs = [];
 
     function handleRowClick(item) {
         if (typeof onRowClick === 'function') {
-            onRowClick(item);
+            // Resolve dynamic arguments based on the item's values
+            const resolvedArgs = clickHandlerArgs.map(arg => 
+                headers.includes(arg) ? item[headers.indexOf(arg)] : arg
+            );
+            console.log(resolvedArgs)
+            onRowClick(...resolvedArgs);
         }
     }
 </script>
 
 {#if rows.length > 0}
+<div class="scrollable-table">
     <table>
         <thead>
             <tr>
@@ -50,4 +39,13 @@
             {/each}
         </tbody>
     </table>
+    </div>
 {/if}
+
+
+<style>
+    .scrollable-table {
+        overflow-y: auto;
+        max-height: 400px; /* Adjust this value based on your needs */
+    }
+</style>

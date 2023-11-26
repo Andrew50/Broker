@@ -10,6 +10,9 @@ from mysql.connector import errorcode
 import aiomysql, aioredis
 
 
+
+
+
 class Data:
 	
 	def __init__(self):
@@ -41,17 +44,31 @@ class Data:
 		except:
 			self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g')
 			self.setup()
+			
 
-	async def init_async_conn(self):
-		if self.inside_container: self._conn_async = await aiomysql.connect(host='mysql', port=3306, user='root', password='7+WCy76_2$%g', db='broker')
-		else: self._conn_async = await aiomysql.connect(host='localhost', port=3307, user='root', password='7+WCy76_2$%g', db='broker')
-		redis_host = 'redis' if self.inside_container else '127.0.0.1'
-		self.r_async = aioredis.Redis(host=redis_host, port=6379)
+
+
+	def get_df(self, form='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
+		#async with self.redis_pool.get() as conn:
+			
+		data = self.r.hget(tf+form,ticker)
+		if not form == 'chart': data = pickle.loads(data)
+		if dt:
+			index = Data.findex(data,dt)
+			data = data[:index+1]
+		if bars:
+			data = data[-bars:]
+		if not pm:
+			raise Exception('to code')
+		return data
 
 	def init_cache(self,debug = False,force = True):
 		if not force and self.r.exists('working'):
 			print('assuming redis already populated',flush = True)
 			return
+		
+
+
 		
 		def match_format(data):
 			# dt, open, high, low, close, volume 
@@ -138,17 +155,7 @@ class Data:
 				
 		self.r.set('working','working')
 
-	async def get_df(self, form='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
-		data = await self.r_async.hget(tf+form,ticker)
-		if not form == 'chart': data = pickle.loads(data)
-		if dt:
-			index = Data.findex(data,dt)
-			data = data[:index+1]
-		if bars:
-			data = data[-bars:]
-		if not pm:
-			raise Exception('to code')
-		return data
+
 	
 	def get_ds(self,form = 'match',request='full',tf='1d', bars=0):
 		
@@ -280,76 +287,7 @@ class Data:
 		return False
 
 
-	async def get_user(self, email, password):
-		async with self._conn_async.cursor() as cursor:
-			await cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
-			user_data = await cursor.fetchone()
-			if user_data and len(user_data) > 0:
-				if password == user_data[2]:  # Assuming password is at index 2
-					return user_data[0]   
-				
 	
-	
-	async def set_user(self, user_id=None, email=None, password=None, settings_string=None, delete=False):
-		async with self._conn_async.cursor() as cursor:
-			if user_id is not None:
-				if not delete:
-					fields = []
-					values = []
-					if email is not None:
-						fields.append("email = %s")
-						values.append(email)
-					if password is not None:
-						fields.append("password = %s")
-						values.append(password)
-					if settings_string is not None:
-						fields.append("settings = %s")
-						values.append(settings_string)
-					if fields:
-						update_query = f"UPDATE users SET {', '.join(fields)} WHERE id = %s"
-						values.append(user_id)
-						await cursor.execute(update_query, values)
-				else:
-					await cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
-			else:
-				insert_query = "INSERT INTO users (email, password, settings) VALUES (%s, %s, %s)"
-				await cursor.execute(insert_query, (email, password, settings_string if settings_string is not None else ''))
-
-			await self._conn_async.commit()
-				
-	async def get_settings(self,user_id):
-		async with self._conn_async.cursor() as cursor:
-			await cursor.execute("SELECT settings FROM users WHERE id = %s", (user_id,))
-			settings = await cursor.fetchone()
-			return settings[0]
-		
-	async def get_user_setups(self,user_id):
-		async with self._conn_async.cursor() as cursor:
-			await cursor.execute("SELECT name, tf, setup_length from setups WHERE user_id = %s",(user_id,))
-			return await cursor.fetchall()
-		
-
-
-	# def get_model(self,user_id,st=None):
-	# 	with self._conn.cursor(buffered=True) as cursor:
-	# 		if st is None:
-	# 			cursor.execute('SELECT tf,model from setups WHERE user_id = %s AND name = %s',(user_id,st))
-	# 		else:
-	# 			cursor.execute('SELECT tf,model from setups WHERE user_id = %s',(user_id,))
-	# 		cursor.fetchone()[0]
-	# 		return
-		
-
-	async def set_setup(self,user_id,st,tf=None,setup_length = None,delete=False):
-		async with self._conn_async.cursor() as cursor:
-			if delete:
-				await cursor.execute("DELETE FROM setups WHERE user_id = %s AND name = %s", (user_id,st))
-			elif tf != None and setup_length != None:
-				insert_query = "INSERT INTO setups (user_id, name, tf, setup_length) VALUES (%s, %s, %s, %s)"
-				await cursor.execute(insert_query, (user_id,st,tf,setup_length))
-			else:
-				raise Exception('missing args')
-		await self._conn_async.commit()
 		
 	def get_setup_length(self,user_id,st):
 		with self._conn.cursor(buffered=True) as cursor:
@@ -375,22 +313,6 @@ class Data:
 			cursor.executemany("INSERT IGNORE INTO setup_data VALUES (%s, %s, %s,%s)", query)
 			
 		self._conn.commit()
-		
-
-
-
-	# def alter_table(self):
-	# 	with self._conn.cursor(buffered=True) as cursor:
-	# 		# SQL command to delete the 'model' column
-	# 		delete_column_query = "ALTER TABLE setups DROP COLUMN model;"
-	# 		cursor.execute(delete_column_query)
-
-	# 		# SQL command to add the 'setup_length' column
-	# 		add_column_query = "ALTER TABLE setups ADD COLUMN setup_length INT;"
-	# 		cursor.execute(add_column_query)
-
-	# 		# Commit the changes
-	# 		self._conn.commit()
 
 	def update(self,force_retrain=False):
 
@@ -551,13 +473,5 @@ class Data:
 							print(e)
 		self.update()
 	
-#start = datetime.datetime.now()
 
 data = Data()
-#if __name__ == '__main__':
-	#data.setup()
-#asyncio.run(data.init_async_conn())
-#data.init_async_conn()
-
-#await data.get_user()
-#print(datetime.datetime.now() - start,flush=True)

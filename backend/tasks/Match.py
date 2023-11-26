@@ -9,26 +9,9 @@ import math
 import asyncio
 import time #temp import
 np_bars = 10
+from sync_Data import data
 
-def format_datetime(dt,reverse=False):
-	if reverse:
-		return datetime.datetime.fromtimestamp(dt)
-			
-	if type(dt) == int or type(dt) == float:
-		return dt
-	if dt is None: return None
-	if dt == 'current': return datetime.datetime.now(pytz.timezone('EST'))
-	if isinstance(dt, str):
-		try: dt = datetime.datetime.strptime(dt, '%Y-%m-%d')
-		except: dt = datetime.datetime.strptime(dt, '%Y-%m-%d %H:%M:%S')
-	time = datetime.time(dt.hour, dt.minute, 0)
-	dt = datetime.datetime.combine(dt.date(), time)
-	if dt.hour == 0 and dt.minute == 0:
-		time = datetime.time(9, 30, 0)
-		dt = datetime.datetime.combine(dt.date(), time)
-	#return dt
-	dt = dt.timestamp()
-	return dt
+
 class Match: 
             
     def compute(ds,y):
@@ -72,13 +55,14 @@ class Match:
         raise AttributeError
         return d 
 
-def get(args,data,user_id = None):
+def get(args,user_id = None):
+    #asyncio.run(data.init_async_conn())
+    
     start = datetime.datetime.now()
-    ticker = args[0]
-    dt = args[2]
-    tf = args[1]
+    ticker,tf,dt = args
     ds = data.get_ds(tf=tf,form='match')
-    y = asyncio.run(data.get_df('match',ticker,tf,dt, bars=np_bars))[:, 2:-1]
+    
+    y = data.get_df('match',ticker,tf,dt, bars=np_bars)[:, 2:-1]
     
     match_data = Match.compute(ds,y)
     for i in range(len(match_data)): match_data[i][1] = match_data[i][1][:10]
@@ -86,8 +70,6 @@ def get(args,data,user_id = None):
     return json.dumps(match_data)
 
 if __name__ == '__main__':
-    from Data import data
-    asyncio.run(data.init_async_conn())
     print('test')
-    print(get(['CELH','1d','2023-08-10'],data))
+    print(get(['CELH','1d','2023-08-10']))
     print('test')
