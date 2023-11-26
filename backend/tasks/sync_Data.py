@@ -287,9 +287,13 @@ class Data:
 		return False
 
 
-	
+	def set_sample_size(self,user_id,st,size):
+		with self._conn.cursor(buffered=True) as cursor:
+			query = "UPDATE setups SET sample_size = %s WHERE user_id = %s AND st = %s;"
+			cursor.execute(query, (size, user_id, st))
+
 		
-	def get_setup_length(self,user_id,st):
+	def get_setup_info(self,user_id,st):
 		with self._conn.cursor(buffered=True) as cursor:
 			cursor.execute('SELECT tf,setup_length from setups WHERE user_id = %s AND name = %s',(user_id,st))
 			return cursor.fetchall()[0]

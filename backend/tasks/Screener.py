@@ -27,7 +27,7 @@ class Screener:
 		for ticker in full_ticker_list:
 			query.append([ticker,dt])
 		for st in setup_types:
-			tf, setup_length = data.get_setup_length(user_id,st)
+			tf, setup_length = data.get_setup_info(user_id,st)
 			ds, ticker_list = data.get_ds('screener',query,tf,setup_length)
 			model = Screener.load_model(user_id,st)
 			ds = ds[:,:,1:]

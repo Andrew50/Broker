@@ -82,7 +82,6 @@ def create_app():
 		if func == 'chart':
 			args += ['MSFT','1d',None][len(args):]
 			ticker,tf,dt = args
-			print(args,flush=True)
 			val = await data_.get_df('chart',ticker,tf,dt)
 			return val
 		elif func == 'create setup':
