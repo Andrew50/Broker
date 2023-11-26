@@ -121,7 +121,7 @@ export async function backend_request(bind_variable, func, ...args) {
         function: func,
         arguments: args
     };
-
+    console.log(args)
     try {
         console.log('Request sent to:', url);
 

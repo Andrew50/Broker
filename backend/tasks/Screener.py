@@ -1,6 +1,7 @@
 import json
 import tensorflow as tf
 import numpy as np
+from sync_Data import data
 
 class Screener:
 
@@ -42,18 +43,17 @@ class Screener:
 					ticker = ticker_list[i]
 					results.append([ticker,int(100*score)])
 				i += 1
-		results.sort(key=lambda x: x[1])
+		results.sort(key=lambda x: x[1],reverse=True)
 		return results
 		
 	
-def get(args,data,user_id):
+def get(args,user_id):
 	ticker, dt, setup_types = args
 	results = Screener.screen(user_id,ticker,dt,setup_types,data)
 	return json.dumps(results)
 			
 if __name__ == '__main__':
-	from Data import Data
-	data = Data()
+	pass
 	#print(Screener.get(['current'],data))
 	
 
