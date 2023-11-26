@@ -289,9 +289,9 @@ class Data:
 
 	def set_sample_size(self,user_id,st,size):
 		with self._conn.cursor(buffered=True) as cursor:
-			query = "UPDATE setups SET sample_size = %s WHERE user_id = %s AND st = %s;"
+			query = "UPDATE setups SET sample_size = %s WHERE user_id = %s AND name = %s;"
 			cursor.execute(query, (size, user_id, st))
-
+		self._conn.commit()
 		
 	def get_setup_info(self,user_id,st):
 		with self._conn.cursor(buffered=True) as cursor:

@@ -53,6 +53,7 @@
                 <th>Name</th>
                 <th>Time Frame</th>
                 <th>Length</th>
+                <th>Sample Size</th>
             </tr>
         </thead>
         <tbody>
@@ -61,6 +62,7 @@
                     <td>{setup[0]}</td>
                     <td>{setup[1]}</td>
                     <td>{setup[2]}</td>
+                    <td>{setup[3]}</td>
                 </tr>
             {/each}
         </tbody>

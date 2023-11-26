@@ -21,6 +21,8 @@ class Trainer:
 	def get_sample(st,user_id,use):
 		all_setups, tf, setup_length = data.get_setup_sample(user_id, st)
 		yes = [sublist for sublist in all_setups if sublist[2] == 1]
+		data.set_sample_size(user_id,st,len(yes))
+		print('set')
 		random.shuffle(all_setups)
 		no = [sublist for sublist in all_setups if sublist[2] == 0][:int(len(yes) / use)]
 		sample = yes + no
@@ -119,6 +121,7 @@ class Trainer:
 
 	def train_model(st,user_id):
 		ds, y = Trainer.get_sample(st,user_id,.01)
+		
 		#num_time_steps = #... (e.g., 100)
 		#input_dim = 4  # Assuming you have 4 feature
 		#s per time step as per your description
