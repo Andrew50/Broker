@@ -150,8 +150,9 @@ class Data:
 			for tf in organized_data[ticker]:
 				organized_data[ticker][tf] = np.array(organized_data[ticker][tf], dtype=float)
 		for tf in ('1d',):#'1'):
-			#for typ in ('match'): # for typ in ('match', 'chart', 'screener')
-			set_hash(organized_data, tf, 'match')
+			#for typ in ('match'): 
+			for typ in ('match', 'chart', 'screener'):
+				set_hash(organized_data, tf, typ)
 				
 		self.r.set('working','working')
 
