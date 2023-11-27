@@ -1,6 +1,6 @@
 <script>
     import { writable } from 'svelte/store';
-    import { setups_list,  data_request } from '../store.js';
+    import { setups_list,  backend_request } from '../store.js';
 
     export let visible = false;
 
@@ -19,10 +19,11 @@
         });
         data_request(null, "create setup", setupName, setupTimeframe, setupLength);
     }
-}async function trainModel(setup) {
-    // Call your custom backend request function and update trainingResults
-    await backend_request(trainingResults, "train setup", ...setup);
-}
+    }
+    // }async function trainModel(setup) {
+    //     // Call your custom backend request function and update trainingResults
+    //     await backend_request(trainingResults, "train setup", ...setup);
+    // }
 
 
     // Function to handle the deletion of a setup
@@ -69,7 +70,8 @@
                     <td>{setup[2]}</td>
                     <td>{setup[3]}</td>
                     <td>
-                            <button on:click={() => trainModel(setup)}>Train</button>
+                           <!-- // <button on:click={() => trainModel(setup)}>Train</button> -->
+                            <button on:click={() => backend_request(trainingResults, 'Trainer-train' , setup[0])}>Train</button>
                             <!-- Display training result -->
                             {$trainingResults[setup[0]]}
                         </td>

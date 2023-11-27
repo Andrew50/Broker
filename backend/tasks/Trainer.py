@@ -5,11 +5,13 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, LSTM, Bidirectional, Dropout, Conv1D, MaxPooling1D, Flatten
 from tensorflow.keras.optimizers import Adam
 from sklearn.utils.class_weight import compute_class_weight
-import keras_tuner as kt
-import matplotlib.pyplot as plt
+try: 
+	import keras_tuner as kt
+	import matplotlib.pyplot as plt
+except: pass
 from tensorflow.keras.callbacks import EarlyStopping
 from sync_Data import data
-import matplotlib.pyplot as plt
+
 import json
 
 
@@ -179,7 +181,7 @@ class Trainer:
 
 		# Clear the session to free memory
 		tensorflow.keras.backend.clear_session()
-		
+		return history.history
 
 
 # Plot training & validation loss values
@@ -197,8 +199,8 @@ class Trainer:
 
 def train(args,user_id):
 	st, = args
-	#Trainer.train_model(st,user_id)
-	history = Trainer.tune_model_hyperparameters(st,user_id)
+	history = Trainer.train_model(st,user_id)
+	#history = Trainer.tune_model_hyperparameters(st,user_id)
 	return json.dumps(history)
 
 

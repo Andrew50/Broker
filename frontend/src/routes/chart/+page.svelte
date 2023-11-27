@@ -34,58 +34,26 @@
 </script>
 
 <div class="button-container">
-    <button class="button match-button" on:click={() =>toggle_menu('match')}>
-        <div>M</div>
-        <div>A</div>
-        <div>T</div>
-        <div>C</div>
-        <div>H</div>
+    
+    <button class="button" on:click={() =>toggle_menu('match')}>
+        <img class="icon" src="/match.png" alt="" />
     </button>
-    <button class="button screener-button" on:click={() =>toggle_menu('screener')}>
-        <div>S</div>
-        <div>C</div>
-        <div>R</div>
-        <div>E</div>
-        <div>E</div>
-        <div>N</div>
-        <div>E</div>
-        <div>R</div>
+    <button class="button" on:click={() =>toggle_menu('screener')}>
+        <img class="icon" src="/screener.png" alt="" />
     </button>
-    <button class="button trainer-button" on:click={() =>toggle_menu('trainer')}>
-        <div>T</div>
-        <div>R</div>
-        <div>A</div>
-        <div>I</div>
-        <div>N</div>
-        <div>E</div>
-        <div>R</div>
+    <button class="button" on:click={() =>toggle_menu('trainer')}>
+        <img class="icon" src="/trainer.png" alt="" />
     </button>
-    <button class="button study-button" on:click={() =>toggle_menu('study')}>
-        <div>S</div>
-        <div>T</div>
-        <div>U</div>
-        <div>D</div>
-        <div>Y</div>
+    <button class="button" on:click={() =>toggle_menu('study')}>
+        <img class="icon" src="/study.png" alt="" />
     </button>
-    <button class="button account-button" on:click={() =>toggle_menu('account')}>
-        <div>A</div>
-        <div>C</div>
-        <div>C</div>
-        <div>O</div>
-        <div>U</div>
-        <div>N</div>
-        <div>T</div>
+    <button class="button" on:click={() =>toggle_menu('account')}>
+        <img class="icon" src="/account.png" alt="" />
     </button>
-    <button class="button settings-button" on:click={() =>toggle_menu('settings')}>
-        <div>S</div>
-        <div>E</div>
-        <div>T</div>
-        <div>T</div>
-        <div>I</div>
-        <div>N</div>
-        <div>G</div>
-        <div>S</div>
+    <button class="button" on:click={() =>toggle_menu('settings')}>
+        <im class="icon" src="/settings.png" alt="" />
     </button>
+    
 </div>
 
 <Match visible = {active_menu == 'match'}/>
@@ -108,11 +76,11 @@
         background-color: #007bff; /* Blue color, consistent with theme */
         color: white;
         border: none;
-        padding: 10px 20px;
-        margin-bottom: 10px;
+        padding: 10px 10px;
+        margin-bottom: 7px;
         cursor: pointer;
         border-radius: 5px;
-        font-size: 16px;
+        font-size: 10px;
         transition: background-color 0.3s;
         display: flex;
         flex-direction: column;
@@ -123,12 +91,10 @@
     .button:hover {
         background-color: #0056b3; /* Darker shade for hover effect */
     }
-
-    .match-button {
-        /* Additional styling specific to match button if needed */
+    .icon{
+        width:30px;
+        height:30px;
     }
+  
 
-    .screener-button {
-        /* Additional styling specific to screener button if needed */
-    }
 </style>
