@@ -7,6 +7,7 @@
     let setupName = '';
     let setupTimeframe = '';
     let setupLength = 0;
+    let trainingResults = writable({});
     
     // Function to handle the creation of a new setup
     function createSetup() {
@@ -18,6 +19,9 @@
         });
         data_request(null, "create setup", setupName, setupTimeframe, setupLength);
     }
+}async function trainModel(setup) {
+    // Call your custom backend request function and update trainingResults
+    await backend_request(trainingResults, "train setup", ...setup);
 }
 
 
@@ -54,6 +58,7 @@
                 <th>Time Frame</th>
                 <th>Length</th>
                 <th>Sample Size</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -63,6 +68,11 @@
                     <td>{setup[1]}</td>
                     <td>{setup[2]}</td>
                     <td>{setup[3]}</td>
+                    <td>
+                            <button on:click={() => trainModel(setup)}>Train</button>
+                            <!-- Display training result -->
+                            {$trainingResults[setup[0]]}
+                        </td>
                 </tr>
             {/each}
         </tbody>

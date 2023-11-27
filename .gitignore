@@ -14,7 +14,7 @@ backend/database/database_dump.sql
 *.userprefs
 backend/1d
 backend/tasks/Setup.py
-backend/tasks/Test.py
+# backend/tasks/Test.py
 # Mono auto generated files
 mono_crash.*
 /backend/scripts/local

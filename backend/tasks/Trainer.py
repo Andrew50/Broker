@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from tensorflow.keras.callbacks import EarlyStopping
 from sync_Data import data
 import matplotlib.pyplot as plt
+import json
 
 
 
@@ -190,15 +191,15 @@ class Trainer:
 		plt.xlabel('Epoch')
 		plt.legend(['Train', 'Validation'], loc='lower right')
 		plt.show()
-
+		return history
 
 
 
 def train(args,user_id):
 	st, = args
 	#Trainer.train_model(st,user_id)
-	Trainer.tune_model_hyperparameters(st,user_id)
-	return 'done'
+	history = Trainer.tune_model_hyperparameters(st,user_id)
+	return json.dumps(history)
 
 
 if __name__ == '__main__':
