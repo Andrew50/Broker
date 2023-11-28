@@ -20639,7 +20639,7 @@ static PyObject *__pyx_pf_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_self, PyA
  *                 totalLowerBound += (xSeq[b, 5] - upper[b-zeroIndex]) ** 2
  *             elif xSeq[b, 5] < lower[b-zeroIndex]:             # <<<<<<<<<<<<<<
  *                 totalLowerBound += (xSeq[b, 5] - lower[b-zeroIndex]) ** 2
- *         if (sqrt(totalLowerBound)*100) > cutoff: continue # Check if the lower bound is greater than the cutoff
+ *         if sqrt(totalLowerBound) > cutoff: continue # Check if the lower bound is greater than the cutoff
  */
       __pyx_t_15 = __pyx_v_b;
       __pyx_t_14 = 5;
@@ -20651,7 +20651,7 @@ static PyObject *__pyx_pf_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_self, PyA
  *                 totalLowerBound += (xSeq[b, 5] - upper[b-zeroIndex]) ** 2
  *             elif xSeq[b, 5] < lower[b-zeroIndex]:
  *                 totalLowerBound += (xSeq[b, 5] - lower[b-zeroIndex]) ** 2             # <<<<<<<<<<<<<<
- *         if (sqrt(totalLowerBound)*100) > cutoff: continue # Check if the lower bound is greater than the cutoff
+ *         if sqrt(totalLowerBound) > cutoff: continue # Check if the lower bound is greater than the cutoff
  * 
  */
         __pyx_t_13 = __pyx_v_b;
@@ -20664,7 +20664,7 @@ static PyObject *__pyx_pf_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_self, PyA
  *                 totalLowerBound += (xSeq[b, 5] - upper[b-zeroIndex]) ** 2
  *             elif xSeq[b, 5] < lower[b-zeroIndex]:             # <<<<<<<<<<<<<<
  *                 totalLowerBound += (xSeq[b, 5] - lower[b-zeroIndex]) ** 2
- *         if (sqrt(totalLowerBound)*100) > cutoff: continue # Check if the lower bound is greater than the cutoff
+ *         if sqrt(totalLowerBound) > cutoff: continue # Check if the lower bound is greater than the cutoff
  */
       }
       __pyx_L14:;
@@ -20673,11 +20673,11 @@ static PyObject *__pyx_pf_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_self, PyA
     /* "Odtw.pyx":62
  *             elif xSeq[b, 5] < lower[b-zeroIndex]:
  *                 totalLowerBound += (xSeq[b, 5] - lower[b-zeroIndex]) ** 2
- *         if (sqrt(totalLowerBound)*100) > cutoff: continue # Check if the lower bound is greater than the cutoff             # <<<<<<<<<<<<<<
+ *         if sqrt(totalLowerBound) > cutoff: continue # Check if the lower bound is greater than the cutoff             # <<<<<<<<<<<<<<
  * 
  *         # Run full dtw
  */
-    __pyx_t_3 = ((sqrt(__pyx_v_totalLowerBound) * 100.0) > __pyx_v_cutoff);
+    __pyx_t_3 = (sqrt(__pyx_v_totalLowerBound) > __pyx_v_cutoff);
     if (__pyx_t_3) {
       goto __pyx_L4_continue;
     }
@@ -21043,7 +21043,7 @@ static PyObject *__pyx_pf_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_self, PyA
  *             cost, cost_prev = cost_prev, cost
  * 
  *         k -= 1             # <<<<<<<<<<<<<<
- *         scores.append([ticker, xSeq[n, 0], sqrt(cost_prev[k]) * 100])
+ *         scores.append([ticker, xSeq[n, 0], sqrt(cost_prev[k])])
  *     return scores
  */
     __pyx_v_k = (__pyx_v_k - 1);
@@ -21051,7 +21051,7 @@ static PyObject *__pyx_pf_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_self, PyA
     /* "Odtw.pyx":97
  * 
  *         k -= 1
- *         scores.append([ticker, xSeq[n, 0], sqrt(cost_prev[k]) * 100])             # <<<<<<<<<<<<<<
+ *         scores.append([ticker, xSeq[n, 0], sqrt(cost_prev[k])])             # <<<<<<<<<<<<<<
  *     return scores
  * 
  */
@@ -21060,7 +21060,7 @@ static PyObject *__pyx_pf_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_self, PyA
     __pyx_t_6 = PyFloat_FromDouble((*__Pyx_BufPtrStrided2d(double *, __pyx_pybuffernd_xSeq.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_xSeq.diminfo[0].strides, __pyx_t_14, __pyx_pybuffernd_xSeq.diminfo[1].strides))); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 97, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __pyx_t_14 = __pyx_v_k;
-    __pyx_t_7 = PyFloat_FromDouble((sqrt((*((double *) ( /* dim=0 */ (__pyx_v_cost_prev.data + __pyx_t_14 * __pyx_v_cost_prev.strides[0]) )))) * 100.0)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 97, __pyx_L1_error)
+    __pyx_t_7 = PyFloat_FromDouble(sqrt((*((double *) ( /* dim=0 */ (__pyx_v_cost_prev.data + __pyx_t_14 * __pyx_v_cost_prev.strides[0]) ))))); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 97, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __pyx_t_5 = PyList_New(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 97, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
@@ -21080,7 +21080,7 @@ static PyObject *__pyx_pf_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_self, PyA
 
   /* "Odtw.pyx":98
  *         k -= 1
- *         scores.append([ticker, xSeq[n, 0], sqrt(cost_prev[k]) * 100])
+ *         scores.append([ticker, xSeq[n, 0], sqrt(cost_prev[k])])
  *     return scores             # <<<<<<<<<<<<<<
  * 
  * 

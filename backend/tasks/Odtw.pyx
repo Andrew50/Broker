@@ -59,7 +59,7 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=2] ySeq, np
                 totalLowerBound += (xSeq[b, 5] - upper[b-zeroIndex]) ** 2
             elif xSeq[b, 5] < lower[b-zeroIndex]:
                 totalLowerBound += (xSeq[b, 5] - lower[b-zeroIndex]) ** 2
-        if (sqrt(totalLowerBound)*100) > cutoff: continue # Check if the lower bound is greater than the cutoff
+        if sqrt(totalLowerBound) > cutoff: continue # Check if the lower bound is greater than the cutoff
 
         # Run full dtw 
         # in original version, a = x sequence, b = y sequence. 
@@ -94,7 +94,7 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=2] ySeq, np
             cost, cost_prev = cost_prev, cost
 
         k -= 1
-        scores.append([ticker, xSeq[n, 0], sqrt(cost_prev[k]) * 100])
+        scores.append([ticker, xSeq[n, 0], sqrt(cost_prev[k])])
     return scores
                 
 

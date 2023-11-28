@@ -8,7 +8,6 @@ import Odtw
 import math
 import asyncio
 import time #temp import
-np_bars = 10
 
 def format_datetime(dt,reverse=False):
 	if reverse:
@@ -31,14 +30,14 @@ def format_datetime(dt,reverse=False):
 	return dt
 class Match: 
             
-    def compute(ds,y):
+    def compute(ds,y, np_bars):
         radius = math.ceil(np_bars/10)
         upper, lower = Odtw.calcBounds(y[:, 3], radius)
-        cutoff = 100*100
+        cutoff = 100
         start = datetime.datetime.now()
         returns = []
-        for ticker, x in ds.items():
-            returns += heapq.nsmallest(3, Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius, ticker), key=lambda x: x[2])
+        for tickerData in ds:
+            returns += heapq.nsmallest(5, Odtw.calcDtw(tickerData[1], y, upper, lower, np_bars, cutoff, radius, tickerData[0]), key=lambda x: x[2])
         top_scores = heapq.nsmallest(20, returns, key=lambda x: x[2])
         print(f"time to complete match {datetime.datetime.now() - start}")
         print(top_scores)
@@ -77,10 +76,11 @@ def get(args,data,user_id = None):
     ticker = args[0]
     dt = args[2]
     tf = args[1]
+    np_bars = args[3]
     ds = data.get_ds(tf=tf,form='match')
     y = asyncio.run(data.get_df('match',ticker,tf,dt, bars=np_bars))[:, 2:-1]
     
-    match_data = Match.compute(ds,y)
+    match_data = Match.compute(ds,y, np_bars)
     for i in range(len(match_data)): match_data[i][1] = match_data[i][1][:10]
     print(datetime.datetime.now() - start)
     return json.dumps(match_data)
@@ -89,5 +89,5 @@ if __name__ == '__main__':
     from Data import data
     asyncio.run(data.init_async_conn())
     print('test')
-    print(get(['CELH','1d','2023-08-10'],data))
+    print(get(['SYM','1d','2023-11-27', 10],data))
     print('test')

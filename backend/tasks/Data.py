@@ -228,10 +228,15 @@ class Data:
 			elif date < dt:
 				i += k
 			k = int(k/2)
-		while df[i,0] < dt:
-			i += 1
-		while df[i,0] > dt:
-			i -= 1
+		try:
+			while df[i,0] < dt:
+				i += 1
+		
+			while df[i,0] > dt:
+				i -= 1
+		except IndexError:
+			return len(df)-1
+		
 		return i
 	
 	def get_ticker_list(self, type='full'):
@@ -398,6 +403,25 @@ class Data:
 
 			def findex(df, dt):
 				dt = Data.format_datetime(dt)
+				left = 0
+				right = len(df)-1
+				currIndex = len(df)/2
+				while left <= right:
+					
+					date = df.index[currIndex]
+					if date > dt:
+						right = currIndex-1
+					elif date < dt: 
+						left = currIndex+1
+					currIndex = (left+right)/2
+					
+				while df.index[currIndex] < dt:
+					currIndex += 1
+				while df.index[currIndex] > dt:
+					currIndex -= 1
+				return currIndex
+				'''
+				dt = Data.format_datetime(dt)
 				i = int(len(df)/2)		
 				k = int(i/2)
 				while k != 0:
@@ -411,7 +435,7 @@ class Data:
 					i += 1
 				while df.index[i] > dt:
 					i -= 1
-				return i
+				return i'''
 		
 			ticker_list = self.get_ticker_list('full')
 
