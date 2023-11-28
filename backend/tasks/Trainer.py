@@ -24,12 +24,14 @@ class Trainer:
 	def get_sample(st,user_id,use):
 		all_setups, tf, setup_length = data.get_setup_sample(user_id, st)
 		yes = [sublist for sublist in all_setups if sublist[2] == 1]
-		data.set_sample_size(user_id,st,len(yes))
-		print('set')
+		data.set_setup_info(user_id,st,size = len(yes))
 		random.shuffle(all_setups)
 		no = [sublist for sublist in all_setups if sublist[2] == 0][:int(len(yes) / use)]
 		sample = yes + no
 		random.shuffle(sample)
+		#print(len([s for s in sample if s[2] == 1]))
+		#print(len([s for s in sample if s[2] == 0]))
+		#input()
 		ds, y = data.get_ds('trainer', sample, tf, setup_length)
 		ds = ds[:, :, 1:5]
 		ds = np.flip(ds,1)
@@ -122,35 +124,43 @@ class Trainer:
 		tensorflow.keras.backend.clear_session()
 		
 
-	def train_model(st,user_id):
-		ds, y = Trainer.get_sample(st,user_id,.01)
-		
-		#num_time_steps = #... (e.g., 100)
-		#input_dim = 4  # Assuming you have 4 feature
-		#s per time step as per your description
-		_,num_time_steps, input_dim = ds.shape
+
+	def train_model(st, user_id):
+		ds, y = Trainer.get_sample(st, user_id, .1)
+		print(ds)
+		_, num_time_steps, input_dim = ds.shape
 		class_weights = compute_class_weight('balanced', classes=np.unique(y), y=y)
 		class_weights_dict = dict(enumerate(class_weights))
 
 		model = Sequential()
-	
-		# Convolutional and pooling layers with hard-coded hyperparameters
-		model.add(Conv1D(filters=96, kernel_size=7, activation='relu', input_shape=(num_time_steps, input_dim), padding='same'))
-		model.add(MaxPooling1D(pool_size=4))
-		model.add(Conv1D(filters=32, kernel_size=3, activation='relu', padding='same'))
-		model.add(MaxPooling1D(pool_size=2))
-		model.add(Conv1D(filters=32, kernel_size=7, activation='relu', padding='same'))
-		model.add(MaxPooling1D(pool_size=2))
+
+		# Adding 5 convolutional layers with varying filters and kernel sizes
+		#model.add(Conv1D(filters=100, kernel_size=100, activation='relu', input_shape=(num_time_steps, input_dim), padding='same'))
+		model.add(LSTM(units = 1000, activation='relu'))#, input_shape=(num_time_steps, input_dim), padding='same'))
+		#model.add(Conv1D(filters=100, kernel_size=100, activation='relu', padding='same'))
+		#model.add(MaxPooling1D(pool_size=4))
+
+		# model.add(Conv1D(filters=64, kernel_size=5, activation='relu', padding='same'))
+		# model.add(MaxPooling1D(pool_size=2))
+
+		# model.add(Conv1D(filters=32, kernel_size=3, activation='relu', padding='same'))
+		# model.add(MaxPooling1D(pool_size=2))
+
+		# model.add(Conv1D(filters=32, kernel_size=3, activation='relu', padding='same'))
+		# model.add(MaxPooling1D(pool_size=2))
+
+		# model.add(Conv1D(filters=16, kernel_size=3, activation='relu', padding='same'))
+		# No additional pooling after the last convolutional layer
+
 		model.add(Flatten())
-	
-		# Dense layers with hard-coded hyperparameters
-		model.add(Dense(units=192, activation='relu'))
-		model.add(Dropout(0.2))
-		model.add(Dense(units=64, activation='relu'))
-		model.add(Dropout(0.4))
-		model.add(Dense(units=32, activation='relu'))
-		model.add(Dropout(0.2))
-	
+
+		# Dense layers with dropout for regularization
+		# model.add(Dense(units=192, activation='relu'))
+		# model.add(Dropout(0.2))
+		#model.add(Dense(units=64, activation='relu'))
+		model.add(Dense(units=100, activation='relu'))
+		#model.add(Dropout(0.4))
+
 		# Output layer
 		model.add(Dense(1, activation='sigmoid'))
 
@@ -161,39 +171,46 @@ class Trainer:
 
 		# Define early stopping callback
 		early_stopping = EarlyStopping(
-			monitor='val_auc_pr',  # Use the metric name here
-			patience=35,
-			restore_best_weights=True
+			monitor='val_auc_pr',
+			patience=100,
+			restore_best_weights=True,
+			mode='max',
+			verbose =1
 		)
 
 		# Fit the model to the training data
 		history = model.fit(
 			ds, y,
-			epochs=200, 
-			batch_size=64,  # This batch size is from your hyperparameter tuning results
-			validation_split=0.2, 
+			epochs=200,
+			batch_size=32,
+			validation_split=0.1,
+			#validation_split=0.2,
 			callbacks=[early_stopping],
-            class_weight=class_weights_dict
+			class_weight=class_weights_dict,
+			verbose=1
 		)
 
-		# Save the model, replace 'path_to_my_model' with the actual path
+		# Save the model
 		model.save(f'models/{user_id}_{st}.h5')
 
 		# Clear the session to free memory
 		tensorflow.keras.backend.clear_session()
-		return history.history
+		score = round(history.history['auc_pr'][-1] * 100)
+		data.set_setup_info(user_id, st, score=score)
+		return {st: {'score': score}}  # Return the auc pr value of the model to frontend
+
 
 
 # Plot training & validation loss values
-		plt.figure(figsize=(12, 6))
-		plt.plot(history.history['auc_pr'], label='Train AUC')
-		plt.plot(history.history['val_auc_pr'], label='Validation AUC')
-		plt.title('Model AUC Progress During Training')
-		plt.ylabel('AUC')
-		plt.xlabel('Epoch')
-		plt.legend(['Train', 'Validation'], loc='lower right')
-		plt.show()
-		return history
+		# plt.figure(figsize=(12, 6))
+		# plt.plot(history.history['auc_pr'], label='Train AUC')
+		# plt.plot(history.history['val_auc_pr'], label='Validation AUC')
+		# plt.title('Model AUC Progress During Training')
+		# plt.ylabel('AUC')
+		# plt.xlabel('Epoch')
+		# plt.legend(['Train', 'Validation'], loc='lower right')
+		# plt.show()
+		# return history
 
 
 
@@ -205,7 +222,7 @@ def train(args,user_id):
 
 
 if __name__ == '__main__':
-	train( ['EP'],4)
+	print(train( ['EP'],4))
 
 
 

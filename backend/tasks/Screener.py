@@ -27,7 +27,11 @@ class Screener:
 		for ticker in full_ticker_list:
 			query.append([ticker,dt])
 		for st in setup_types:
-			tf, setup_length = data.get_setup_info(user_id,st)
+			#tf, setup_length = data.get_setup_info(user_id,st)
+			#setup_length = 100#######=================================================================================================== fix
+			#tf = '1d'
+			#user_id = 0
+			#st = 'EP'
 			ds, ticker_list = data.get_ds('screener',query,tf,setup_length)
 			model = Screener.load_model(user_id,st)
 			ds = ds[:,:,1:]
@@ -49,6 +53,7 @@ class Screener:
 	
 def get(args,user_id):
 	ticker, dt, setup_types = args
+	
 	results = Screener.screen(user_id,ticker,dt,setup_types,data)
 	return json.dumps(results)
 			

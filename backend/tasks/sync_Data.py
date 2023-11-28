@@ -213,8 +213,10 @@ class Data:
 						padding = bars - value.shape[0]
 						if padding > 0:
 							raise TypeError
-							pad_width = [(0, padding)] + [(0, 0)] * (value.ndim - 1)  # Pad only the first dimension
+							pad_width = [(padding,0)] + [(0, 0)] * (value.ndim - 1)  # Pad only the first dimension
 							value = np.pad(value, pad_width, mode='constant', constant_values=0)
+						for ii in (2,3,4):
+							value[-1,ii] = value[-1,1]
 						returns.append(value)
 						tickers.append(ticker)
 					except TypeError:
@@ -288,10 +290,12 @@ class Data:
 		return False
 
 
-	def set_sample_size(self,user_id,st,size):
-		with self._conn.cursor(buffered=True) as cursor:
-			query = "UPDATE setups SET sample_size = %s WHERE user_id = %s AND name = %s;"
-			cursor.execute(query, (size, user_id, st))
+	def set_setup_info(self,user_id,st,size=None,score=None):
+		for val, ident in [[size,'sample_size'],[score,'score']]:
+			if val != None:
+				with self._conn.cursor(buffered=True) as cursor:
+					query = f"UPDATE setups SET {ident} = %s WHERE user_id = %s AND name = %s;"
+					cursor.execute(query, (val, user_id, st))
 		self._conn.commit()
 		
 	def get_setup_info(self,user_id,st):

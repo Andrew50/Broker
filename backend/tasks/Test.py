@@ -21,18 +21,18 @@
 
 import pandas as pd
 
-from Data import data
-from Data import Data
+#from Data import data
+#from Data import Data
 
-df = pd.read_feather('C:/Stocks/local/data/d_EP.feather')[['ticker','dt','value']]
-df['dt'] = df['dt'].astype(str).apply(Data.format_datetime)
+df = pd.read_feather('C:/Stocks2/local/data/d_EP.feather')[['ticker','dt','value']]
+#df['dt'] = df['dt'].astype(str).apply(Data.format_datetime)
+
+print(len(df[df['value'] == 1]))
+print(df[df['value'] == 1])
 
 
+#df = df.values.tolist()
 
-
-
-df = df.values.tolist()
-
-data.set_setup_sample(4,'EP',df)
+#data.set_setup_sample(4,'EP',df)
 
 

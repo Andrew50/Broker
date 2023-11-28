@@ -7,7 +7,8 @@
     let setupName = '';
     let setupTimeframe = '';
     let setupLength = 0;
-    let trainingResults = writable({});
+    let helper_store = writable({});
+    let scores = {};
     
     // Function to handle the creation of a new setup
     function createSetup() {
@@ -20,13 +21,7 @@
         data_request(null, "create setup", setupName, setupTimeframe, setupLength);
     }
     }
-    // }async function trainModel(setup) {
-    //     // Call your custom backend request function and update trainingResults
-    //     await backend_request(trainingResults, "train setup", ...setup);
-    // }
 
-
-    // Function to handle the deletion of a setup
     function deleteSetup(name) {
     setups_list.update(list => {
         const index = list.indexOf(name);
@@ -38,7 +33,23 @@
     });
     data_request(null, "delete setup", name);
 }
+   
 
+   helper_store.subscribe(value => {
+    Object.keys(value).forEach(st => {
+        const newScore = value[st].score;
+
+        setups_list.update(list => {
+            return list.map(setup => {
+                if (setup[0] === st) {
+                    setup[4] = newScore;
+                }
+                return setup;
+            });
+        });
+    });
+});
+    
 
     // Function to autofill the control area
     function selectSetup(setup) {
@@ -59,7 +70,8 @@
                 <th>Time Frame</th>
                 <th>Length</th>
                 <th>Sample Size</th>
-                <th>Actions</th>
+                <th>Score</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -69,12 +81,8 @@
                     <td>{setup[1]}</td>
                     <td>{setup[2]}</td>
                     <td>{setup[3]}</td>
-                    <td>
-                           <!-- // <button on:click={() => trainModel(setup)}>Train</button> -->
-                            <button on:click={() => backend_request(trainingResults, 'Trainer-train' , setup[0])}>Train</button>
-                            <!-- Display training result -->
-                            {$trainingResults[setup[0]]}
-                        </td>
+                    <td>{setup[4]}<td>
+                    <td><button on:click={() =>backend_request(helper_store,'Trainer-train',setup[0])}>Train</button></td>
                 </tr>
             {/each}
         </tbody>
