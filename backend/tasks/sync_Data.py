@@ -176,7 +176,7 @@ class Data:
 
 			if form == 'trainer':
 				classifications = []
-				
+				failed = 0
 				for ticker, dt, classification in request:
 					try:
 						value = pickle.loads(self.r.hget(tf+'screener',ticker))
@@ -186,15 +186,16 @@ class Data:
 						#print(value.shape)
 						padding = bars - value.shape[0]
 						if padding > 0:
-							raise TypeError
+							#raise TypeError
 							pad_width = [(0, padding)] + [(0, 0)] * (value.ndim - 1)  # Pad only the first dimension
 							value = np.pad(value, pad_width, mode='constant', constant_values=0)
 						returns.append(value)
 						classifications.append(classification)
 					except TypeError:
-						pass
+						failed += 1
+						#print (ticker)
 						#print(ticker,dt)
-			
+				print(f'{failed} df requests failed!')
 
 				returns = np.array(returns)
 				classifications = np.array(classifications)

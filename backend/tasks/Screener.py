@@ -27,7 +27,7 @@ class Screener:
 		for ticker in full_ticker_list:
 			query.append([ticker,dt])
 		for st in setup_types:
-			#tf, setup_length = data.get_setup_info(user_id,st)
+			tf, setup_length = data.get_setup_info(user_id,st)
 			#setup_length = 100#######=================================================================================================== fix
 			#tf = '1d'
 			#user_id = 0
