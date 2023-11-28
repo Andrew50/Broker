@@ -23,6 +23,7 @@ class Data:
 				while True: #wait for redis to be ready
 					try:
 						if not self.r.info()['loading'] == 0: raise Exception('gosh')
+						self.r.ping()
 						break
 					except:
 						print('waiting for redis',flush=True)

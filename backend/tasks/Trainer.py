@@ -11,31 +11,40 @@ try:
 except: pass
 from tensorflow.keras.callbacks import EarlyStopping
 from sync_Data import data
-
 import json
-
-
-
-
-
+from imblearn.over_sampling import SMOTE
 
 class Trainer:
 	
-	def get_sample(st,user_id,use):
+
+	def get_sample(st, user_id, use):
+		# Existing code to get the dataset
 		all_setups, tf, setup_length = data.get_setup_sample(user_id, st)
 		yes = [sublist for sublist in all_setups if sublist[2] == 1]
-		data.set_setup_info(user_id,st,size = len(yes))
+		data.set_setup_info(user_id, st, size=len(yes))
 		random.shuffle(all_setups)
 		no = [sublist for sublist in all_setups if sublist[2] == 0][:int(len(yes) / use)]
 		sample = yes + no
 		random.shuffle(sample)
-		#print(len([s for s in sample if s[2] == 1]))
-		#print(len([s for s in sample if s[2] == 0]))
-		#input()
+
 		ds, y = data.get_ds('trainer', sample, tf, setup_length)
 		ds = ds[:, :, 1:5]
-		ds = np.flip(ds,1)
-		return ds, y
+		ds = np.flip(ds, 1)
+
+		# Reshape ds for SMOTE
+		n_samples, n_time_steps, n_features = ds.shape
+		ds_reshaped = ds.reshape(-1, n_time_steps * n_features)
+
+		# Apply SMOTE
+		smote = SMOTE()
+		ds_resampled, y_resampled = smote.fit_resample(ds_reshaped, y)
+
+		# Reshape the dataset back to its original shape
+		ds = ds_resampled.reshape(-1, n_time_steps, n_features)
+		print(len([x for x in y_resampled if x == 1]))
+		print(len([x for x in y_resampled if x == 0]))
+		
+		return ds, y_resampled
 
 	def build_lstm_trainer_model(hp):
 		model = Sequential()
@@ -118,7 +127,7 @@ class Trainer:
 			batch_size=best_hps.get('batch_size'),  # Use the tuned batch size
 			validation_split=0.2, 
 			callbacks=[early_stopping],
-            class_weight=class_weights_dict
+			class_weight=class_weights_dict
 		)
 		model.save(f'C:/dev/broker/backend/models/{user_id}_{st}')
 		tensorflow.keras.backend.clear_session()
@@ -132,61 +141,43 @@ class Trainer:
 		class_weights = compute_class_weight('balanced', classes=np.unique(y), y=y)
 		class_weights_dict = dict(enumerate(class_weights))
 
+
 		model = Sequential()
-
-		# Adding 5 convolutional layers with varying filters and kernel sizes
-		#model.add(Conv1D(filters=100, kernel_size=100, activation='relu', input_shape=(num_time_steps, input_dim), padding='same'))
-		model.add(LSTM(units = 1000, activation='relu'))#, input_shape=(num_time_steps, input_dim), padding='same'))
-		#model.add(Conv1D(filters=100, kernel_size=100, activation='relu', padding='same'))
-		#model.add(MaxPooling1D(pool_size=4))
-
-		# model.add(Conv1D(filters=64, kernel_size=5, activation='relu', padding='same'))
-		# model.add(MaxPooling1D(pool_size=2))
-
-		# model.add(Conv1D(filters=32, kernel_size=3, activation='relu', padding='same'))
-		# model.add(MaxPooling1D(pool_size=2))
-
-		# model.add(Conv1D(filters=32, kernel_size=3, activation='relu', padding='same'))
-		# model.add(MaxPooling1D(pool_size=2))
-
-		# model.add(Conv1D(filters=16, kernel_size=3, activation='relu', padding='same'))
-		# No additional pooling after the last convolutional layer
-
+		lucas_numbers = [3, 4, 7, 11, 18, 29, 47, 76]
+		# Initial Conv1D layer as a feature extractor
+		model.add(Conv1D(filters=lucas_numbers[0], kernel_size=3, activation='relu', input_shape=(num_time_steps, input_dim)))
+    
+		# LSTM layers as hidden layers
+		for units in lucas_numbers[1:3]:  # Using Lucas numbers for LSTM layers
+			model.add(LSTM(units=units, return_sequences=True))  # return_sequences=True for stacking LSTM layers
+		model.add(LSTM(units=lucas_numbers[3], return_sequences=False))  # Last LSTM layer with return_sequences=False
+    
+		# Flatten the output of the LSTM layers before passing it to Dense layers
 		model.add(Flatten())
 
-		# Dense layers with dropout for regularization
-		# model.add(Dense(units=192, activation='relu'))
-		# model.add(Dropout(0.2))
-		#model.add(Dense(units=64, activation='relu'))
-		model.add(Dense(units=100, activation='relu'))
-		#model.add(Dropout(0.4))
-
-		# Output layer
+		# Dense (MLP) layers as additional hidden layers
+		for units in lucas_numbers[4:]:  # Using Lucas numbers for Dense layers
+			model.add(Dense(units=units, activation='relu'))
+			model.add(Dropout(0.5))  # Dropout for regularization
 		model.add(Dense(1, activation='sigmoid'))
+		model.compile(optimizer='adam', loss='binary_crossentropy', metrics=[tensorflow.keras.metrics.AUC(curve='PR', name='auc_pr')])
 
-		# Compile the model
-		model.compile(optimizer=Adam(learning_rate=0.01),
-					  loss='binary_crossentropy',
-					  metrics=[tensorflow.keras.metrics.AUC(curve='PR', name='auc_pr')])
-
-		# Define early stopping callback
 		early_stopping = EarlyStopping(
-			monitor='val_auc_pr',
-			patience=100,
+			monitor='auc_pr',
+			patience=20,
 			restore_best_weights=True,
 			mode='max',
 			verbose =1
 		)
 
-		# Fit the model to the training data
 		history = model.fit(
 			ds, y,
 			epochs=200,
-			batch_size=32,
+			batch_size=64,
 			validation_split=0.1,
 			#validation_split=0.2,
 			callbacks=[early_stopping],
-			class_weight=class_weights_dict,
+			#class_weight=class_weights_dict,
 			verbose=1
 		)
 
@@ -199,27 +190,10 @@ class Trainer:
 		data.set_setup_info(user_id, st, score=score)
 		return {st: {'score': score}}  # Return the auc pr value of the model to frontend
 
-
-
-# Plot training & validation loss values
-		# plt.figure(figsize=(12, 6))
-		# plt.plot(history.history['auc_pr'], label='Train AUC')
-		# plt.plot(history.history['val_auc_pr'], label='Validation AUC')
-		# plt.title('Model AUC Progress During Training')
-		# plt.ylabel('AUC')
-		# plt.xlabel('Epoch')
-		# plt.legend(['Train', 'Validation'], loc='lower right')
-		# plt.show()
-		# return history
-
-
-
 def train(args,user_id):
 	st, = args
 	history = Trainer.train_model(st,user_id)
-	#history = Trainer.tune_model_hyperparameters(st,user_id)
 	return json.dumps(history)
-
 
 if __name__ == '__main__':
 	print(train( ['EP'],4))
