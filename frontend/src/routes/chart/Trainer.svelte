@@ -1,6 +1,6 @@
 <script>
     import { writable } from 'svelte/store';
-    import { setups_list,  backend_request } from '../store.js';
+    import { setups_list,  backend_request, data_request } from '../store.js';
 
     export let visible = false;
 

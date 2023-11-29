@@ -36,14 +36,14 @@ class Trainer:
 
 
 	def get_sample(st, user_id):
-		training_ratio, validation_ratio, oversample = .4, .1, 1.5
+		training_ratio, validation_ratio, oversample = .2, .1, 1
 		
 		all_instances, tf, setup_length = data.get_setup_sample(user_id, st)
 		yes_instances = [x for x in all_instances if x[2] == 1]
 		no_instances = [x for x in all_instances if x[2] == 0]
 		
-	
-
+		
+		print(len(yes_instances))
 		# For validation set
 		num_yes_validation = len(yes_instances)
 		num_no_validation = int((num_yes_validation / validation_ratio) - num_yes_validation)
@@ -105,7 +105,7 @@ class Trainer:
 			model.add(Dropout(dropout))  # Dropout for regularization
 		model.add(Dense(1, activation='sigmoid'))
 		opt = SGD(learning_rate=0.0001)
-#model.compile(loss = "categorical_crossentropy", optimizer = opt)
+		#model.compile(loss = "categorical_crossentropy", optimizer = opt)
 		#model.compile(optimizer='adam', loss='binary_crossentropy', metrics=[tensorflow.keras.metrics.AUC(curve='PR', name='auc_pr')])
 		model.compile(optimizer=opt, loss='binary_crossentropy', metrics=[tensorflow.keras.metrics.AUC(curve='PR', name='auc_pr')])
 
@@ -168,7 +168,7 @@ def train(args,user_id):
 
 if __name__ == '__main__':
 
-	print(train( ['EP'],4))
+	print(train( ['F'],4))
 
 
 

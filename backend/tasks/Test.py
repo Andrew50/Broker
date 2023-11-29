@@ -24,20 +24,21 @@
 # import pandas as pd
 # ydf = yf.download(tickers = ticker, period = period, group_by='ticker', interval = ytf, ignore_tz = True, progress=False, show_errors = False, threads = True, prepost = True) 
 # print(ydf)
+import pandas as pd
 from sync_Data import data
-data.update()
+#data.update()
 #from Data import data
 #from Data import Data
+st = "F"
+df = pd.read_feather(f'C:/Stocks2/local/data/d_{st}.feather')[['ticker','dt','value']]
+#df['dt'] = df['dt'].astype(str).apply(Data.format_datetime)
 
-# df = pd.read_feather('C:/Stocks2/local/data/d_EP.feather')[['ticker','dt','value']]
-# #df['dt'] = df['dt'].astype(str).apply(Data.format_datetime)
-
-# print(len(df[df['value'] == 1]))
-# print(df[df['value'] == 1])
+#print(df[df['value'] == 1])
 
 
-#df = df.values.tolist()
+df = df.values.tolist()
 
-#data.set_setup_sample(4,'EP',df)
+data.set_setup_sample(4,st,df)
+#print(len(df[df['value'] == 1]))
 
 
