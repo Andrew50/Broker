@@ -124,6 +124,6 @@ def create_app():
 app = create_app()
 
 if __name__ == '__main__':
-	data.init_cache()#use when redis_init changed and old format/data needs to be overwriten
-	#data.init_cache(force=False)#default for quikc loading
+	#data.init_cache()#use when redis_init changed and old format/data needs to be overwriten
+	data.init_cache(force=False)#default for quikc loading
 	uvicorn.run("api:app", host="0.0.0.0", port=5057, reload=True)
