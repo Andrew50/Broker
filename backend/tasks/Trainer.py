@@ -27,6 +27,8 @@ from sklearn.model_selection import train_test_split
 from imblearn.pipeline import Pipeline
 from imblearn.under_sampling import RandomUnderSampler
 from sklearn.model_selection import train_test_split
+from keras.optimizers import SGD
+from tcn import TCN, tcn_full_summary
 
 class Trainer:
 
@@ -34,7 +36,7 @@ class Trainer:
 
 
 	def get_sample(st, user_id):
-		training_ratio, validation_ratio, oversample = .6, .15, 2
+		training_ratio, validation_ratio, oversample = .2, .3, 20
 		
 		all_instances, tf, setup_length = data.get_setup_sample(user_id, st)
 		yes_instances = [x for x in all_instances if x[2] == 1]
@@ -48,7 +50,6 @@ class Trainer:
 		validation_instances = yes_instances + random.sample(no_instances, num_no_validation)
 		validation_x, validation_y = data.get_ds('trainer', validation_instances, tf, setup_length)
 
-		# For training set
 		num_yes_training = len(yes_instances) * oversample
 		num_no_training = int((num_yes_training / training_ratio) - num_yes_training)
 		training_instances = yes_instances + random.sample(no_instances, num_no_training)
@@ -60,8 +61,9 @@ class Trainer:
 		training_x = training_x.reshape(-1, shape_1 * shape_2)
 
 		# Apply SMOTE
-		print(f'pre ratio {np.mean(training_y)}')
-		smote = SMOTE(sampling_strategy=training_ratio)
+		#print(f'pre ratio {np.mean(training_y)}')
+		smote_percent = training_ratio / (1 - training_ratio)
+		smote = SMOTE(sampling_strategy=smote_percent)
 		training_x, training_y = smote.fit_resample(training_x, training_y)
 
 		# Reshape training set back to original shape
@@ -69,7 +71,7 @@ class Trainer:
 
 		print(f"Training set size: {len(training_y)}, Class balance: {np.mean(training_y)}")
 		print(f"Validation set size: {len(validation_y)}, Class balance: {np.mean(validation_y)}")
-    
+	
 		return training_x, training_y, validation_x, validation_y
 
 	
@@ -78,7 +80,7 @@ class Trainer:
 
 		ds, y, ds_val, y_val = Trainer.get_sample(st, user_id)
 		_, num_time_steps, input_dim = ds.shape
-		model = Sequential()
+# 		model = Sequential()
 		
 
 
@@ -86,34 +88,44 @@ class Trainer:
 
 
 		
-		conv_filter = 3
-		kernal_size = 3
-		lstm_list = [64,32]
-		dense_list = [3]
-		dropout = .2
+# 		conv_filter = 50
+# 		kernal_size = 3
+# 		lstm_list = [3,5,8,13]
+# 		dense_list = [21,34]
+# 		dropout = .2
+
+		
+# 		#model.add(Conv1D(filters=conv_filter, kernel_size=kernal_size, activation='relu', input_shape=(num_time_steps, input_dim)))
+# 		for units in lstm_list[:-1]: 
+# 			model.add(Bidirectional(LSTM(units=units, return_sequences=True)))  # return_sequences=True for stacking LSTM layers
+# 		model.add(Bidirectional(LSTM(units=lstm_list[-1], return_sequences=False)))  # Last LSTM layer with return_sequences=False
+# 		model.add(Flatten())
+# 		for units in dense_list:  # Using Lucas numbers for Dense layers
+# 			model.add(Dense(units=units, activation='sigmoid'))
+# 			model.add(Dropout(dropout))  # Dropout for regularization
+# 		model.add(Dense(1, activation='sigmoid'))
+# 		opt = SGD(learning_rate=0.0001)
+# #model.compile(loss = "categorical_crossentropy", optimizer = opt)
+# 		#model.compile(optimizer='adam', loss='binary_crossentropy', metrics=[tensorflow.keras.metrics.AUC(curve='PR', name='auc_pr')])
+# 		model.compile(optimizer=opt, loss='binary_crossentropy', metrics=[tensorflow.keras.metrics.AUC(curve='PR', name='auc_pr')])
 
 
-		#model.add(Conv1D(filters=conv_filter, kernel_size=kernal_size, activation='relu', input_shape=(num_time_steps, input_dim)))
-		for units in lstm_list[:-1]: 
-			model.add(Bidirectional(LSTM(units=units, return_sequences=True)))  # return_sequences=True for stacking LSTM layers
-		model.add(Bidirectional(LSTM(units=lstm_list[-1], return_sequences=False)))  # Last LSTM layer with return_sequences=False
-		model.add(Flatten())
-		for units in dense_list:  # Using Lucas numbers for Dense layers
-			model.add(Dense(units=units, activation='relu'))
-			model.add(Dropout(dropout))  # Dropout for regularization
-		model.add(Dense(1, activation='sigmoid'))
+		# model = Sequential([Bidirectional(LSTM(64, input_shape=(ds.shape[1], ds.shape[2]), return_sequences=True,),), Dropout(
+		# 	0.2), Bidirectional(LSTM(32)), Dense(1, activation='sigmoid'),])
+		# model.compile(loss='binary_crossentropy',
+		# 			  optimizer=Adam(learning_rate=1e-3), metrics=['accuracy'])
+		model = Sequential([
+			TCN(input_shape=(num_time_steps, num_features)),
+			Dense(1, activation='sigmoid')
+		])
+
 		model.compile(optimizer='adam', loss='binary_crossentropy', metrics=[tensorflow.keras.metrics.AUC(curve='PR', name='auc_pr')])
-
-
-#		model = Sequential([Bidirectional(LSTM(64, input_shape=(x.shape[1], x.shape[2]), return_sequences=True,),), Dropout(
-# 			0.2), Bidirectional(LSTM(32)), Dense(3, activation='softmax'),])
-# 			model.compile(loss='sparse_categorical_crossentropy',
-# 					  optimizer=Adam(learning_rate=1e-3), metrics=['accuracy'])
-
+		tcn_full_summary(model, expand_residual_blocks=False)
 
 
 		early_stopping = EarlyStopping(
-			monitor='val_auc_pr',
+			#monitor='val_auc_pr',
+			monitor='accuracy',
 			patience=20,
 			restore_best_weights=True,
 			mode='max',

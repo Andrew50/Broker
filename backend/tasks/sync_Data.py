@@ -84,16 +84,16 @@ class Data:
 			#return pickle.dumps(np.column_stack((data[1:, 0], close_prices[1:], (data[1:, 1] / close_prices[:-1] - 1), (data[1:, 2]/close_prices[:-1] -1), (data[1:,3]/close_prices[:-1] - 1), (close_prices[1:] / close_prices[:-1]) - 1, data[1:, 5])))
 		
 		def screener_format(data):
-			dt = data[:,0]
+			#dt = data[:,0]
 
-			data = data[:,1:5]
-			mean = np.mean(data, axis=0)
-			std = np.std(data, axis=0)
-			data = (data - mean) / std
+			# data = data[:,1:5]
+			# mean = np.mean(data, axis=0)
+			# std = np.std(data, axis=0)
+			# data = (data - mean) / std
 
-			#dt = data[1:,0]
+			dt = data[1:,0]
 
-			# data = (data[1:,:5] / data[:-1,:5]) - 1
+			data = (data[1:,:5] / data[:-1,:5]) - 1
 			return pickle.dumps(np.column_stack((dt,data)))
 
 		def chart_format(data,tf):
@@ -152,7 +152,8 @@ class Data:
 				organized_data[ticker][tf] = np.array(organized_data[ticker][tf], dtype=float)
 		for tf in ('1d',):#'1'):
 			#for typ in ('match'): 
-			for typ in ('match', 'chart', 'screener'):
+			#for typ in ('match', 'chart', 'screener'):
+			for typ in ('screener',):
 				set_hash(organized_data, tf, typ)
 				
 		self.r.set('working','working')
@@ -191,7 +192,7 @@ class Data:
 							value = np.pad(value, pad_width, mode='constant', constant_values=0)
 						returns.append(value)
 						classifications.append(classification)
-					except TypeError:
+					except :
 						failed += 1
 						#print (ticker)
 						#print(ticker,dt)
