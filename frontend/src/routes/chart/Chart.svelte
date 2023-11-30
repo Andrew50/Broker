@@ -142,7 +142,7 @@ function closePopup() {
     text-align: center;
     box-sizing: border-box;
     z-index: 2000;
-    font-size:40pt;
+    font-size: 40pt;
     text-transform:uppercase;
     }
 </style>

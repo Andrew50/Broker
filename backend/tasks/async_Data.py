@@ -52,7 +52,7 @@ class Data:
 
 	async def get_df(self, form='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
 		#async with self.redis_pool.get() as conn:
-			
+		print(form,ticker,tf,dt,bars,pm,flush=True)
 		data = await self.redis_pool.hget(tf+form,ticker)
 		if not form == 'chart': data = pickle.loads(data)
 		if dt:

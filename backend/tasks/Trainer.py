@@ -36,7 +36,7 @@ class Trainer:
 
 
 	def get_sample(st, user_id):
-		training_ratio, validation_ratio, oversample = .2, .1, 2
+		training_ratio, validation_ratio, oversample = .25, .05, 1.5
 		
 		all_instances, tf, setup_length = data.get_setup_sample(user_id, st)
 		yes_instances = [x for x in all_instances if x[2] == 1]
@@ -97,6 +97,7 @@ class Trainer:
 		model.add(Conv1D(filters=conv_filter, kernel_size=kernal_size, activation='relu', input_shape=(num_time_steps, input_dim)))
 		for units in lstm_list[:-1]: 
 			model.add(Bidirectional(LSTM(units=units, return_sequences=True)))  # return_sequences=True for stacking LSTM layers
+			model.add(Dropout(.2))
 		model.add(Bidirectional(LSTM(units=lstm_list[-1], return_sequences=False)))  # Last LSTM layer with return_sequences=False
 		model.add(Flatten())
 		for units in dense_list:  # Using Lucas numbers for Dense layers
@@ -106,19 +107,13 @@ class Trainer:
 		#opt = SGD(learning_rate=0.0001)
 		#model.compile(loss = "categorical_crossentropy", optimizer = opt)
 		#model.compile(optimizer='adam', loss='binary_crossentropy', metrics=[tensorflow.keras.metrics.AUC(curve='PR', name='auc_pr')])
-		model.compile(optimizer='adam', loss='binary_crossentropy', metrics=[tensorflow.keras.metrics.AUC(curve='PR', name='auc_pr')])
-
-
-
+		model.compile(optimizer=Adam(learning_rate=1e-3), loss='binary_crossentropy', metrics=[tensorflow.keras.metrics.AUC(curve='PR', name='auc_pr')])
 
 
 		# model = Sequential([Bidirectional(LSTM(64, input_shape=(ds.shape[1], ds.shape[2]), return_sequences=True,),), Dropout(
 		# 	0.2), Bidirectional(LSTM(32)), Dense(1, activation='sigmoid'),])
 		# model.compile(loss='binary_crossentropy',
 		# 			  optimizer=Adam(learning_rate=1e-3), metrics=['accuracy'])
-
-
-
 
 		# model = Sequential([
 		# 	TCN(input_shape=(num_time_steps, input_dim)),
@@ -130,7 +125,6 @@ class Trainer:
 
 
 		early_stopping = EarlyStopping(
-			#monitor='val_auc_pr',
 			monitor='val_auc_pr',
 			patience=15,
 			restore_best_weights=True,
@@ -138,14 +132,7 @@ class Trainer:
 			verbose =1
 		)
 
-		history = model.fit(
-			ds, y,
-			epochs=200,
-			batch_size=64,
-			validation_data=(ds_val, y_val),  # Use the actual validation set here
-			callbacks=[early_stopping],
-			verbose=1
-		)
+		history = model.fit(ds, y,epochs=50,batch_size=64,validation_data=(ds_val, y_val),)  # Use the actual validation set herecallbacks=[early_stopping],verbose=1)
 		
 		if not os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False):
 			print('saved model --------------------')
@@ -167,7 +154,7 @@ def train(args,user_id):
 
 if __name__ == '__main__':
 
-	print(train( ['F'],6))
+	print(train( ['EP'],6))
 
 
 

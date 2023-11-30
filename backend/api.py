@@ -129,6 +129,7 @@ def create_app():
 			args += ['MSFT','1d',None][len(args):]
 			ticker,tf,dt = args
 			val = await data_.get_df('chart',ticker,tf,dt)
+			print(val,flush=True)
 			return val
 		elif func == 'create setup':
 			st, tf, setup_length = args
@@ -173,6 +174,6 @@ app = create_app()
 
 #eng_project
 if __name__ == '__main__':
-	#.init_cache(force=True)#use when redis_init changed and old format/data needs to be overwriten
+	#data.init_cache(force=True)
 	data.init_cache()#default for quikc loading
 	uvicorn.run("api:app", host="0.0.0.0", port=5057, reload=True)

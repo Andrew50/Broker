@@ -65,24 +65,13 @@ export async function public_request(bind_variable, func, ...args) {
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
 export async function data_request(bind_variable,func, ...args) {
     const url = `http://localhost:5057/data`;
     const payload = {
         function: func,
         arguments: args
     };
-
+    console.log('backend args',args)
     try {
         console.log('Request sent to:', url);
         const response = await fetch(url, {
@@ -160,6 +149,7 @@ export async function backend_request(bind_variable, func, ...args) {
                 bind_variable.set(result);
             } else if (statusData.status === 'failed') {
                 clearInterval(intervalId);
+
                 bind_variable.set('failed');
             }
         };

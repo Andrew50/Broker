@@ -32,17 +32,17 @@ from sync_Data import data
 st = "F"
 
 
+print(data.get_df('screener','HWBK','1d'))
+# df = pd.read_feather(f'C:/Stocks2/local/data/d_{st}.feather')[['ticker','dt','value']]
+# df['dt'] = df['dt'].astype(str).apply(data.format_datetime)
+# print(len(df[df['value'] == 1]))
 
-df = pd.read_feather(f'C:/Stocks2/local/data/d_{st}.feather')[['ticker','dt','value']]
-df['dt'] = df['dt'].astype(str).apply(data.format_datetime)
-print(len(df[df['value'] == 1]))
-
-#print(df[df['value'] == 1])
+# #print(df[df['value'] == 1])
 
 
-df = df.values.tolist()
+# df = df.values.tolist()
 
-user_id = 6
-data.set_setup_sample(user_id,st,df)
+# user_id = 6
+# data.set_setup_sample(user_id,st,df)
 
 
