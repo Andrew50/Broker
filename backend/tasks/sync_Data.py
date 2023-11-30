@@ -407,7 +407,7 @@ class Data:
 			setup_id, tf,setup_length = cursor.fetchall()[0]
 			cursor.execute('SELECT * from setup_data WHERE setup_id = %s',(setup_id,))
 			values = [[ticker,dt,val] for setup_id,ticker,dt,val in cursor.fetchall()]
-			return values, tf,setup_length
+			return values,tf,setup_length
 		
 	
 		
@@ -550,7 +550,7 @@ class Data:
 				ticker VARCHAR(5) NOT NULL,
 				dt INT NOT NULL,
 				value BOOLEAN NOT NULL,
-				UNIQUE(ticker, dt),
+				UNIQUE(setup_id,ticker, dt),
 				FOREIGN KEY (setup_id) REFERENCES setups(setup_id)
 				ON DELETE CASCADE
 			);

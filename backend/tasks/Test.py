@@ -29,7 +29,7 @@ from sync_Data import data
 #data.update()
 #from Data import data
 #from Data import Data
-st = "EP"
+st = "F"
 
 
 
@@ -42,6 +42,7 @@ print(len(df[df['value'] == 1]))
 
 df = df.values.tolist()
 
-data.set_setup_sample(6,st,df)
+user_id = 6
+data.set_setup_sample(user_id,st,df)
 
 

@@ -36,12 +36,13 @@ class Trainer:
 
 
 	def get_sample(st, user_id):
-		training_ratio, validation_ratio, oversample = .2, .1, 1
+		training_ratio, validation_ratio, oversample = .2, .1, 2
 		
 		all_instances, tf, setup_length = data.get_setup_sample(user_id, st)
 		yes_instances = [x for x in all_instances if x[2] == 1]
 		no_instances = [x for x in all_instances if x[2] == 0]
 		
+		data.set_setup_info(user_id,st,size = len(yes_instances))
 		
 		#print(len(yes_instances))
 		# For validation set
@@ -82,7 +83,7 @@ class Trainer:
 		model = Sequential()
 
 		
-		conv_filter = 50
+		conv_filter = 32
 		kernal_size = 3
 		lstm_list = [64,32]
 		dense_list = []
@@ -93,7 +94,7 @@ class Trainer:
 		# 		print(ds[i,:,:])
 			
 		# 		input()
-		#model.add(Conv1D(filters=conv_filter, kernel_size=kernal_size, activation='relu', input_shape=(num_time_steps, input_dim)))
+		model.add(Conv1D(filters=conv_filter, kernel_size=kernal_size, activation='relu', input_shape=(num_time_steps, input_dim)))
 		for units in lstm_list[:-1]: 
 			model.add(Bidirectional(LSTM(units=units, return_sequences=True)))  # return_sequences=True for stacking LSTM layers
 		model.add(Bidirectional(LSTM(units=lstm_list[-1], return_sequences=False)))  # Last LSTM layer with return_sequences=False
@@ -131,7 +132,7 @@ class Trainer:
 		early_stopping = EarlyStopping(
 			#monitor='val_auc_pr',
 			monitor='val_auc_pr',
-			patience=40,
+			patience=15,
 			restore_best_weights=True,
 			mode='max',
 			verbose =1
@@ -166,7 +167,7 @@ def train(args,user_id):
 
 if __name__ == '__main__':
 
-	print(train( ['EP'],6))
+	print(train( ['F'],6))
 
 
 
