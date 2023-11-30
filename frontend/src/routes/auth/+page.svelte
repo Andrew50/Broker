@@ -35,7 +35,7 @@
 
   async function signUp(username, password) {
     try {
-        await data_request('signup', username, password);
+        await public_request(null,'signup', username, password);
         await signIn(username, password); // Automatically sign in after account creation
     } catch (error) {
         errorMessage.set(error.message || 'Failed to create account');

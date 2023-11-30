@@ -9,7 +9,10 @@ import asyncio
 from mysql.connector import errorcode
 import aiomysql, aioredis
 
-
+import multiprocessing
+import redis
+import mysql.connector
+from contextlib import closing
 
 
 
@@ -62,27 +65,14 @@ class Data:
 		if not pm:
 			raise Exception('to code')
 		return data
-
-	def init_cache(self,debug = False,force = True):
-		if not force and self.r.exists('working'):
-			print('assuming redis already populated',flush = True)
-			return
-		
+	
 
 
-		
-		def match_format(data):
-			# dt, open, high, low, close, volume 
-			# 0    1     2     3     4      5
-			ohlcData = data[1:,1:5]/data[:-1, 4].reshape(-1, 1) - 1
-			mean = np.mean(ohlcData, axis=0)
-			std = np.std(ohlcData, axis=0)
-			ohlcData = (ohlcData - mean) / std
-			
-			return pickle.dumps(np.column_stack((data[1:, 0], data[1:, 4], ohlcData[:, 0], ohlcData[:, 1], ohlcData[:, 2], ohlcData[:, 3], data[1:, 5])))
-			#close_prices = data[:, 4]
-			#return pickle.dumps(np.column_stack((data[1:, 0], close_prices[1:], (data[1:, 1] / close_prices[:-1] - 1), (data[1:, 2]/close_prices[:-1] -1), (data[1:,3]/close_prices[:-1] - 1), (close_prices[1:] / close_prices[:-1]) - 1, data[1:, 5])))
-		
+
+
+	# Assuming you have defined screener_format function here
+	@staticmethod
+	def process_ticker_data(bar):
 		def screener_format(data):
 			#dt = data[:,0]
 
@@ -92,71 +82,176 @@ class Data:
 			# data = (data - mean) / std
 
 			dt = data[1:,0]
+			dt = dt.reshape(-1,1)
+			#print(dt,flush=True)
 
-			data = (data[1:,:5] / data[:-1,:5]) - 1
+			data = (data[1:,1:5] / data[:-1,4][:, None]) - 1
+			#print(dt,flush=True)
+		#	print(data,flush=True)
+			##print(dt.shape,flush=True)
+		#	print(data.shape,flush=True)
 			return pickle.dumps(np.column_stack((dt,data)))
+		try:
+			# Initialize SQL connection from the pool
+			#with mysql.connector.connect(pool_name="mypool") as conn:
+			#	with conn.cursor(buffered=True) as cursor:
+					# SQL query for the specific ticker
+			ticker,tf = bar
+			with sql_pool.get_connection() as conn:
+				with conn.cursor() as cursor:
+					cursor.execute("SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s and tf = %s", (ticker,tf))
+					data = np.array(cursor.fetchall())
 
-		def chart_format(data,tf):
-			list_of_lists = data.tolist()[:]
-			if 'd' in tf or 'w' in tf:
-				list_of_lists = [{
-				'time': pd.to_datetime(row[0], unit='s').strftime('%Y-%m-%d'),
-				'open': row[1],
-				'high': row[2],
-				'low': row[3],
-				'close': row[4]
-			} for row in list_of_lists]
-			else:
-				list_of_lists = [{
-				'time': pd.to_datetime(row[0], unit='s').strftime('%Y-%m-%d %H:%M:%S'),
-				'open': row[1],
-				'high': row[2],
-				'low': row[3],
-				'close': row[4]
-				}for row in list_of_lists]
-	
-			r = json.dumps(list_of_lists)
-			return r
-		
-		def set_hash(data, tf, form):
-			for ticker, df in data.items():
-				if tf in df:  # Check if tf data exists for the ticker
-					try:
-						if form == 'match':
-							formatted_data = match_format(np.array(df[tf])) 
-						elif form == 'screener':
-							formatted_data = screener_format(np.array(df[tf]))
-						elif form =='chart':
-							formatted_data = chart_format(np.array(df[tf]),tf)
-						self.r.hset(tf + form, ticker, formatted_data)
-					except Exception as e:
-						print(e + ' _ ' + form)
-		
-		cursor = self._conn.cursor(buffered=True)
-		if debug:
-			cursor.execute("SELECT COUNT(*) FROM dfs")
-			total_count = cursor.fetchone()[0]
-			limit = int(total_count * 0.05)
-			cursor.execute(f"SELECT * FROM dfs LIMIT {limit}")
-		else:
-			cursor.execute("SELECT * FROM dfs")
-		data = cursor.fetchall()
-		
-		organized_data = defaultdict(lambda: defaultdict(list))
-		for row in data:
-			ticker, tf, *rest = row
-			organized_data[ticker][tf].append(rest)
+					# Process data
+					#print(data,flush=True)
+					for form in ('screener',):
+						if form == 'screener':
+							dt = data[1:,0]
+							dt = dt.reshape(-1,1)
+							data = (data[1:,1:5] / data[:-1,4][:, None]) - 1
+							data = np.column_stack((dt,data))
+							#print(data.shape,flush=True)
+							processed_data = pickle.dumps(data)
+						#print(processed_data,flush = True)
+					
+						redis_pool.hset(tf+form, ticker, processed_data)
+			#conn.close()
+		except TimeoutError:
+			pass
+		#except Exception as e:
+			#print(f"Error processing ticker {ticker}: {e}")
 
-		for ticker in organized_data:
-			for tf in organized_data[ticker]:
-				organized_data[ticker][tf] = np.array(organized_data[ticker][tf], dtype=float)
-		for tf in ('1d',):#'1'):
-			#for typ in ('match'): 
-			#for typ in ('match', 'chart', 'screener'):
-			for typ in ('screener',):
-				set_hash(organized_data, tf, typ)
-				
+	# Main Function
+	def init_cache(self,force = False):
+		if not force and self.r.exists('working'):
+			print('assuming redis already populated',flush = True)
+			return
+		# Initialize SQL connection pool
+		global sql_pool
+		sql_pool = mysql.connector.pooling.MySQLConnectionPool(pool_name="mypool", pool_size=6, host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
+
+		# Initialize Redis connection pool
+		global redis_pool
+		redis_pool = self.r#redis.ConnectionPool(host='localhost', port=6379)
+
+		# Get the list of unique tickers
+		tickers = self.get_ticker_list()# get_unique_tickers()  # Define this function to get tickers from your DB
+
+		# Create a pool of worker processes
+		pool = multiprocessing.Pool(processes=1)  # Adjust number of processes as needed
+
+		# Distribute the work among the processes
+		for tf in ('1d',):
+			arglist = [[ticker,tf] for ticker in tickers]
+			pool.map(self.process_ticker_data, arglist)
+
+		pool.close()
+		pool.join()
 		self.r.set('working','working')
+
+
+
+
+
+
+
+
+
+	# def init_cache(self,debug = False,force = True):
+	# 	if not force and self.r.exists('working'):
+	# 		print('assuming redis already populated',flush = True)
+	# 		return
+		
+
+
+		
+	# 	def match_format(data):
+	# 		# dt, open, high, low, close, volume 
+	# 		# 0    1     2     3     4      5
+	# 		ohlcData = data[1:,1:5]/data[:-1, 4].reshape(-1, 1) - 1
+	# 		mean = np.mean(ohlcData, axis=0)
+	# 		std = np.std(ohlcData, axis=0)
+	# 		ohlcData = (ohlcData - mean) / std
+			
+	# 		return pickle.dumps(np.column_stack((data[1:, 0], data[1:, 4], ohlcData[:, 0], ohlcData[:, 1], ohlcData[:, 2], ohlcData[:, 3], data[1:, 5])))
+	# 		#close_prices = data[:, 4]
+	# 		#return pickle.dumps(np.column_stack((data[1:, 0], close_prices[1:], (data[1:, 1] / close_prices[:-1] - 1), (data[1:, 2]/close_prices[:-1] -1), (data[1:,3]/close_prices[:-1] - 1), (close_prices[1:] / close_prices[:-1]) - 1, data[1:, 5])))
+		
+	# 	def screener_format(data):
+	# 		#dt = data[:,0]
+
+	# 		# data = data[:,1:5]
+	# 		# mean = np.mean(data, axis=0)
+	# 		# std = np.std(data, axis=0)
+	# 		# data = (data - mean) / std
+
+	# 		dt = data[1:,0]
+	# 		#print(dt,flush=True)
+
+	# 		data = (data[1:,1:5] / data[:-1,4][:,None]) - 1
+	# 		return pickle.dumps(np.column_stack((dt,data)))
+
+	# 	def chart_format(data,tf):
+	# 		list_of_lists = data.tolist()[:]
+	# 		if 'd' in tf or 'w' in tf:
+	# 			list_of_lists = [{
+	# 			'time': pd.to_datetime(row[0], unit='s').strftime('%Y-%m-%d'),
+	# 			'open': row[1],
+	# 			'high': row[2],
+	# 			'low': row[3],
+	# 			'close': row[4]
+	# 		} for row in list_of_lists]
+	# 		else:
+	# 			list_of_lists = [{
+	# 			'time': pd.to_datetime(row[0], unit='s').strftime('%Y-%m-%d %H:%M:%S'),
+	# 			'open': row[1],
+	# 			'high': row[2],
+	# 			'low': row[3],
+	# 			'close': row[4]
+	# 			}for row in list_of_lists]
+	
+	# 		r = json.dumps(list_of_lists)
+	# 		return r
+		
+	# 	def set_hash(data, tf, form):
+	# 		for ticker, df in data.items():
+	# 			if tf in df:  # Check if tf data exists for the ticker
+	# 				try:
+	# 					if form == 'match':
+	# 						formatted_data = match_format(np.array(df[tf])) 
+	# 					elif form == 'screener':
+	# 						formatted_data = screener_format(np.array(df[tf]))
+	# 					elif form =='chart':
+	# 						formatted_data = chart_format(np.array(df[tf]),tf)
+	# 					self.r.hset(tf + form, ticker, formatted_data)
+	# 				except Exception as e:
+	# 					print(str(e) + ' _ ' + form)
+		
+	# 	cursor = self._conn.cursor(buffered=True)
+	# 	if debug:
+	# 		cursor.execute("SELECT COUNT(*) FROM dfs")
+	# 		total_count = cursor.fetchone()[0]
+	# 		limit = int(total_count * 0.05)
+	# 		cursor.execute(f"SELECT * FROM dfs LIMIT {limit}")
+	# 	else:
+	# 		cursor.execute("SELECT * FROM dfs")
+	# 	data = cursor.fetchall()
+		
+	# 	organized_data = defaultdict(lambda: defaultdict(list))
+	# 	for row in data:
+	# 		ticker, tf, *rest = row
+	# 		organized_data[ticker][tf].append(rest)
+
+	# 	for ticker in organized_data:
+	# 		for tf in organized_data[ticker]:
+	# 			organized_data[ticker][tf] = np.array(organized_data[ticker][tf], dtype=float)
+	# 	for tf in ('1d',):#'1'):
+	# 		#for typ in ('match'): 
+	# 		#for typ in ('match', 'chart', 'screener'):
+	# 		for typ in ('screener',):
+	# 			set_hash(organized_data, tf, typ)
+				
+	# 	self.r.set('working','working')
 
 
 	
@@ -180,24 +275,23 @@ class Data:
 				failed = 0
 				for ticker, dt, classification in request:
 					try:
-						value = pickle.loads(self.r.hget(tf+'screener',ticker))
+						value = pickle.loads(self.r.hget(tf+'screener',ticker))#get rid of dt becuase dont need for training
+					
 						if not dt == '' or dt == None:
 							index = Data.findex(value,dt)
 							value = value[index-bars+1:index+1,:]
-						#print(value.shape)
+						value = value[:,1:]
 						padding = bars - value.shape[0]
 						if padding > 0:
-							#raise TypeError
 							pad_width = [(0, padding)] + [(0, 0)] * (value.ndim - 1)  # Pad only the first dimension
 							value = np.pad(value, pad_width, mode='constant', constant_values=0)
+							
 						returns.append(value)
 						classifications.append(classification)
-					except :
+					except:
 						failed += 1
-						#print (ticker)
-						#print(ticker,dt)
 				print(f'{failed} df requests failed!')
-
+				
 				returns = np.array(returns)
 				classifications = np.array(classifications)
 				return returns, classifications
@@ -321,8 +415,10 @@ class Data:
 		with self._conn.cursor(buffered=True) as cursor:
 			cursor.execute('SELECT setup_id from setups WHERE user_id = %s AND name = %s',(user_id,st))
 			setup_id = cursor.fetchone()[0]
+			print(setup_id)
 			query = [[setup_id,ticker,dt,classification] for ticker,dt,classification in data]
-			cursor.executemany("INSERT IGNORE INTO setup_data VALUES (%s, %s, %s,%s)", query)
+			#cursor.executemany("INSERT IGNORE INTO setup_data VALUES (%s, %s, %s,%s)", query)
+			cursor.executemany("INSERT INTO setup_data VALUES (%s, %s, %s,%s)", query)
 			
 		self._conn.commit()
 
@@ -445,6 +541,7 @@ class Data:
 				setup_length INT NOT NULL,
 				UNIQUE(user_id, name),
 				FOREIGN KEY (user_id) REFERENCES users(id)
+				ON DELETE CASCADE
 			);
 			CREATE INDEX user_id_index ON setups (user_id);
 			CREATE INDEX name_index ON setups (name);
@@ -455,6 +552,7 @@ class Data:
 				value BOOLEAN NOT NULL,
 				UNIQUE(ticker, dt),
 				FOREIGN KEY (setup_id) REFERENCES setups(setup_id)
+				ON DELETE CASCADE
 			);
 			CREATE INDEX id_index ON setup_data (setup_id);
 			CREATE TABLE full_ticker_list(ticker VARCHAR(5) NOT NULL);
@@ -478,7 +576,7 @@ class Data:
 							df['datetime']= (df['datetime'].astype(np.int64) // 10**9)
 							df = df.values.tolist()
 							rows = [[ticker, tf] + row for row in df]
-							insert_query = "INSERT IGNORE INTO dfs VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+							insert_query = "INSERT INTO dfs VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
 							cursor.executemany(insert_query, rows)
 							self._conn.commit()
 						except Exception as e: #if d doesnt exist or theres no data then this gets hit every loop

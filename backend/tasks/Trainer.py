@@ -43,7 +43,7 @@ class Trainer:
 		no_instances = [x for x in all_instances if x[2] == 0]
 		
 		
-		print(len(yes_instances))
+		#print(len(yes_instances))
 		# For validation set
 		num_yes_validation = len(yes_instances)
 		num_no_validation = int((num_yes_validation / validation_ratio) - num_yes_validation)
@@ -55,7 +55,6 @@ class Trainer:
 		training_instances = yes_instances + random.sample(no_instances, num_no_training)
 		
 		training_x, training_y = data.get_ds('trainer', training_instances, tf, setup_length)
-
 		# Reshape training set for SMOTE
 		_, shape_1, shape_2 = training_x.shape
 		training_x = training_x.reshape(-1, shape_1 * shape_2)
@@ -81,21 +80,20 @@ class Trainer:
 		ds, y, ds_val, y_val = Trainer.get_sample(st, user_id)
 		_, num_time_steps, input_dim = ds.shape
 		model = Sequential()
-		
-
-		
-
-
 
 		
 		conv_filter = 50
 		kernal_size = 3
-		lstm_list = [64,64,32,32]
-		dense_list = [32,16]
+		lstm_list = [64,32]
+		dense_list = []
 		dropout = .2
 
-		
-		model.add(Conv1D(filters=conv_filter, kernel_size=kernal_size, activation='relu', input_shape=(num_time_steps, input_dim)))
+		# for i in range(len(ds)):
+		# 	if y[i] == 1:
+		# 		print(ds[i,:,:])
+			
+		# 		input()
+		#model.add(Conv1D(filters=conv_filter, kernel_size=kernal_size, activation='relu', input_shape=(num_time_steps, input_dim)))
 		for units in lstm_list[:-1]: 
 			model.add(Bidirectional(LSTM(units=units, return_sequences=True)))  # return_sequences=True for stacking LSTM layers
 		model.add(Bidirectional(LSTM(units=lstm_list[-1], return_sequences=False)))  # Last LSTM layer with return_sequences=False
@@ -104,10 +102,10 @@ class Trainer:
 			model.add(Dense(units=units, activation='sigmoid'))
 			model.add(Dropout(dropout))  # Dropout for regularization
 		model.add(Dense(1, activation='sigmoid'))
-		opt = SGD(learning_rate=0.0001)
+		#opt = SGD(learning_rate=0.0001)
 		#model.compile(loss = "categorical_crossentropy", optimizer = opt)
 		#model.compile(optimizer='adam', loss='binary_crossentropy', metrics=[tensorflow.keras.metrics.AUC(curve='PR', name='auc_pr')])
-		model.compile(optimizer=opt, loss='binary_crossentropy', metrics=[tensorflow.keras.metrics.AUC(curve='PR', name='auc_pr')])
+		model.compile(optimizer='adam', loss='binary_crossentropy', metrics=[tensorflow.keras.metrics.AUC(curve='PR', name='auc_pr')])
 
 
 
@@ -168,7 +166,7 @@ def train(args,user_id):
 
 if __name__ == '__main__':
 
-	print(train( ['F'],4))
+	print(train( ['EP'],6))
 
 
 

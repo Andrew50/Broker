@@ -29,16 +29,19 @@ from sync_Data import data
 #data.update()
 #from Data import data
 #from Data import Data
-st = "F"
+st = "EP"
+
+
+
 df = pd.read_feather(f'C:/Stocks2/local/data/d_{st}.feather')[['ticker','dt','value']]
-#df['dt'] = df['dt'].astype(str).apply(Data.format_datetime)
+df['dt'] = df['dt'].astype(str).apply(data.format_datetime)
+print(len(df[df['value'] == 1]))
 
 #print(df[df['value'] == 1])
 
 
 df = df.values.tolist()
 
-data.set_setup_sample(4,st,df)
-#print(len(df[df['value'] == 1]))
+data.set_setup_sample(6,st,df)
 
 

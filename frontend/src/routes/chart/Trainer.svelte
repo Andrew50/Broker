@@ -9,25 +9,32 @@
     let setupLength = 0;
     let helper_store = writable({});
     let scores = {};
+    let errorMessage = '';
     
     // Function to handle the creation of a new setup
     function createSetup() {
         setupLength = parseInt(setupLength);
-    if (setupName && !$setups_list.includes(setupName) && setupLength > 0 && setupTimeframe != '') {
-        setups_list.update(list => {
-            list.push([setupName,setupTimeframe,setupLength]);
-            return list;
-        });
-        data_request(null, "create setup", setupName, setupTimeframe, setupLength);
+        if (!setupName || !setupLength > 0 || !setupTimeframe != '' ){
+            errorMessage = 'Empty Input'
+        }
+        else if($setups_list.some(subArray => subArray[0] === setupName)) {
+            errorMessage = 'Duplicate Setup';
+        
+                
+        }else{
+            setups_list.update(list => {
+                    list.push([setupName,setupTimeframe,setupLength]);
+                    return list;
+                });
+                data_request(null, "create setup", setupName, setupTimeframe, setupLength);
+        }
     }
-    }
-
-    function deleteSetup(name) {
+function deleteSetup(name) {
     setups_list.update(list => {
-        const index = list.indexOf(name);
+        // Find the index of the setup array that matches the given name
+        const index = list.findIndex(setup => setup[0] === name);
         if (index > -1) {
-            list.splice(index, 1);
-            return list;
+            list.splice(index, 1); // Remove the found setup
         }
         return list;
     });
@@ -62,7 +69,9 @@
 
 <div class="popout-menu" class:visible={visible}>
     {#if visible}
-    
+    {#if errorMessage} <!-- Check if there's an error message -->
+            <p class="error-message">{errorMessage}</p> <!-- Display the error message -->
+        {/if}
     <table>
         <thead>
             <tr>
@@ -113,4 +122,7 @@
 .inp{
     width: 100px;
 }
+.error-message {
+        color: red; /* Style for the error message */
+    }
 </style>
