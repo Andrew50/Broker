@@ -18,6 +18,9 @@ from contextlib import closing
 
 class Data:
 	
+
+
+	#eng_project
 	def __init__(self):
 		try:
 			self.inside_container = os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False)
@@ -49,6 +52,10 @@ class Data:
 			self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g')
 			self.setup()
 			
+
+
+
+
 
 
 

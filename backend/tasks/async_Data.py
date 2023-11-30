@@ -2,6 +2,8 @@ import aiomysql, aioredis, pickle, datetime, pytz
 
 class Data:
 	
+
+	#eng_project
 	async def init_async_conn(self):
 		# self.redis_pool = await aioredis.create_redis_pool(
 		# 	f'redis://redis', minsize=1, maxsize=20)
@@ -62,6 +64,9 @@ class Data:
 			raise Exception('to code')
 		return data
 
+
+
+	#eng_project
 	async def get_user(self, email, password):
 		async with self.mysql_pool.acquire() as conn:
 			async with conn.cursor() as cursor:
@@ -71,6 +76,10 @@ class Data:
 					if password == user_data[2]:  # Assuming password is at index 2
 						return user_data[0]   
 	
+
+
+
+	#eng_project
 	async def set_user(self, user_id=None, email=None, password=None, settings_string=None, delete=False):
 		async with self.mysql_pool.acquire() as conn:
 			async with conn.cursor() as cursor:

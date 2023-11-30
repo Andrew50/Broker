@@ -1,3 +1,31 @@
+
+
+
+"""
+===============================================================================
+ENGR 13300 Fall 2023
+
+Program Description
+    Replace this line with a description of your program.
+
+Assignment Information
+    Assignment:     Individual Project
+    Author:         Andrew Billings, billin19
+    Team ID:        LC2
+
+ACADEMIC INTEGRITY STATEMENT
+I have not used source code obtained from any other unauthorized
+source, either modified or unmodified. Neither have I provided
+access to my code to another. The project I am submitting
+is my own original work.
+===============================================================================
+"""
+
+
+
+
+
+
 from fastapi import FastAPI, HTTPException, status, Request as FastAPIRequest, Depends, Header
 import datetime, uvicorn, importlib, sys, traceback, jwt, asyncio, time, json
 from redis import Redis
@@ -17,6 +45,7 @@ class Request(BaseModel):
 	arguments: list
 	
 
+#eng_project
 async def validate_auth(token: str = Depends(oauth2_scheme)):
 	try:
 		payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
@@ -26,6 +55,18 @@ async def validate_auth(token: str = Depends(oauth2_scheme)):
 		return user_id
 	except jwt.PyJWTError:
 		raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
+	
+#eng_project
+def create_jwt_token(user_id: str) -> str:
+	payload = {
+		"sub": user_id, # Subject of the token (user identifier)
+		"exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1), # Expiration time
+	}
+	return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+
+
+
+
 
 def run_task(func,args,user_id):
 	try:
@@ -37,12 +78,7 @@ def run_task(func,args,user_id):
 		print(traceback.format_exc() + str(e), flush=True)
 		return 'failed'
 	
-def create_jwt_token(user_id: str) -> str:
-	payload = {
-		"sub": user_id, # Subject of the token (user identifier)
-		"exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1), # Expiration time
-	}
-	return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+
 
 def create_app():
 	app = FastAPI()
@@ -50,12 +86,16 @@ def create_app():
 	redis_conn = Redis(host='redis', port=6379)
 	q = Queue('my_queue', connection=redis_conn)
 
+
+	
 	@app.on_event("startup")
 	async def startup_event():
 		app.state.data = Data()
 		await app.state.data.init_async_conn()
 		
 
+		
+		#eng_project
 	@app.post('/public',status_code=201)
 	async def public_request(request_model: Request, request: FastAPIRequest):
 		data = request.app.state.data
@@ -74,6 +114,12 @@ def create_app():
 		
 		else:
 			raise Exception('to code' + func)
+		
+
+
+
+
+
 	
 	@app.post('/data',status_code=201)
 	async def data_request(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
@@ -123,6 +169,9 @@ def create_app():
 
 app = create_app()
 
+
+
+#eng_project
 if __name__ == '__main__':
 	#.init_cache(force=True)#use when redis_init changed and old format/data needs to be overwriten
 	data.init_cache()#default for quikc loading
