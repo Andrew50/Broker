@@ -1,7 +1,7 @@
 <script>
     import { writable } from 'svelte/store';
     import { setups_list,  backend_request, data_request } from '../store.js';
-
+    import Table from './Table.svelte'
     export let visible = false;
 
     let setupName = '';
@@ -10,6 +10,13 @@
     let helper_store = writable({});
     let scores = {};
     let errorMessage = '';
+    let selected_setup = '';
+    let instance_queue = {};
+
+
+    setups_list.forEach(setup => {
+        instance_queue[setup[0]] = [];
+    });
     
     // Function to handle the creation of a new setup
     function createSetup() {
@@ -65,39 +72,55 @@ function deleteSetup(name) {
         setupLength = setup[2]
         // Assuming setupTimeframe needs to be fetched or set here
     }
+
+    function select_setup(setup) {
+        selected_setup = setup;
+        // Assuming setupTimeframe needs to be fetched or set here
+    }
+
+    async function load_instance(){
+         const checkStatus = async () => {
+
+            try{
+                current_instance = instance_queue[selected_setup][0]
+                data_request(chart_data,'chart',...current_instance)
+
+                clearInterval(intervalId);
+            }catch{}
+        const intervalId = setInterval(checkStatus, 100); // Check every x milliseconds
+
+
+
+    }
+
+    function fetch_instance(){
+        data_request(null,'setup queue',selected_setup).then((new_instances) => {
+            instance_queue[selected_setup] = instance_queue[selected_setup].concat(new_instances)})
+        
+        
+    }
+
+    function label_instance(instance,value){
+        backend_request(null,'set sample',selected_setup,value,instance)
+        instance_queue[selected_setup].shift()
+        load_next_instance()
+    }
+
+
 </script>
 
 <div class="popout-menu" class:visible={visible}>
     {#if visible}
+    {#if selected_setup == ''}
     {#if errorMessage} <!-- Check if there's an error message -->
             <p class="error-message">{errorMessage}</p> <!-- Display the error message -->
         {/if}
-    <table>
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Time Frame</th>
-                <th>Length</th>
-                <th>Sample Size</th>
-                <th>Score</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {#each $setups_list as setup}
-                <tr on:click={() => selectSetup(setup)}>
-                    <td>{setup[0]}</td>
-                    <td>{setup[1]}</td>
-                    <td>{setup[2]}</td>
-                    <td>{setup[3]}</td>
-                    <td>{setup[4]}<td>
-                    <td><button on:click={() =>backend_request(helper_store,'Trainer-train',setup[0])}>Train</button></td>
-                </tr>
-            {/each}
-        </tbody>
-    </table>
-        
-
+  
+    <Table 
+            headers={['Name','TF','Length','Samples','Score']} 
+            rows={$setups_list} 
+            onRowClick={select_setup}
+            clickHandlerArgs={['Name']} />
 
 
 
@@ -114,6 +137,18 @@ function deleteSetup(name) {
             <button on:click={() => deleteSetup(setupName)}>Delete Setup</button>
             </div>
         </div>
+        {/if}
+        {#if selected_setup != ''}
+            <div class ="trainer">
+
+                <p> Is ths a {selected_setup} <p>
+                <button on:click={() => label_instance(current_instance,true)}> Yes  </button>
+                <button on:click={() => label_instance(current_instance,false)}> No </button>
+                <button on:click={() => {selected_setup = ''}}> Back </button>
+
+            </div>
+        {/if}
+
     {/if}
 </div>
 

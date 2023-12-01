@@ -1,6 +1,3 @@
-
-
-
 """
 ===============================================================================
 ENGR 13300 Fall 2023
@@ -21,11 +18,6 @@ is my own original work.
 ===============================================================================
 """
 
-
-
-
-
-
 from fastapi import FastAPI, HTTPException, status, Request as FastAPIRequest, Depends, Header
 import datetime, uvicorn, importlib, sys, traceback, jwt, asyncio, time, json
 from redis import Redis
@@ -44,8 +36,6 @@ class Request(BaseModel):
 	function: str
 	arguments: list
 	
-
-#eng_project
 async def validate_auth(token: str = Depends(oauth2_scheme)):
 	try:
 		payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
@@ -56,17 +46,12 @@ async def validate_auth(token: str = Depends(oauth2_scheme)):
 	except jwt.PyJWTError:
 		raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
 	
-#eng_project
 def create_jwt_token(user_id: str) -> str:
 	payload = {
 		"sub": user_id, # Subject of the token (user identifier)
 		"exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1), # Expiration time
 	}
 	return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
-
-
-
-
 
 def run_task(func,args,user_id):
 	try:
@@ -77,8 +62,6 @@ def run_task(func,args,user_id):
 	except Exception as e:
 		print(traceback.format_exc() + str(e), flush=True)
 		return 'failed'
-	
-
 
 def create_app():
 	app = FastAPI()
@@ -86,16 +69,11 @@ def create_app():
 	redis_conn = Redis(host='redis', port=6379)
 	q = Queue('my_queue', connection=redis_conn)
 
-
-	
 	@app.on_event("startup")
 	async def startup_event():
 		app.state.data = Data()
 		await app.state.data.init_async_conn()
 		
-
-		
-		#eng_project
 	@app.post('/public',status_code=201)
 	async def public_request(request_model: Request, request: FastAPIRequest):
 		data = request.app.state.data
@@ -115,12 +93,6 @@ def create_app():
 		else:
 			raise Exception('to code' + func)
 		
-
-
-
-
-
-	
 	@app.post('/data',status_code=201)
 	async def data_request(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
 		data_ = request.app.state.data
@@ -170,9 +142,6 @@ def create_app():
 
 app = create_app()
 
-
-
-#eng_project
 if __name__ == '__main__':
 	#data.init_cache(force=True)
 	data.init_cache()#default for quikc loading
