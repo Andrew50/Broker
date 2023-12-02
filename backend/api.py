@@ -1,23 +1,3 @@
-"""
-===============================================================================
-ENGR 13300 Fall 2023
-
-Program Description
-    Replace this line with a description of your program.
-
-Assignment Information
-    Assignment:     Individual Project
-    Author:         Andrew Billings, billin19
-    Team ID:        LC2
-
-ACADEMIC INTEGRITY STATEMENT
-I have not used source code obtained from any other unauthorized
-source, either modified or unmodified. Neither have I provided
-access to my code to another. The project I am submitting
-is my own original work.
-===============================================================================
-"""
-
 from fastapi import FastAPI, HTTPException, status, Request as FastAPIRequest, Depends, Header
 import datetime, uvicorn, importlib, sys, traceback, jwt, asyncio, time, json
 from redis import Redis

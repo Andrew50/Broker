@@ -144,12 +144,13 @@ class Data:
 		redis_pool = self.r#redis.ConnectionPool(host='localhost', port=6379)
 		tickers = self.get_ticker_list()# get_unique_tickers()  # Define this function to get tickers from your DB
 		pool = multiprocessing.Pool(processes=8)  # Adjust number of processes as needed
+		self.r.set('working','working')
 		for tf in ('1d',):
 			arglist = [[ticker,tf] for ticker in tickers]
 			pool.map(self.process_ticker_data, arglist)
 		pool.close()
 		pool.join()
-		self.r.set('working','working')
+		
 	
 	def get_ds(self,form = 'match',request='full',tf='1d', bars=0):
 		

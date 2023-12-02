@@ -28,7 +28,7 @@
             throw new Error('Invalid Credentials');
         }
     } catch (error) {
-        errorMessage.set(error.message || 'Failed to sign in');
+        errorMessage.set('Failed to sign in');
         password = '';
     }
 }
