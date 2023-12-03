@@ -27,14 +27,16 @@ function getAuthHeaders() {
 
 
 export async function public_request(bind_variable, func, ...args) {
+
     const url = `http://localhost:5057/public`;
     const payload = {
         function: func,
         arguments: args
     };
+    console.log('Request sent to:', url, 'func:', func, 'args:', args);
+
 
     try {
-        console.log('Request sent to:', url);
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -65,15 +67,15 @@ export async function public_request(bind_variable, func, ...args) {
     }
 }
 
-export async function data_request(bind_variable,func, ...args) {
+export async function data_request(bind_variable, func, ...args) {
     const url = `http://localhost:5057/data`;
     const payload = {
         function: func,
         arguments: args
     };
-    console.log('backend args',args)
+    console.log('Request sent to:', url, 'func:', func, 'args:', args);
+
     try {
-        console.log('Request sent to:', url);
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -105,14 +107,16 @@ export async function data_request(bind_variable,func, ...args) {
 }
 
 export async function backend_request(bind_variable, func, ...args) {
+
     const url = `http://localhost:5057/backend`;
     const payload = {
         function: func,
         arguments: args
     };
-    console.log(args)
+    console.log('Request sent to:', url, 'func:', func, 'args:', args);
+
     try {
-        console.log('Request sent to:', url);
+        
 
         const response = await fetch(url, {
             method: 'POST',
@@ -138,14 +142,12 @@ export async function backend_request(bind_variable, func, ...args) {
             const statusData = await statusResponse.json();
             if (statusData.status === 'done') {
                 clearInterval(intervalId);
-                console.log(statusData.result);
                 let result = statusData.result;
                 try {
                     result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
                 } catch {
                     // Result might already be in a proper JSON format or another parsing error occurred
                 }
-                console.log(result)
                 bind_variable.set(result);
             } else if (statusData.status === 'failed') {
                 clearInterval(intervalId);

@@ -83,10 +83,10 @@ function handleCheckboxChange(setup, event) {
     .popout-menu {
         /* Your existing styles */
     }
-    .screener-data {
+   /*  .screener-data {
         overflow-y: auto;
-        max-height: 200px; /* Adjust as needed */
-    }
+        max-height: 200px; /* Adjust as needed 
+    } */
     .input-form {
         display: flex;
         flex-direction: column;

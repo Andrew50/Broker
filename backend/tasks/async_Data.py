@@ -2,6 +2,10 @@ import aiomysql, aioredis, pickle, datetime, pytz
 
 class Data:
 	
+	async def get_trainer_queue(self,user_id,st):
+		return await self.redis_pool.rpop(str(user_id)+st)
+	
+	
 
 	#eng_project
 	async def init_async_conn(self):

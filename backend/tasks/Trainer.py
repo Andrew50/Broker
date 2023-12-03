@@ -1,6 +1,6 @@
 import numpy as np
 import random
-import tensorflow, os
+import tensorflow, os, datetime
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, LSTM, Bidirectional, Dropout, Conv1D, MaxPooling1D, Flatten
 from tensorflow.keras.optimizers import Adam
@@ -8,6 +8,7 @@ from sklearn.utils.class_weight import compute_class_weight
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.layers import Bidirectional
 from tensorflow.python import training
+import time
 try: 
 	import keras_tuner as kt
 	import matplotlib.pyplot as plt
@@ -28,10 +29,11 @@ from imblearn.pipeline import Pipeline
 from imblearn.under_sampling import RandomUnderSampler
 from sklearn.model_selection import train_test_split
 from keras.optimizers import SGD
-from tcn import TCN, tcn_full_summary
+#from tcn import TCN, tcn_full_summary
+
+from Screener import Screener
 
 class Trainer:
-
 
 
 
@@ -146,11 +148,56 @@ class Trainer:
 		score = round(history.history['val_auc_pr'][-1] * 100)
 		data.set_setup_info(user_id, st, score=score)
 		return {st: {'score': score}}  # Return the auc pr value of the model to frontend
+	
+
+
+	def run_generator(st,user_id):
+		i = 0
+		model = Screener.load_model(user_id,st)
+		prev_length = None
+		while True:
+			
+			length = data.get_trainer_queue_size(user_id,st)
+			if length != prev_length:
+				start = datetime.datetime.now()
+			if (datetime.datetime.now() - start).seconds > 60:
+				break
+			if length < 20:
+				if i == 0:
+					sample,_,_ = data.get_setup_sample(user_id,st)
+					sample = [[ticker,dt] for ticker,dt,val in sample]
+					query = sample
+					i = 1
+				elif i == 1:
+					raise Warning('to code')
+				# elif i == 1:
+				# 	query = []
+				# 	for setup in sample:
+				# 		#get neihgbor
+				# 		neighbors = get_neighbors(setup)
+				# 		for neighbor in neighbors:
+				# 			if neighbor not in sample:
+				# 				query.append(neighbor)
+				#	i = 2
+				#elif i == 2:
+					#random
+				instances = Screener.screen(user_id,st,'trainer',query,.3,model)
+				[data.set_trainer_queue(user_id,st,instance) for instance in instances]
+			prev_length = length
+			time.sleep(10)
+		return
+
 
 def train(args,user_id):
 	st, = args
-	history = Trainer.train_model(st,user_id)
-	return json.dumps(history)
+	results = Trainer.run_generator(st,user_id)
+	return json.dumps(results)
+
+
+def start(args,user_id):
+	st, = args
+	Trainer.run_generator(st,user_id)
+
 
 if __name__ == '__main__':
 

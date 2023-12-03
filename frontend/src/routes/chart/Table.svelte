@@ -13,7 +13,6 @@
             const resolvedArgs = clickHandlerArgs.map(arg => 
                 headers.includes(arg) ? item[headers.indexOf(arg)] : arg
             );
-            console.log('args',resolvedArgs)
 
             onRowClick(...resolvedArgs);
         }

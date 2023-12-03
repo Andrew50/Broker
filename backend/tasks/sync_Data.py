@@ -52,12 +52,12 @@ class Data:
 			self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g')
 			self.setup()
 			
+	def get_trainer_queue_size(self,user_id,st):
+		return self.r.llen(str(user_id)+st)
 
-
-
-
-
-
+	def set_trainer_queue(self, user_id,st, instance):
+		# Add the item to the Redis list
+		self.r.lpush(user_id+st, json.dumps(instance))
 
 	def get_df(self, form='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
 		#async with self.redis_pool.get() as conn:
@@ -199,8 +199,11 @@ class Data:
 					try:
 						value = pickle.loads(self.r.hget(tf+form,ticker))
 						if dt != '' and dt != None:
-							index = Data.findex(value,dt)
-							value = value[index-bars+1:index+1,:]
+							try:
+								index = Data.findex(value,dt)
+								value = value[index-bars+1:index+1,:]
+							except:
+								raise TypeError
 						else:
 							value = value[-bars:]
 						#print(value.shape)
@@ -302,8 +305,9 @@ class Data:
 		with self._conn.cursor(buffered=True) as cursor:
 			cursor.execute('SELECT setup_id, tf,setup_length from setups WHERE user_id = %s AND name = %s',(user_id,st))
 			setup_id, tf,setup_length = cursor.fetchall()[0]
-			cursor.execute('SELECT * from setup_data WHERE setup_id = %s',(setup_id,))
-			values = [[ticker,dt,val] for setup_id,ticker,dt,val in cursor.fetchall()]
+			cursor.execute('SELECT ticker,dt,value from setup_data WHERE setup_id = %s',(setup_id,))
+			#values = [[ticker,dt,val] for setup_id,ticker,dt,val in cursor.fetchall()]
+			values = cursor.fetchall()
 			return values,tf,setup_length
 		
 	

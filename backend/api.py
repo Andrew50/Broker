@@ -40,7 +40,7 @@ def run_task(func,args,user_id):
 		func = getattr(module, function_name, None)
 		return func(args,user_id)
 	except Exception as e:
-		print(traceback.format_exc() + str(e), flush=True)
+		raise Warning(str(traceback.format_exc() + str(e)))
 		return 'failed'
 
 def create_app():
@@ -81,7 +81,6 @@ def create_app():
 			args += ['MSFT','1d',None][len(args):]
 			ticker,tf,dt = args
 			val = await data_.get_df('chart',ticker,tf,dt)
-			print(val,flush=True)
 			return val
 		elif func == 'create setup':
 			st, tf, setup_length = args
@@ -95,6 +94,17 @@ def create_app():
 			user_id, st, query = args
 			data_.set_setup_sample(user_id,st,query)
 			return 'done'
+		elif func == 'get instance':
+			st, = args
+			instance = await data_.get_trainer_queue(user_id,st)
+			if instance == None:
+				q.enqueue(run_task, kwargs={'func': 'Trainer-start', 'args': args, 'user_id':user_id}, timeout=6000000)
+				while True:
+					instance = await data_.get_trainer_queue(user_id,st)
+					if instance != None:
+						break
+					await asyncio.sleep(.2)
+			return instance
 		else:
 			raise Exception('to code' + func)
 			
@@ -124,5 +134,5 @@ app = create_app()
 
 if __name__ == '__main__':
 	#data.init_cache(force=True)
-	data.init_cache()#default for quikc loading
+	data.init_cache(force=False)#default for quikc loading
 	uvicorn.run("api:app", host="0.0.0.0", port=5057, reload=True)
