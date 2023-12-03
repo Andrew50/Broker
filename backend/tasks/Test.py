@@ -31,8 +31,8 @@ from sync_Data import data
 #from Data import Data
 st = "F"
 
-
-print(data.get_df('screener','HWBK','1d'))
+    
+#print(data.get_df('screener','HWBK','1d'))
 # df = pd.read_feather(f'C:/Stocks2/local/data/d_{st}.feather')[['ticker','dt','value']]
 # df['dt'] = df['dt'].astype(str).apply(data.format_datetime)
 # print(len(df[df['value'] == 1]))

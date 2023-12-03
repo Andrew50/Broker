@@ -58,6 +58,7 @@ def create_app():
 	async def public_request(request_model: Request, request: FastAPIRequest):
 		data = request.app.state.data
 		func, args = request_model.function, request_model.arguments
+		print(f'received public request for {func}: {args}',flush=True)
 		if func == 'signup':
 			await data.set_user(email=args[0],password=args[1])
 			func = 'signin'
@@ -68,7 +69,9 @@ def create_app():
 			token = create_jwt_token(user_id)
 			setups = await data.get_user_setups(user_id)
 			settings = await data.get_settings(user_id)
-			return {"access_token": token, "token_type": "bearer","setups":setups,"settings":settings}
+			watchlists = await data.get_watchlists(user_id)
+			return {"access_token": token, "token_type": "bearer",
+		   "setups":setups,"settings":settings,"watchlists":watchlists}
 		
 		else:
 			raise Exception('to code' + func)
@@ -77,6 +80,7 @@ def create_app():
 	async def data_request(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
 		data_ = request.app.state.data
 		func, args = request_model.function, request_model.arguments
+		print(f'received data request for {func}: {args}',flush=True)
 		if func == 'chart':
 			args += ['MSFT','1d',None][len(args):]
 			ticker,tf,dt = args
@@ -91,8 +95,8 @@ def create_app():
 			await data_.set_setup(user_id,st,delete = True)
 			return 'done'
 		elif func == 'set sample':
-			user_id, st, query = args
-			data_.set_setup_sample(user_id,st,query)
+			st, ticker,tf,dt,value = args
+			await data_.set_single_setup_sample(user_id,st,ticker,dt,value)
 			return 'done'
 		elif func == 'get instance':
 			st, = args
@@ -104,6 +108,10 @@ def create_app():
 					if instance != None:
 						break
 					await asyncio.sleep(.2)
+			
+			#while True:
+			#	instance = await data_.get_trainer_queue(user_id,st)
+
 			return instance
 		else:
 			raise Exception('to code' + func)
@@ -111,6 +119,7 @@ def create_app():
 	@app.post('/backend', status_code=201)
 	async def backend_request(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
 		func, args = request_model.function, request_model.arguments
+		print(f'received backend request for {func}: {args}',flush=True)
 		job = q.enqueue(run_task, kwargs={'func': func, 'args': args, 'user_id':user_id}, timeout=600)
 		return {'task_id': job.get_id()}
 	

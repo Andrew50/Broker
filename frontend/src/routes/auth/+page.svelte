@@ -1,7 +1,7 @@
 <script>
   import { goto } from '$app/navigation';
   import { writable } from 'svelte/store';
-  import {auth_data,setups_list,settings,public_request} from '../store.js'
+  import {auth_data,setups_list,settings,public_request,watchlist_data} from '../store.js'
   
 
   let username = '';
@@ -23,12 +23,21 @@
             auth_data.set(response.access_token);
             settings.set(response.settings);
             setups_list.set(response.setups);
+            watchlist_data.set(response.watchlists);
+            // watchlist_data.update(data => {
+            // response.watchlists.forEach(key => {
+            //     data[key] = []; // Set each key with an empty list
+             //});
+        //return data;
+        
             await goto('/chart');
         } else {
             throw new Error('Invalid Credentials');
         }
     } catch (error) {
-        errorMessage.set('Failed to sign in');
+        //errorMessage.set('Failed to sign in');
+        errorMessage.set(error);
+
         password = '';
     }
 }

@@ -111,6 +111,7 @@ function closePopup() {
 
 <Chart width={innerWidth - 500} height={innerHeight - 20} {...options} on:click={onChartClick} 
     on:blur={onChartBlur}>
+    {#if $chart_data && Array.isArray($chart_data) && $chart_data.length > 0}
     <CandlestickSeries
         data={$chart_data}
         reactive={true}
@@ -121,6 +122,8 @@ function closePopup() {
         wickDownColor="rgba(255, 0, 0, 1)"
         wickUpColor="rgba(0,255, 0, 1)"
     />
+{/if}
+
 </Chart>
 
 <input class = 'input-overlay' 

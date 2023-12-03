@@ -48,8 +48,6 @@ function deleteSetup(name) {
     });
     data_request(null, "delete setup", name);
 }
-   
-
    helper_store.subscribe(value => {
         Object.keys(value).forEach(st => {
             const newScore = value[st].score;
@@ -64,16 +62,10 @@ function deleteSetup(name) {
             });
         });
     });
-    
-
 
     current_instance.subscribe(value =>{
-
         data_request(chart_data,'chart',...value)
-        
     })
-
- 
 
     function select_setup(setup) {
         selected_setup = setup;
@@ -81,8 +73,8 @@ function deleteSetup(name) {
         // Assuming setupTimeframe needs to be fetched or set here
     }
    
-    function label_instance(instance,value){
-        data_request(null,'set sample',selected_setup,value,instance)
+    function label_instance(value){
+        data_request(null,'set sample',selected_setup,...$current_instance,value)
         //instance_queue[selected_setup].shift()
         data_request(current_instance,'get instance',selected_setup)
     }
@@ -103,9 +95,6 @@ function deleteSetup(name) {
             onRowClick={select_setup}
             clickHandlerArgs={['Name']} />
 
-
-
-
         <div class="controls">
             <div>
             <input class = "inp" type="text" placeholder="Setup Name" bind:value={setupName} />
@@ -123,8 +112,8 @@ function deleteSetup(name) {
             <div class ="trainer">
 
                 <p> Is ths a {selected_setup} <p>
-                <button on:click={() => label_instance(current_instance,true)}> Yes  </button>
-                <button on:click={() => label_instance(current_instance,false)}> No </button>
+                <button on:click={() => label_instance(true)}> Yes  </button>
+                <button on:click={() => label_instance(false)}> No </button>
                 <button on:click={() => {selected_setup = ''}}> Back </button>
 
             </div>

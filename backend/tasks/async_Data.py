@@ -1,4 +1,4 @@
-import aiomysql, aioredis, pickle, datetime, pytz
+import aiomysql, aioredis, pickle, datetime, pytz, json
 
 class Data:
 	
@@ -37,6 +37,7 @@ class Data:
 		dt = dt.timestamp()
 		return dt
 
+	@staticmethod
 	def findex(df, dt):
 		dt = Data.format_datetime(dt)
 		i = int(len(df)/2)		
@@ -58,13 +59,24 @@ class Data:
 		#async with self.redis_pool.get() as conn:
 		print(form,ticker,tf,dt,bars,pm,flush=True)
 		data = await self.redis_pool.hget(tf+form,ticker)
-		if not form == 'chart': data = pickle.loads(data)
-		if dt:
-			index = Data.findex(data,dt)
-			data = data[:index+1]
-		if bars:
-			data = data[-bars:]
-		if not pm:
+		
+		if form == 'chart': 
+			
+			if dt:
+				normal_data = await self.redis_pool.hget(tf+'screener',ticker)
+				normal_data = pickle.loads(normal_data)
+				index = Data.findex(normal_data,dt) + 1 #add 1 becuase screener format len is 1 less then chart len
+				
+				data = json.loads(data)
+				data = data[:index+1] 
+				data = json.dumps(data)
+			if bars:
+				raise Exception("to code")
+			
+			if not pm:
+				raise Exception('to code')
+				
+		else:
 			raise Exception('to code')
 		return data
 
@@ -110,7 +122,23 @@ class Data:
 					insert_query = "INSERT INTO users (email, password, settings) VALUES (%s, %s, %s)"
 					await cursor.execute(insert_query, (email, password, settings_string if settings_string is not None else ''))
 			await conn.commit()
-				
+			
+	async def get_watchlists(self,user_id):
+		async with self.mysql_pool.acquire() as conn:
+			async with conn.cursor() as cursor:
+				await cursor.execute("SELECT name, ticker FROM watchlists WHERE user_id = %s", (user_id,))
+				list_of_lists = await cursor.fetchall()
+				if list_of_lists == None:
+					return {}
+				name_to_tickers = {}
+				for name, ticker in list_of_lists:
+					if name in name_to_tickers:
+						name_to_tickers[name].append([ticker])
+					else:
+						name_to_tickers[name] = [[ticker]]
+
+				return name_to_tickers
+						 
 	async def get_settings(self,user_id):
 		async with self.mysql_pool.acquire() as conn:
 			async with conn.cursor() as cursor:
@@ -134,4 +162,15 @@ class Data:
 					await cursor.execute(insert_query, (user_id,st,tf,setup_length))
 				else:
 					raise Exception('missing args')
+			await conn.commit()
+			
+
+
+	async def set_single_setup_sample(self,user_id,st,ticker,dt,value):##################################### ix this shit bruhhg dododosoosdodsfdsiho
+		async with self.mysql_pool.acquire() as conn:
+			async with conn.cursor() as cursor:
+				await cursor.execute('SELECT setup_id from setups WHERE user_id = %s AND name = %s',(user_id,st))
+				setup_id = (await cursor.fetchone())[0]
+				await cursor.execute("INSERT INTO setup_data VALUES (%s, %s, %s,%s)", (setup_id,ticker,dt,value))
+				
 			await conn.commit()

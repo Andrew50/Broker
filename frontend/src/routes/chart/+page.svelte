@@ -6,6 +6,7 @@
     import Study from './Study.svelte'
     import Account from './Account.svelte'
     import Settings from './Settings.svelte'
+    import Watchlist from './Watchlist.svelte'
     import {auth_data} from '../store.js'
     import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
@@ -35,6 +36,9 @@
 
 <div class="button-container">
     
+    <button class="button" on:click={() =>toggle_menu('watchlist')}>
+        <im class="icon" src="/watchlist.png" alt="" />
+    </button>
     <button class="button" on:click={() =>toggle_menu('match')}>
         <img class="icon" src="/match.png" alt="" />
     </button>
@@ -56,6 +60,7 @@
     
 </div>
 
+<Watchlist visible = {active_menu == 'watchlist'}/>
 <Match visible = {active_menu == 'match'}/>
 <Screener visible = {active_menu == 'screener'}/>
 <Trainer visible = {active_menu == 'trainer'}/>

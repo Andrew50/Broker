@@ -156,13 +156,16 @@ class Trainer:
 		model = Screener.load_model(user_id,st)
 		prev_length = None
 		while True:
-			
+			print('in generator',flush=True)
 			length = data.get_trainer_queue_size(user_id,st)
+			print('trainer queue length: ',length,flush=True)
 			if length != prev_length:
 				start = datetime.datetime.now()
+				print('generator timeout reset',flush=True)
 			if (datetime.datetime.now() - start).seconds > 60:
 				break
 			if length < 20:
+				print('running trainer screener',flush=True)
 				if i == 0:
 					sample,_,_ = data.get_setup_sample(user_id,st)
 					sample = [[ticker,dt] for ticker,dt,val in sample]

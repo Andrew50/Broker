@@ -12,6 +12,8 @@ export let auth_data = writable(null)
 
 export let setups_list = writable([])
 
+export let watchlist_data = writable({})
+
 export let settings = writable({})
 
 
@@ -24,6 +26,8 @@ function getAuthHeaders() {
     const token = get(auth_data);
     return token ? { 'Authorization': `Bearer ${token}` } : {};
 }
+
+
 
 
 export async function public_request(bind_variable, func, ...args) {

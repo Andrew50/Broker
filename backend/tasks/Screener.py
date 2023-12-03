@@ -33,13 +33,14 @@ class Screener:
 			st = setup_types
 			tf, setup_length = data.get_setup_info(user_id,st)
 			ds, ticker_list = data.get_ds('screener',query,tf,setup_length)
+			dt_list = ds[:,-1,0]
 			ds = ds[:,:,1:]
 			scores = model.predict(ds)[:,0]
 			i = 0
 			for score in scores:
 				if score > threshold and score < 1 - threshold:
 					ticker = ticker_list[i]
-					results.append([ticker,int(100*score)])
+					results.append([ticker,tf,dt_list[i]])
 				i += 1
 			
 			return results

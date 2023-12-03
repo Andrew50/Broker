@@ -57,7 +57,7 @@ class Data:
 
 	def set_trainer_queue(self, user_id,st, instance):
 		# Add the item to the Redis list
-		self.r.lpush(user_id+st, json.dumps(instance))
+		self.r.lpush(str(user_id)+st, json.dumps(instance))
 
 	def get_df(self, form='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
 		#async with self.redis_pool.get() as conn:
@@ -434,6 +434,16 @@ class Data:
 				settings TEXT
 			);
 			CREATE INDEX email_index ON users(email);
+			CREATE TABLE watchlists (
+    user_id INT,
+    name VARCHAR(255) NOT NULL,
+    ticker VARCHAR(5) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE
+);
+
+CREATE INDEX user_id_index ON watchlists (user_id);
+CREATE INDEX name_index ON watchlists (name);
 			CREATE TABLE setups(
 				user_id INT NOT NULL,
 				name VARCHAR(255) NOT NULL,
