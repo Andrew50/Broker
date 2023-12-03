@@ -323,6 +323,7 @@
 </Chart>
 
 <a href="/test">test</a>
+<a href="/hart">test</a>
 
 <!-- Ticker -->
 <input class = 'input-overlay' 
