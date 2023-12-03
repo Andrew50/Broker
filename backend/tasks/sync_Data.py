@@ -1,3 +1,4 @@
+from token import EXACT_TOKEN_TYPES
 import numpy as np
 import  pandas as pd, numpy as np, datetime, mysql.connector, pytz, redis, pickle,  multiprocessing
 import numpy as np
@@ -153,17 +154,42 @@ class Data:
 		
 	
 	def get_ds(self,form = 'match',request='full',tf='1d', bars=0):
+		returns = []
 		
 		if request == 'full':
-			if bars != 0:
-				raise Exception('to code')
-			hash_data = self.r.hgetall(tf+form)
-			#return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
-			return [[field.decode(), pickle.loads(value)] for field, value in hash_data.items()]
+			if form == 'screener':
+				hash_data = self.r.hgetall(tf+form)
+				#return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
+				tickers = []
+				for ticker, value in hash_data.items():
+					try:
+						ticker = ticker.decode()
+						value = pickle.loads(value)
+						if bars:
+							padding = bars - value.shape[0]
+							if padding > 0:
+								pad_width = [(0, padding)] + [(0, 0)] * (value.ndim - 1)  # Pad only the first dimension
+								value = np.pad(value, pad_width, mode='constant', constant_values=0)
+							value = value[-bars:,:]
+						for ii in (2,3,4):
+							value[-1,ii] = value[-1,1]
+						returns.append(value)
+						tickers.append(ticker)
+					except TimeoutError: 
+						pass
+					
+
+
+				#val = np.array([field.decode() for field, value in hash_data.items()])
+				
+				return np.array(returns), tickers
+			elif form == 'match':
+				hash_data = self.r.hgetall(tf+form)
+				#return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
+				return [[field.decode(), pickle.loads(value)] for field, value in hash_data.items()]
 			
 
 		else:
-			returns = []
 			
 
 

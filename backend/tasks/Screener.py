@@ -67,9 +67,9 @@ class Screener:
 
 	
 def get(args,user_id):
-	ticker, tf, dt, setup_types = args
+	setup_types = args
 
-	results = Screener.screen(user_id,ticker,dt,setup_types)
+	results = Screener.screen(user_id,setup_types,'screener')
 	return json.dumps(results)
 			
 if __name__ == '__main__':

@@ -52,7 +52,7 @@ function handleCheckboxChange(setup, event) {
             </div>
         {/each}
 
-        <form on:submit|preventDefault={() => backend_request(screener_data,'Screener-get',ticker,datetime,[...selectedSetups])} class="input-form">
+        <form on:submit|preventDefault={() => backend_request(screener_data,'Screener-get',...selectedSetups)} class="input-form">
             <div class="form-group">
                 <label for="ticker">Ticker:</label>
                 <input type="text" id="ticker" bind:value={ticker} placeholder="Ticker">
