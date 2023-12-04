@@ -16,7 +16,6 @@ class Request(BaseModel):
 	function: str
 	arguments: list
 	
-
 async def validate_auth(token: str = Depends(oauth2_scheme)):
 	try:
 		payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
@@ -26,6 +25,13 @@ async def validate_auth(token: str = Depends(oauth2_scheme)):
 		return user_id
 	except jwt.PyJWTError:
 		raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
+	
+def create_jwt_token(user_id: str) -> str:
+	payload = {
+		"sub": user_id, # Subject of the token (user identifier)
+		"exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1), # Expiration time
+	}
+	return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
 def run_task(func,args,user_id):
 	try:
@@ -34,15 +40,8 @@ def run_task(func,args,user_id):
 		func = getattr(module, function_name, None)
 		return func(args,user_id)
 	except Exception as e:
-		print(traceback.format_exc() + str(e), flush=True)
+		raise Warning(str(traceback.format_exc() + str(e)))
 		return 'failed'
-	
-def create_jwt_token(user_id: str) -> str:
-	payload = {
-		"sub": user_id, # Subject of the token (user identifier)
-		"exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1), # Expiration time
-	}
-	return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
 def create_app():
 	app = FastAPI()
@@ -55,11 +54,11 @@ def create_app():
 		app.state.data = Data()
 		await app.state.data.init_async_conn()
 		
-
 	@app.post('/public',status_code=201)
-	async def data_request(request_model: Request, request: FastAPIRequest):
+	async def public_request(request_model: Request, request: FastAPIRequest):
 		data = request.app.state.data
 		func, args = request_model.function, request_model.arguments
+		print(f'received public request for {func}: {args}',flush=True)
 		if func == 'signup':
 			await data.set_user(email=args[0],password=args[1])
 			func = 'signin'
@@ -70,19 +69,21 @@ def create_app():
 			token = create_jwt_token(user_id)
 			setups = await data.get_user_setups(user_id)
 			settings = await data.get_settings(user_id)
-			return {"access_token": token, "token_type": "bearer","setups":setups,"settings":settings}
+			watchlists = await data.get_watchlists(user_id)
+			return {"access_token": token, "token_type": "bearer",
+		   "setups":setups,"settings":settings,"watchlists":watchlists}
 		
 		else:
 			raise Exception('to code' + func)
-	
+		
 	@app.post('/data',status_code=201)
 	async def data_request(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
 		data_ = request.app.state.data
 		func, args = request_model.function, request_model.arguments
+		print(f'received data request for {func}: {args}',flush=True)
 		if func == 'chart':
 			args += ['MSFT','1d',None][len(args):]
 			ticker,tf,dt = args
-			print(args,flush=True)
 			val = await data_.get_df('chart',ticker,tf,dt)
 			return val
 		elif func == 'create setup':
@@ -94,15 +95,35 @@ def create_app():
 			await data_.set_setup(user_id,st,delete = True)
 			return 'done'
 		elif func == 'set sample':
-			user_id, st, query = args
-			data_.set_setup_sample(user_id,st,query)
+			st, ticker,tf,dt,value = args
+			await data_.set_single_setup_sample(user_id,st,ticker,dt,value)
 			return 'done'
+		elif func == 'get instance':
+			st, = args
+			instance = await data_.get_trainer_queue(user_id,st)
+			if instance == None:
+				q.enqueue(run_task, kwargs={'func': 'Trainer-start', 'args': args, 'user_id':user_id}, timeout=6000000)
+				while True:
+					instance = await data_.get_trainer_queue(user_id,st)
+					if instance != None:
+						break
+					await asyncio.sleep(.2)
+			
+			#while True:
+			#	instance = await data_.get_trainer_queue(user_id,st)
+
+			return instance
+		elif func == 'study':
+			st,ticker,tf,dt,annotation = args
+			val = await data_.set_annotation(user_id,st,ticker,tf,dt,annotation)
+			return json.dumps(val)
 		else:
 			raise Exception('to code' + func)
 			
 	@app.post('/backend', status_code=201)
 	async def backend_request(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
 		func, args = request_model.function, request_model.arguments
+		print(f'received backend request for {func}: {args}',flush=True)
 		job = q.enqueue(run_task, kwargs={'func': func, 'args': args, 'user_id':user_id}, timeout=600)
 		return {'task_id': job.get_id()}
 	
@@ -125,6 +146,6 @@ def create_app():
 app = create_app()
 
 if __name__ == '__main__':
-	#data.init_cache()#use when redis_init changed and old format/data needs to be overwriten
+	#data.init_cache(force=True)
 	data.init_cache(force=False)#default for quikc loading
 	uvicorn.run("api:app", host="0.0.0.0", port=5057, reload=True)

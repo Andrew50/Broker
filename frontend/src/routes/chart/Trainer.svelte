@@ -1,94 +1,159 @@
 <script>
     import { writable } from 'svelte/store';
-    import { setups_list,  data_request } from '../store.js';
-
+    import { setups_list,  chart_data,backend_request, data_request } from '../store.js';
+    import Table from './Table.svelte'
     export let visible = false;
+    import { onMount } from 'svelte';
 
     let setupName = '';
     let setupTimeframe = '';
     let setupLength = 0;
-    
+    let helper_store = writable({});
+    //let scores = {};
+    let errorMessage = '';
+    let selected_setup = '';
+    let instance_queue = {};
+    let current_instance = writable([]);
+    let training = false;
+
+    try{
+    setups_list.forEach(setup => {
+        instance_queue[setup[0]] = [];
+    });
+    }catch{}
     // Function to handle the creation of a new setup
     function createSetup() {
         setupLength = parseInt(setupLength);
-    if (setupName && !$setups_list.includes(setupName) && setupLength > 0 && setupTimeframe != '') {
-        setups_list.update(list => {
-            list.push([setupName,setupTimeframe,setupLength]);
-            return list;
-        });
-        data_request(null, "create setup", setupName, setupTimeframe, setupLength);
+        if (!setupName || !setupLength > 0 || !setupTimeframe != '' ){
+            errorMessage = 'Empty Input'
+        }
+        else if($setups_list.some(subArray => subArray[0] === setupName)) {
+            errorMessage = 'Duplicate Setup';
+        }else{
+            setups_list.update(list => {
+                    list.push([setupName,setupTimeframe,setupLength]);
+                    return list;
+                });
+                data_request(null, "create setup", setupName, setupTimeframe, setupLength);
+        }
     }
-}
 
-
-    // Function to handle the deletion of a setup
-    function deleteSetup(name) {
+function deleteSetup(name) {
     setups_list.update(list => {
-        const index = list.indexOf(name);
+        // Find the index of the setup array that matches the given name
+        const index = list.findIndex(setup => setup[0] === name);
         if (index > -1) {
-            list.splice(index, 1);
-            return list;
+            list.splice(index, 1); // Remove the found setup
         }
         return list;
     });
     data_request(null, "delete setup", name);
 }
+   helper_store.subscribe(value => {
+        Object.keys(value).forEach(st => {
+            const newScore = value[st].score;
 
+            setups_list.update(list => {
+                return list.map(setup => {
+                    if (setup[0] === st) {
+                        setup[4] = newScore;
+                    }
+                    return setup;
+                });
+            });
+        });
+    });
 
-    // Function to autofill the control area
-    function selectSetup(setup) {
-        setupName= setup[0]
-        setupTimeframe= setup[1]
-        setupLength = setup[2]
+    current_instance.subscribe(value =>{
+        data_request(chart_data,'chart',...value)
+    })
+
+    function select_setup(setup) {
+        selected_setup = setup;
+        data_request(current_instance,'get instance',selected_setup)
         // Assuming setupTimeframe needs to be fetched or set here
     }
+   
+    function label_instance(value){
+        data_request(null,'set sample',selected_setup,...$current_instance,value)
+        //instance_queue[selected_setup].shift()
+        data_request(current_instance,'get instance',selected_setup)
+    }
+
+
+
+
 </script>
+
+
 
 <div class="popout-menu" class:visible={visible}>
     {#if visible}
-    
-    <table>
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Time Frame</th>
-                <th>Length</th>
-            </tr>
-        </thead>
-        <tbody>
-            {#each $setups_list as setup}
-                <tr on:click={() => selectSetup(setup)}>
-                    <td>{setup[0]}</td>
-                    <td>{setup[1]}</td>
-                    <td>{setup[2]}</td>
-                </tr>
-            {/each}
-        </tbody>
-    </table>
-        
-
-
-
-
-
-        <div class="controls">
-            <div>
-            <input class = "inp" type="text" placeholder="Setup Name" bind:value={setupName} />
-            
-            <input class = "inp" type="text" placeholder="Setup Timeframe" bind:value={setupTimeframe} />
-            <input class = "inp" type="text" placeholder="Setup Length" bind:value={setupLength} />
-            </div>
-            <div>
-            <button on:click={createSetup}>Create Setup</button>
-            <button on:click={() => deleteSetup(setupName)}>Delete Setup</button>
-            </div>
+        <div>
+            <Table 
+                headers={['Name','TF','Length','Samples','Score']} 
+                rows={$setups_list} 
+                onRowClick={select_setup}
+                clickHandlerArgs={['Name']} />
         </div>
+
+        {#if errorMessage}
+            <p class="error-message">{errorMessage}</p> <!-- Display the error message -->
+        {/if}
+
+        {#if selected_setup == ''}
+            
+            <div class="setup-details">
+                <!-- Additional content for when a setup is selected -->
+               
+                <div class="controls">
+                    <input class = "inp" type="text" placeholder="Setup Name" bind:value={setupName} />
+            
+                    <input class = "inp" type="text" placeholder="Setup Timeframe" bind:value={setupTimeframe} />
+                    <input class = "inp" type="text" placeholder="Setup Length" bind:value={setupLength} />
+                    </div>
+                    <div>
+                    <button on:click={createSetup}>Create Setup</button>
+                    <button on:click={() => deleteSetup(setupName)}>Delete Setup</button>
+                </div>
+
+            </div>
+            {/if}
+        
+        {#if selected_setup}
+         <p> Is this a {selected_setup}? </p>
+         <div>
+                <button on:click={() => label_instance(true)}> Yes  </button>
+                <button on:click={() => label_instance(false)}> No </button>
+                <button on:click={() => {selected_setup = ''}}> Back </button>
+
+
+            </div>
+       
+        {/if}
     {/if}
 </div>
 
 <style>
-@import './style.css';
-.inp{
-    width: 100px;
-}
+    @import './style.css';
+    .inp {
+        width: 100px;
+    }
+    .error-message {
+        color: red;
+    }
+    .setup-details {
+        margin-top: 20px; /* Adjust as needed */
+        /* Additional styling for the setup details section */
+    }
+    /* ... other styles ... */
 </style>
+
+
+
+
+
+
+
+
+

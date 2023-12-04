@@ -7,25 +7,34 @@
 
     let ticker = '';
     let datetime = '';
-    let selectedSetups = writable([]);
-
+   // let selectedSetups = writable([]);
+   //console.log(setups_list.get)
+     let selectedSetups = new Set($setups_list.map(subArray => subArray[0]));
+     console.log('god',selectedSetups)
     export let visible = false;
     let innerWidth;
     let innerHeight;
     // Function to handle checkbox changes
-    onMount(() => {
-    selectedSetups.set($setups_list.map(setup => setup[0]));
-});
+//     onMount(() => {
+//     selectedSetups.set($setups_list.map(setup => setup[0]));
+// });
 
 // When updating selectedSetups, use the store's update method
 function handleCheckboxChange(setup, event) {
-    selectedSetups.update(currentSelected => {
+
         if (event.target.checked) {
-            return [...currentSelected, setup[0]];
+            selectedSetups.add(setup);
         } else {
-            return currentSelected.filter(s => s !== setup);
+            selectedSetups.delete(setup);
         }
-    });
+        console.log(selectedSetups)
+    // selectedSetups.update(currentSelected => {
+    //     if (event.target.checked) {
+    //         return [...currentSelected, setup[0]];
+    //     } else {
+    //         return currentSelected.filter(s => s !== setup);
+    //     }
+    // });
 }
     // ... [rest of your script] ...
 </script>
@@ -34,13 +43,16 @@ function handleCheckboxChange(setup, event) {
     {#if visible}
         <!-- Display setups_list as a checklist above the inputs -->
         {#each $setups_list as setup}
+            <div>
             <label class="setup-item">
-                <input type="checkbox" checked on:change={(e) => handleCheckboxChange(setup, e)}>
-                {setup.join(' - ')}
+                <input type="checkbox" checked on:change={(e) => handleCheckboxChange(setup[0], e)}>
+                {setup[0]}
+                <!-- {setup.join(' - ')} -->
             </label>
+            </div>
         {/each}
 
-        <form on:submit|preventDefault={() => backend_request(screener_data,'Screener-get',ticker,datetime,$selectedSetups)} class="input-form">
+        <form on:submit|preventDefault={() => backend_request(screener_data,'Screener-get',...selectedSetups)} class="input-form">
             <div class="form-group">
                 <label for="ticker">Ticker:</label>
                 <input type="text" id="ticker" bind:value={ticker} placeholder="Ticker">
@@ -71,10 +83,10 @@ function handleCheckboxChange(setup, event) {
     .popout-menu {
         /* Your existing styles */
     }
-    .screener-data {
+   /*  .screener-data {
         overflow-y: auto;
-        max-height: 200px; /* Adjust as needed */
-    }
+        max-height: 200px; /* Adjust as needed 
+    } */
     .input-form {
         display: flex;
         flex-direction: column;
