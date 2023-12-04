@@ -19,8 +19,20 @@
 # 		try:
 # 			df = pd.read_feather(path)
 
-import time
-def get(args):
-    ticker = args[0]
-    time.sleep(1)
-    return ticker
+import pandas as pd
+
+from Data import data
+from Data import Data
+
+df = pd.read_feather('C:/Stocks/local/data/d_EP.feather')[['ticker','dt','value']]
+df['dt'] = df['dt'].astype(str).apply(Data.format_datetime)
+
+
+
+
+
+df = df.values.tolist()
+
+data.set_setup_sample(4,'EP',df)
+
+

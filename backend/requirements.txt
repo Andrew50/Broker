@@ -6,7 +6,7 @@ redis==3.3.11
 rq==1.2.0
 starlette
 uvicorn==0.11.7
-uvloop
+tensorflow
 cython==3.0.5
 mysql-connector-python==8.1.0
 numpy==1.23.5
@@ -14,4 +14,7 @@ pandas==2.0.1
 pytz==2023.3
 tqdm==4.65.0
 yfinance==0.2.18
-msgpack==1.0.7
+PyJWT==2.8.0
+aiomysql==0.2.0
+aioredis==2.0.1
+uvloop

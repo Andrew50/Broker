@@ -1,23 +1,17 @@
 import json
 import pandas as pd
 
-try:
-    from Data import Data, Database
-except:
-    from .Data import Data, Database
+#try:
+#except:
+    #from .Data import Data, Database, Cache
     
+    #god
+from Data import data
 
-
-def get(args):
-
+async def get(args):
     args += ['MSFT','1d',None][len(args):]
-    ticker = args[0]
-    
-    tf = args[1]
-    dt = Database.format_datetime(args[2])
-    db = Database()
-    df = db.get_df(ticker,tf,dt)
-    print('god')
+    ticker,tf,dt = args
+    df = data.get_df('chart',ticker,tf,dt)
     list_of_lists = df.tolist()[:]
 
     # Convert the first column (Unix timestamps) to string datetimes

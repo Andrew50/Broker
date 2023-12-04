@@ -1,35 +1,39 @@
 version: '3.6'
 
 services:
-   
-    myproj_redis:
-        container_name: myproj_redis
-        hostname: redis
+
+    redis:
         image: redis:latest
-        #command: --port 6379
-        command: ["redis-server", "--maxmemory 6gb", "--port 6379"]
         ports:
-            - "6379:6379"
-        expose:
-            - "6379"
-        restart: always
+          - 6379:6379
         networks:
-        - my-network
+          - my-network
+        hostname: redis
+        volumes:
+          #  - redis-data:/data
+          - ./790:/redis
+        command: redis-server #./redis/redis.conf    
+        #command: python worker.py
+        mem_limit: 7G
+        #redis-server #
+  
 
     myproj_api:
+        depends_on:
+            - mysql
+            - redis
         container_name: my_api
         build:
             context: ./
             dockerfile: ./Dockerfile
         ports:
         - "5057:5057"
-        working_dir: /home/myproj
+        working_dir: /app
         volumes:
-            - ./:/home/myproj
-       # links:
-      #      - myproj_redis
+            - ./:/app/tasks
+           # - ./:/app
         command: 
-            python startup.py
+            python api.py
         networks:
             - my-network
 
@@ -37,10 +41,16 @@ services:
         build:
             context: ./
             dockerfile: ./Dockerfile
-        working_dir: /home/myproj
-      #  links:
-      #      - myproj_redis
-        command: rq worker --url redis://myproj_redis:6379 my_queue
+        working_dir: /app
+        #command: rq worker --url redis://redis:6379 my_queue
+        command: /bin/sh -c "sleep 10 && rq worker --url redis://redis:6379 my_queue"
+        #command: python worker.py
+        volumes: 
+            - ./:/app/models
+        #command: python worker.py
+        depends_on:
+            - mysql
+            - redis
         networks:
         - my-network
 
@@ -48,8 +58,8 @@ services:
         container_name: mysql
         image: mysql:latest
         environment:
-            MYSQL_ROOT_PASSWORD: god
-            #MYSQL_PASSWORD: 7+WCy76_2$%g
+            #MYSQL_ROOT_PASSWORD: god
+            MYSQL_ROOT_PASSWORD: 7+WCy76_2$%g
         ports:
         - "3307:3306"
         volumes:
@@ -63,3 +73,4 @@ volumes:
 
 networks:
     my-network:    
+        driver: bridge
