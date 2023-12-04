@@ -5,6 +5,7 @@
 />
 
 <script>
+//change
     import { ColorType, CrosshairMode } from 'lightweight-charts';
     import { Chart, CandlestickSeries } from 'svelte-lightweight-charts';
     import { chart_data } from '../store.js';
