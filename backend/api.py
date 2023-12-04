@@ -113,6 +113,10 @@ def create_app():
 			#	instance = await data_.get_trainer_queue(user_id,st)
 
 			return instance
+		elif func == 'study':
+			st,ticker,_,dt,annotation = args
+			val = await data_.set_annotation(user_id,ticker,tf,dt,annotation)
+			return json.dumps(val)
 		else:
 			raise Exception('to code' + func)
 			

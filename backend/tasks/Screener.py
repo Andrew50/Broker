@@ -47,20 +47,21 @@ class Screener:
 		
 		elif _format == 'study':
 			query = [[query,None]]
-			for st in setup_types:
-				tf, setup_length = data.get_setup_info(user_id,st)
-				ds, ticker_list = data.get_ds('screener',query,tf,None)
+			st = setup_types
+			#for st in setup_types:
+			tf, setup_length = data.get_setup_info(user_id,st)
+			ds, ticker_list = data.get_ds('screener',query,tf,None)
 				
-				model = Screener.load_model(user_id,st)
-				dt_list = ds[:,:,0]
-				ds = ds[:,:,1:]
-				scores = model.predict(ds)[:,0]
-				i = 0
-				for score in scores:
-					if score > threshold:
-						dt = dt_list[i]
-						results.append([dt,int(100*score)])
-					i += 1
+			model = Screener.load_model(user_id,st)
+			dt_list = ds[:,:,0]
+			ds = ds[:,:,1:]
+			scores = model.predict(ds)[:,0]
+			i = 0
+			for score in scores:
+				if score > threshold:
+					dt = dt_list[i]
+					results.append([dt,int(100*score)])
+				i += 1
 			
 			return results
 		

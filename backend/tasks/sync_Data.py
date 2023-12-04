@@ -311,7 +311,7 @@ class Data:
 		elif hour == 9 and minute >= 30:
 			return True
 		return False
-
+	
 
 	def set_setup_info(self,user_id,st,size=None,score=None):
 		for val, ident in [[size,'sample_size'],[score,'score']]:
@@ -326,7 +326,26 @@ class Data:
 			cursor.execute('SELECT tf,setup_length from setups WHERE user_id = %s AND name = %s',(user_id,st))
 			return cursor.fetchall()[0]
 		
-	
+	def get_finished_study_tickers(self,user_id,st):
+		with self._conn.cursor(buffered = True) as cursor:
+			query = "SELECT DISTINCT ticker FROM study WHERE user_id = %s AND st = %s"
+			cursor.execute(query, (user_id, st))
+
+			return [row[0] for row in cursor.fetchall()]
+
+	def get_study_length(self,user_id,st):
+		with self._conn.cursor(buffered = True) as cursor:
+			query = "SELECT COUNT(*) FROM study WHERE user_id = %s AND st = %s AND annotation <> ''"
+			cursor.execute(query, (user_id, st))
+			count = cursor.fetchone()[0]
+		return count
+			
+	def set_study(self,user_id,st,instances):
+		with self._conn.cursor(buffered = True) as cursor:
+			query = [[user_id,st,ticker,dt,''] for ticker,tf,dt in instances]
+			cursor.executemany("INSERT INTO study VALUES (%s, %s, %s, %s, %s)",query)
+		self._conn.commit()
+
 	def get_setup_sample(self,user_id,st):
 		with self._conn.cursor(buffered=True) as cursor:
 			cursor.execute('SELECT setup_id, tf,setup_length from setups WHERE user_id = %s AND name = %s',(user_id,st))
@@ -465,11 +484,30 @@ class Data:
     name VARCHAR(255) NOT NULL,
     ticker VARCHAR(5) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
-    ON DELETE CASCADE
+    ON DELETE CASCADE,
+	UNIQUE(user_id,name)
 );
 
 CREATE INDEX user_id_index ON watchlists (user_id);
 CREATE INDEX name_index ON watchlists (name);
+
+
+CREATE TABLE study (
+    user_id INT,
+    st VARCHAR(255) NOT NULL,
+    ticker VARCHAR(5) NOT NULL,
+    dt INT NOT NULL,
+    annotation TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE(user_id, st)
+) ;
+CREATE INDEX user_id_index ON study (user_id);
+CREATE INDEX st_index ON study (st);
+
+
+
+
+
 			CREATE TABLE setups(
 				user_id INT NOT NULL,
 				name VARCHAR(255) NOT NULL,
