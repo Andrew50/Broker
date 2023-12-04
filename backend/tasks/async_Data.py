@@ -139,14 +139,16 @@ class Data:
 
 				return name_to_tickers
 			
-	async def set_annotation(self,user_id,st,ticker,dt,annotation):
+	async def set_annotation(self,user_id,st,ticker,tf,dt,annotation):
 		async with self.mysql_pool.acquire() as conn:
 			async with conn.cursor() as cursor:
 				if annotation != '' and annotation != None:
 					query = "UPDATE study SET annotation = %s WHERE user_id = %s AND st = %s AND ticker = %s AND dt = %s"
 					await cursor.execute(query, (annotation, user_id, st, ticker, dt))
 					await conn.commit()
-				instance = await cursor.execute("SELECT ticker, tf, dt FROM study where user_id = %s and st = %s and annotation = ''",(user_id,st))
+				await cursor.execute("SELECT ticker,dt FROM study where user_id = %s and st = %s and annotation = ''",(user_id,st))
+				ticker,dt = (await cursor.fetchone())[0]
+				instance = [ticker,tf,dt]
 			return instance
 
 	async def get_study(self,user_id,st):

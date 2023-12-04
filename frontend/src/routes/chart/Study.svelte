@@ -1,23 +1,21 @@
 
 <script>
-    import { chart_data, data_request,setups_list} from '../store.js';
+    import { chart_data, data_request,setups_list, backend_request} from '../store.js';
     export let visible = false;
     let innerHeight
     import { get } from 'svelte/store';
 
-    let selected_st = get(setups_list)[0][0]
-    function change_st(){
-        annotation = ''
-    }
+    let selected_st = '';
+    
 
     let annotation;
-    let current_instance = writable();
+    let current_instance = writable(['','1d','']);
 
-
+    import { writable } from 'svelte/store';
 
     function next(){
-
-        data_request(current_instance,'study',annotation,...get(current_instance))
+        console.log(get(current_instance))
+        data_request(current_instance,'study',selected_st,...(get(current_instance)),annotation)
 
         annotation = ''
     }
@@ -30,18 +28,23 @@
     {#if visible}
 
         <div>
-        <select bind:value={selected_st} on:change={change_st}>
+            <div>
+        <select bind:value={selected_st} on:change={next}>
             <option disabled selected value="">Select a watchlist</option>
             {#each $setups_list as key}
                 <option value={key[0]}>{key[0]}</option>
             {/each}
         </select>
+        <button on:click={() => backend_request(null,'Study-get',selected_st)}>Fetch [dev]</button>
+        </div>
+
         <div>
         <textarea bind:value={annotation} class="large-textarea" placeholder="Enter text here"></textarea>
         </div>
         <div>
         <button on:click={next}>Next</button>
        </div>
+
         </div>
     {/if}
 </div>

@@ -114,8 +114,8 @@ def create_app():
 
 			return instance
 		elif func == 'study':
-			st,ticker,_,dt,annotation = args
-			val = await data_.set_annotation(user_id,ticker,tf,dt,annotation)
+			st,ticker,tf,dt,annotation = args
+			val = await data_.set_annotation(user_id,st,ticker,tf,dt,annotation)
 			return json.dumps(val)
 		else:
 			raise Exception('to code' + func)

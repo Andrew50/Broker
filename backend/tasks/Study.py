@@ -19,6 +19,11 @@ class Study:
 
 
 
+
+def get(args,user_id):
+    st, = args
+    Study.update(user_id,st)
+
 if __name__ == '__main__':
     
     Study.update(6,'EP')

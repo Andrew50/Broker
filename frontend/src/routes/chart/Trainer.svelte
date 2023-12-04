@@ -13,7 +13,8 @@
     let errorMessage = '';
     let selected_setup = '';
     let instance_queue = {};
-    let current_instance = writable([])
+    let current_instance = writable([]);
+    let training = false;
 
     try{
     setups_list.forEach(setup => {
@@ -80,54 +81,79 @@ function deleteSetup(name) {
     }
 
 
+
+
 </script>
+
+
 
 <div class="popout-menu" class:visible={visible}>
     {#if visible}
-    {#if selected_setup == ''}
-    {#if errorMessage} <!-- Check if there's an error message -->
+        <div>
+            <Table 
+                headers={['Name','TF','Length','Samples','Score']} 
+                rows={$setups_list} 
+                onRowClick={select_setup}
+                clickHandlerArgs={['Name']} />
+        </div>
+
+        {#if errorMessage}
             <p class="error-message">{errorMessage}</p> <!-- Display the error message -->
         {/if}
-  
-    <Table 
-            headers={['Name','TF','Length','Samples','Score']} 
-            rows={$setups_list} 
-            onRowClick={select_setup}
-            clickHandlerArgs={['Name']} />
 
-        <div class="controls">
-            <div>
-            <input class = "inp" type="text" placeholder="Setup Name" bind:value={setupName} />
+        {#if selected_setup == ''}
             
-            <input class = "inp" type="text" placeholder="Setup Timeframe" bind:value={setupTimeframe} />
-            <input class = "inp" type="text" placeholder="Setup Length" bind:value={setupLength} />
-            </div>
-            <div>
-            <button on:click={createSetup}>Create Setup</button>
-            <button on:click={() => deleteSetup(setupName)}>Delete Setup</button>
-            </div>
-        </div>
-        {/if}
-        {#if selected_setup != ''}
-            <div class ="trainer">
+            <div class="setup-details">
+                <!-- Additional content for when a setup is selected -->
+               
+                <div class="controls">
+                    <input class = "inp" type="text" placeholder="Setup Name" bind:value={setupName} />
+            
+                    <input class = "inp" type="text" placeholder="Setup Timeframe" bind:value={setupTimeframe} />
+                    <input class = "inp" type="text" placeholder="Setup Length" bind:value={setupLength} />
+                    </div>
+                    <div>
+                    <button on:click={createSetup}>Create Setup</button>
+                    <button on:click={() => deleteSetup(setupName)}>Delete Setup</button>
+                </div>
 
-                <p> Is ths a {selected_setup} <p>
+            </div>
+            {/if}
+        
+        {#if selected_setup}
+         <p> Is this a {selected_setup}? </p>
+         <div>
                 <button on:click={() => label_instance(true)}> Yes  </button>
                 <button on:click={() => label_instance(false)}> No </button>
                 <button on:click={() => {selected_setup = ''}}> Back </button>
 
-            </div>
-        {/if}
 
+            </div>
+       
+        {/if}
     {/if}
 </div>
 
 <style>
-@import './style.css';
-.inp{
-    width: 100px;
-}
-.error-message {
-        color: red; /* Style for the error message */
+    @import './style.css';
+    .inp {
+        width: 100px;
     }
+    .error-message {
+        color: red;
+    }
+    .setup-details {
+        margin-top: 20px; /* Adjust as needed */
+        /* Additional styling for the setup details section */
+    }
+    /* ... other styles ... */
 </style>
+
+
+
+
+
+
+
+
+
