@@ -1,5 +1,5 @@
 <script>
-    import { chart_data,  backend_request, match_data} from './store.js';
+    import { chart_data,  backend_request, match_data} from '../store.js';
     let ticker = 'JBL'
     let tf = '1d' 
     let dt = '2023-10-03'
@@ -52,20 +52,8 @@
 </div>
 
 <style>
-    .popout-menu {
-    display: none;
-    position: fixed;
-    right: 70px;
-    top: 0;
-    background-color: #f9f9f9;
-    min-width: 3px;
-    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-    }
-    .popout-menu.visible {
-    display: block;
-    }
+@import './style.css';
 </style>
-
 
 
 

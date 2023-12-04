@@ -8,7 +8,7 @@
 
 	import {ColorType, CrosshairMode} from 'lightweight-charts';
     import {Chart, CandlestickSeries} from 'svelte-lightweight-charts';
-	import {chart_data, backend_request} from './store.js';
+	import {chart_data, backend_request, data_request} from '../store.js';
 
 	let innerWidth;
     let innerHeight;
@@ -20,6 +20,8 @@
 	let popup = false;
 	let TickerBoxValue = '';
 	let TickerBoxVisible = "none";
+
+    
 
 	const options = {
         layout: {background: {type: ColorType.Solid,color: '#000000',},textColor: 'rgba(255, 255, 255, 0.9)',},
@@ -82,7 +84,8 @@
         if (popup) {
             if (event.key == "Enter") {
                 ticker = TickerBoxValue;
-                backend_request(chart_data, 'Chart-get', ticker);
+                data_request(chart_data,'chart', ticker);
+
                 closePopup();
             }else{
                 TickerBoxVisible = "block"
@@ -106,7 +109,7 @@ function closePopup() {
 
 </script>
 
-<Chart width={innerWidth - 300} height={innerHeight - 40} {...options} on:click={onChartClick} 
+<Chart width={innerWidth - 500} height={innerHeight - 20} {...options} on:click={onChartClick} 
     on:blur={onChartBlur}>
     <CandlestickSeries
         data={$chart_data}

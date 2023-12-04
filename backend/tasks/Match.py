@@ -1,5 +1,4 @@
 from re import L
-from Data import Database, Data, Cache
 import numpy as np
 import json
 import math, heapq
@@ -7,27 +6,26 @@ sqrt = math.sqrt
 import datetime
 import Odtw
 import math
+import asyncio
+import time #temp import
 np_bars = 10
+from sync_Data import data
+
+
 class Match: 
             
-    def compute(db,ticker,tf,dt,ds):
-        dt = Database.format_datetime(dt)
-        y = Match.formatArray(Data(db,ticker, tf, dt,bars=np_bars+1).df, yValue=True)
+    def compute(ds,y):
         radius = math.ceil(np_bars/10)
-        
-
-
-
-        upper, lower = Odtw.calcBounds(y, radius)
-        cutoff = 0.02*100
+        upper, lower = Odtw.calcBounds(y[:, 3], radius)
+        cutoff = 100*100
         start = datetime.datetime.now()
         returns = []
         for ticker, x in ds.items():
-            returns += heapq.nsmallest(2, Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius, ticker), key=lambda x: x[2])
+            returns += heapq.nsmallest(3, Odtw.calcDtw(x, y, upper, lower, np_bars, cutoff, radius, ticker), key=lambda x: x[2])
         top_scores = heapq.nsmallest(20, returns, key=lambda x: x[2])
-        print(datetime.datetime.now() - start)
+        print(f"time to complete match {datetime.datetime.now() - start}")
         print(top_scores)
-        return [[ticker,str(Database.format_datetime(timestamp, True)),round(score,2)] for ticker,timestamp, score in top_scores]
+        return [[ticker,str(format_datetime(dt=timestamp, reverse=True)),round(score,2)] for ticker,timestamp, score in top_scores]
        
 
     def formatArray(data, onlyCloseAndVol = True, yValue = False, whichColumn=4):
@@ -57,19 +55,21 @@ class Match:
         raise AttributeError
         return d 
 
-def get(args):
+def get(args,user_id = None):
+    #asyncio.run(data.init_async_conn())
+    
     start = datetime.datetime.now()
-    ticker = args[0]
-    dt = args[2]
-    tf = args[1]
-    db = Database()
-    cache = Cache()
-    ds = cache.get_hash('ds')
-    match_data = Match.compute(db,ticker,tf,dt, ds)
-    for i in range(len(match_data)):
-        match_data[i][1] = match_data[i][1][:10]
+    ticker,tf,dt = args
+    ds = data.get_ds(tf=tf,form='match')
+    
+    y = data.get_df('match',ticker,tf,dt, bars=np_bars)[:, 2:-1]
+    
+    match_data = Match.compute(ds,y)
+    for i in range(len(match_data)): match_data[i][1] = match_data[i][1][:10]
     print(datetime.datetime.now() - start)
     return json.dumps(match_data)
 
 if __name__ == '__main__':
+    print('test')
     print(get(['CELH','1d','2023-08-10']))
+    print('test')
