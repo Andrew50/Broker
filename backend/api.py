@@ -7,8 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from worker import run_task
 
-
-
+#stats
+#is it working
 
 app = FastAPI()
 
@@ -25,7 +25,7 @@ app.add_middleware(
 	allow_headers=["*"],  # Allows all headers
 )
 
-redis_conn = Redis(host='myproj_redis', port=6379)
+redis_conn = Redis(host='redis', port=6379)
 q = Queue('my_queue', connection=redis_conn)
 
 @app.post('/fetch/{request}', status_code=201)

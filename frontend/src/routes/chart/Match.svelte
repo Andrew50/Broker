@@ -35,7 +35,7 @@
                 </thead>
                 <tbody>
                     {#each $match_data as item}
-                        <tr on:click={() => backend_request(chart_data,'Chart-get',item[0],'1d',item[1])}>
+                         <tr on:click={() => backend_request(chart_data,'Chart-get',item[0],item[1],'1d')}><!--will have to get fixed at some point[' -->
                             <td>{item[0]}</td> <!-- Ticker Symbol -->
                             <td>{item[1]}</td> <!-- Timestamp -->
                             <td>{item[2]}</td> <!-- Value -->
