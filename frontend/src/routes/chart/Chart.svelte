@@ -51,20 +51,6 @@
     {/if}
 </Chart>
 
-
-<Chart width={innerWidth - 500} height={innerHeight - 20} {...options} on:click={() => TickerBoxVisible = true}>
-    {#if $chart_data && Array.isArray($chart_data) && $chart_data.length > 0}
-        <CandlestickSeries data={$chart_data}
-        reactive={true}
-        upColor="rgba(0,255, 0, 1)"
-        downColor="rgba(255, 0, 0, 1)"
-        borderDownColor="rgba(255, 0, 0, 1)"
-        borderUpColor="rgba(0,255, 0, 1)"
-        wickDownColor="rgba(255, 0, 0, 1)"
-        wickUpColor="rgba(0,255, 0, 1)" />
-    {/if}
-</Chart>
-
 {#if TickerBoxVisible}
     <input class='input-overlay' bind:value={TickerBoxValue} on:keydown={onKeydown} />
 {/if}

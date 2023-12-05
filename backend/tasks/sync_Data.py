@@ -8,7 +8,6 @@ from collections import defaultdict
 import yfinance as yf
 import asyncio
 from mysql.connector import errorcode
-import aiomysql, aioredis
 
 import multiprocessing
 import redis
@@ -389,7 +388,7 @@ class Data:
 					i -= 1
 				return i
 		
-			ticker_list = self.get_ticker_list('full')
+			ticker_list = self.get_ticker_list('full')[:50]
 
 		
 			for ticker in tqdm(ticker_list):
