@@ -50,7 +50,7 @@
                 <option value={key}>{key}</option>
             {/each}
         </select>
-        <input type="text" placeholder="Name" bind:value={watchlist_name} />
+        <input type="text" placeholder="Name" bind:value={watchlist_name}/>
         <button on:click={() => create_watchlist()}> Create New </button>
         </div>
         <div>

@@ -31,8 +31,12 @@
     }
 
 	function resizeInputOnDynamicContent(node) {
+		
 		const measuringElement = document.createElement('div');
 		document.body.appendChild(measuringElement);
+		
+		/** duplicate the styles of the existing node, but
+		remove the measuring element from the viewport. */
 		function duplicateAndSet() {
 			const styles = window.getComputedStyle(node);
 			measuringElement.innerHTML = node.value;
@@ -53,6 +57,7 @@
 			node.style.width = `${(measuringElement.offsetWidth)*1.5}px`;
 		}
 		duplicateAndSet();
+		/** listen to any style changes */
 		const observer = new MutationObserver(duplicateAndSet)
 		observer.observe(node, { attributes: true, childList: true, subtree: true });
 		
@@ -64,53 +69,32 @@
 			}
 		}
 	}
-    let chartFocused = false;
 
-    function onChartClick() {chartFocused = true}
-
-    function onChartBlur() {
-    chartFocused = false;
-        TickerBoxVisible = "none";
-    }
+    
 
     function onKeydown(event) {
-    if (chartFocused) {
-        popup = true;
-        if (!popup && /^[a-zA-Z]$/.test(event.key.toLowerCase())) {
-            TickerBoxVisible = "block";
-            popup = true;
-            TickerBox.focus();
-        }
-        if (popup) {
-            if (event.key == "Enter") {
-                ticker = TickerBoxValue;
+			if (/^[a-zA-Z]$/.test(event.key.toLowerCase()) && !popup && !(document.activeElement.tagName === 'INPUT' && document.activeElement.type === 'text')&& !(document.activeElement.tagName === 'TEXTAREA' && document.activeElement.type === 'textarea')) {
+			TickerBoxVisible = "block"
+			popup = true;
+			TickerBoxValue += event.key;
+			event.preventDefault();
+			TickerBox.focus();
+			}
+			else if(event.key == "Enter" ){
+				TickerBoxVisible = "none"
+				ticker = TickerBoxValue.toUpperCase();
                 data_request(chart_data,'chart', ticker);
+				TickerBoxValue = '';
+				popup = false;
+				
+			}
+			TickerBox.focus();
+	}
 
-                closePopup();
-            }else{
-                TickerBoxVisible = "block"
-                const key_press = event.key.toUpperCase();
-                console.log(key_press)
-                TickerBoxValue += key_press;
-		        event.preventDefault();
-            }
-        }
-    } else {
-        chartFocused = false;
-    }
-}
-
-function closePopup() {
-    TickerBoxVisible = "none";
-    TickerBoxValue = '';
-    popup = false;
-    chartFocused = false; // Reset focus state
-}
 
 </script>
 
-<Chart width={innerWidth - 500} height={innerHeight - 20} {...options} on:click={onChartClick} 
-    on:blur={onChartBlur}>
+<Chart width={innerWidth - 500} height={innerHeight - 20} {...options}>
     {#if $chart_data && Array.isArray($chart_data) && $chart_data.length > 0}
     <CandlestickSeries
         data={$chart_data}
@@ -132,20 +116,20 @@ function closePopup() {
 	style ="display: {TickerBoxVisible};"
     use:resizeInputOnDynamicContent
 />
-
+    
 <style>
 	.input-overlay{
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: rgba(255, 255, 255, 0.5); /* 50% opacity white background */
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    box-sizing: border-box;
-    z-index: 2000;
-    font-size: 40pt;
-    text-transform:uppercase;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: rgba(255, 255, 255, 0.5); /* 50% opacity white background */
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        box-sizing: border-box;
+        z-index: 2000;
+        font-size: 40pt;
+        text-transform:uppercase;
     }
 </style>

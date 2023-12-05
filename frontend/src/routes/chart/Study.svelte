@@ -20,7 +20,11 @@
         annotation = ''
     }
 
-
+    function checkActiveElement() {
+    const activeElement = document.activeElement;
+        console.log("TagName:", activeElement.tagName);
+        console.log("Type:", activeElement.type);
+}
 
 </script>
 
@@ -39,7 +43,7 @@
         </div>
 
         <div>
-        <textarea bind:value={annotation} class="large-textarea" placeholder="Enter text here"></textarea>
+        <textarea bind:value={annotation} class="large-textarea" placeholder="Enter text here" on:focus = {checkActiveElement}></textarea>
         </div>
         <div>
         <button on:click={next}>Next</button>
