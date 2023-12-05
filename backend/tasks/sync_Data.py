@@ -514,6 +514,8 @@ CREATE INDEX st_index ON study (st);
 				setup_id INT AUTO_INCREMENT UNIQUE,
 				tf VARCHAR(3) NOT NULL,
 				setup_length INT NOT NULL,
+				sample_size INT,
+				score INT,
 				UNIQUE(user_id, name),
 				FOREIGN KEY (user_id) REFERENCES users(id)
 				ON DELETE CASCADE
