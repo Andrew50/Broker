@@ -368,7 +368,7 @@ class Data:
 			
 		self._conn.commit()
 
-	def update(self,force_retrain=False):
+	def update(self,force_retrain=False,num = None):
 
 		with self._conn.cursor(buffered=True) as cursor:
 
@@ -388,9 +388,11 @@ class Data:
 				while df.index[i] > dt:
 					i -= 1
 				return i
-		
-			ticker_list = self.get_ticker_list('full')
-
+			if num != None:
+				ticker_list = self.get_ticker_list('full')[:num]
+			else:
+				ticker_list = self.get_ticker_list('full')
+				
 		
 			for ticker in tqdm(ticker_list):
 				for tf in ['1d']:
@@ -558,7 +560,7 @@ CREATE INDEX st_index ON study (st);
 							self._conn.commit()
 						except Exception as e: #if d doesnt exist or theres no data then this gets hit every loop
 							print(e)
-		self.update()
+		self.update(num = int(input('num tickers to do')))
 	
 
 data = Data()
