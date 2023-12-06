@@ -5,7 +5,9 @@ class Data:
 	async def get_trainer_queue(self,user_id,st):
 		return await self.redis_pool.rpop(str(user_id)+st)
 	
-	
+	async def get_trainer_queue_size(self, user_id, st):
+		# Use await with aioredis operations
+		return await self.redis.llen(str(user_id) + st)
 
 	#eng_project
 	async def init_async_conn(self):
@@ -138,6 +140,17 @@ class Data:
 						name_to_tickers[name] = [[ticker]]
 
 				return name_to_tickers
+			
+	async def set_watchlist(self,user_id,ticker,watchlist_name,delete):
+		async with self.mysql_pool.acquire() as conn:
+			async with conn.cursor() as cursor:
+				if delete:
+					query = ("DELETE FROM watchlists WHERE user_id = %s and name = %s and ticker = %s")
+				else:
+					query = ("INSERT INTO watchlists (user_id, name, ticker) VALUES (%s, %s, %s)")
+					
+				await cursor.execute(query,(user_id,watchlist_name,ticker))
+				await conn.commit()
 			
 	async def set_annotation(self,user_id,st,ticker,tf,dt,annotation):
 		async with self.mysql_pool.acquire() as conn:

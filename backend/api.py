@@ -100,23 +100,26 @@ def create_app():
 			return 'done'
 		elif func == 'get instance':
 			st, = args
-			instance = await data_.get_trainer_queue(user_id,st)
-			if instance == None:
+			queue_size = data_.get_trainer_queue_size(user_id,st)
+			if queue_size == 50:
 				q.enqueue(run_task, kwargs={'func': 'Trainer-start', 'args': args, 'user_id':user_id}, timeout=6000000)
-				while True:
-					instance = await data_.get_trainer_queue(user_id,st)
-					if instance != None:
-						break
-					await asyncio.sleep(.2)
-			
-			#while True:
-			#	instance = await data_.get_trainer_queue(user_id,st)
-
+				# if queue_size == 0:
+				# 	while True:
+				# 		instance = await data_.get_trainer_queue(user_id,st)
+				# 		if instance != None:
+				# 			break
+				# 		await asyncio.sleep(.2)
+			else:
+				instance = await data_.get_trainer_queue(user_id,st)
+				
 			return instance
 		elif func == 'study':
 			st,ticker,tf,dt,annotation = args
 			val = await data_.set_annotation(user_id,st,ticker,tf,dt,annotation)
 			return json.dumps(val)
+		elif func == 'watchlist':
+			ticker,watchlist_name,delete = args
+			await data_.set_watchlist(user_id,ticker,watchlist_name,delete)
 		else:
 			raise Exception('to code' + func)
 			
@@ -147,5 +150,5 @@ app = create_app()
 
 if __name__ == '__main__':
 	#data.init_cache(force=True)
-	data.init_cache(force=False)#default for quikc loading
+	#data.init_cache(force=False)#default for quikc loading
 	uvicorn.run("api:app", host="0.0.0.0", port=5057, reload=True)

@@ -121,6 +121,7 @@ function deleteSetup(name) {
             {/if}
         
         {#if selected_setup}
+        <button on:click={() => backend_request(null,'Trainer-train',selected_setup)}>Train</button>
          <p> Is this a {selected_setup}? </p>
          <div>
                 <button on:click={() => label_instance(true)}> Yes  </button>

@@ -34,6 +34,7 @@
         watchlist_data.update(current => {
         return { ...current, [selected_watchlist]: [...current[selected_watchlist], [ticker_name]]};
         });
+        data_request(null,'watchlist',ticker_name,selected_watchlist,false)
         ticker_name = ''
     }
 

@@ -193,7 +193,7 @@ class Trainer:
 
 def train(args,user_id):
 	st, = args
-	results = Trainer.run_generator(st,user_id)
+	results = Trainer.train_model(st,user_id)
 	return json.dumps(results)
 
 

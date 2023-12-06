@@ -5,7 +5,7 @@ class Study:
     
 
     def update(user_id,st):
-        total = data
+        total = data.get_study_length(user_id,st)
         ticker_list = data.get_ticker_list('full')
         current_tickers = data.get_finished_study_tickers(user_id,st)
         for ticker in ticker_list:
