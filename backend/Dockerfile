@@ -13,16 +13,21 @@ ENV AM_I_IN_A_DOCKER_CONTAINER Yes
 ENV C_INCLUDE_PATH=/usr/local/lib/python3.10/site-packages/numpy/core/include:$C_INCLUDE_PATH
 ENV PYTHONPATH=/app
 
+# Install system dependencies for Python, Firefox, and GeckoDriver
+RUN apt-get update \
+    && apt-get install -y wget gnupg firefox-esr gcc libpython3-dev \
+    && wget https://github.com/mozilla/geckodriver/releases/download/v0.29.0/geckodriver-v0.29.0-linux64.tar.gz \
+    && tar -zxf geckodriver-v0.29.0-linux64.tar.gz -C /usr/local/bin \
+    && rm geckodriver-v0.29.0-linux64.tar.gz \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy your application code
 COPY api.py ./
 COPY tasks/ ./
 COPY models/ ./ 
-# models/
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y gcc libpython3-dev && rm -rf /var/lib/apt/lists/*
+# Compile any extensions
 RUN python Setup.py build_ext --inplace
-
 
 # Copy the current directory contents into the container at /usr/src/app
 COPY Database.py ./
@@ -45,4 +50,3 @@ RUN touch /var/log/cron.log
 
 # Run the command on container startup
 CMD cron && tail -f /var/log/cron.log
-

@@ -19,7 +19,7 @@ from contextlib import closing
 
 
 
-class Database:
+class d:
 
 	def __init__(self):
 		self.inside_container = os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False)
@@ -340,10 +340,10 @@ class Database:
 		# 					print(e)
 		# self.update(num = int(input('num tickers to do')))
 		
-
-
-
 db = Database()
-db.update()
-db.init_cache()
-db.close_connection()
+
+if __name__ == "__main__":
+	db.update()
+	db.init_cache()
+	db.close_connection()
+

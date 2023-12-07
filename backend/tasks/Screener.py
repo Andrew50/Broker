@@ -2,8 +2,45 @@ import json
 import tensorflow as tf
 import numpy as np
 from sync_Data import data
+import selenium.webdriver as webdriver
+from selenium.webdriver.common.by import By 
+from selenium.webdriver.firefox.options import Options 
+from selenium.webdriver.firefox.service import Service
+import pathlib, time, selenium, datetime, os, math, tensorflow
+import pandas as pd
+
+
+import yfinance as yf
+import datetime
+import multiprocessing
+
 
 class Screener:
+
+	def fetch_stock_data(tickers):
+		args = " ".join(tickers)
+		ds = yf.download(args, interval = '1m',period = '1d',prepost = True, auto_adjust = True,threads = True)
+		print(ds)
+		for df in ds:
+			time.sleep(50)
+			print(ds)
+
+	def get_pm_prices():
+		from sync_Data import data
+	
+		tickers = data.get_ticker_list()[:8000]
+		batches = []
+		for i in range(0,len(tickers),100):
+			batches.append(tickers[i:i+ 100])
+		
+		with multiprocessing.Pool(8) as pool:
+			results = pool.map(Screener.fetch_stock_data,batches)
+	
+		return results
+		#for data in results:
+		#	print(data)
+
+	
 	
 	def load_model(user_id,st):
 		return tf.keras.models.load_model(f'{user_id}_{st}')
@@ -65,7 +102,7 @@ class Screener:
 			
 			return results
 		
-
+	
 	
 def get(args,user_id):
 	setup_types = args
@@ -74,4 +111,4 @@ def get(args,user_id):
 	return json.dumps(results)
 			
 if __name__ == '__main__':
-	pass
+	print(Screener.get_pm_prices())

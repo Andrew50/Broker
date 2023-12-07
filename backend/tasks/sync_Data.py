@@ -51,6 +51,18 @@ class Data:
 		# except:
 		# 	self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g')
 		# 	self.setup()
+
+
+
+
+
+
+
+
+
+
+
+
 			
 	def get_trainer_queue_size(self,user_id,st):
 		return self.r.llen(str(user_id)+st)
