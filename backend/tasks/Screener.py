@@ -17,26 +17,7 @@ import multiprocessing
 
 class Screener:
 
-	def fetch_stock_data(tickers):
-		args = " ".join(tickers)
-		ds = yf.download(args, interval = '1m',period = '1d',prepost = True, auto_adjust = True,threads = True)
-		print(ds)
-		time.sleep(50)
-
-	def get_pm_prices():
-		from sync_Data import data
 	
-		tickers = data.get_ticker_list()[:8000]
-		batches = []
-		for i in range(0,len(tickers),100):
-			batches.append(tickers[i:i+ 100])
-		
-		with multiprocessing.Pool(8) as pool:
-			results = pool.map(Screener.fetch_stock_data,batches)
-	
-		return results
-		#for data in results:
-		#	print(data)
 
 	
 	
@@ -109,4 +90,4 @@ def get(args,user_id):
 	return json.dumps(results)
 			
 if __name__ == '__main__':
-	print(Screener.get_pm_prices())
+	print(Screener.screen(6,['EP'],'screener'))

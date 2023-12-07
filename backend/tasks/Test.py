@@ -24,43 +24,43 @@
 # ydf = yf.download(tickers = ticker, period = period, group_by='ticker', interval = ytf, ignore_tz = True, progress=False, show_errors = False, threads = True, prepost = True) 
 
 
+from sync_Data import data
+#data.init_prev_close_cache()
+
+# import yfinance as yf
+# import datetime
+# import multiprocessing
 
 
+# #ydf = yf.download(tickers = ticker, period = period, group_by='ticker', interval = ytf, ignore_tz = True, progress=False, show_errors = False, threads = True, prepost = True
 
-import yfinance as yf
-import datetime
-import multiprocessing
+# def fetch_stock_data(tickers):
+# 	args = " ".join(tickers)
+# 	return yf.download(args, interval = '1d',period = '5d')
 
-
-#ydf = yf.download(tickers = ticker, period = period, group_by='ticker', interval = ytf, ignore_tz = True, progress=False, show_errors = False, threads = True, prepost = True
-
-def fetch_stock_data(tickers):
-	args = " ".join(tickers)
-	return yf.download(args, interval = '1d',period = '5d')
-
-def main():
-	from sync_Data import data
+# def main():
+# 	from sync_Data import data
 	
-	tickers = data.get_ticker_list()[:8000]
-	batches = []
-	print(len(tickers))
-	for i in range(0,len(tickers),1000):
-		batches.append(tickers[i:i+ 1000])
+# 	tickers = data.get_ticker_list()[:8000]
+# 	batches = []
+# 	print(len(tickers))
+# 	for i in range(0,len(tickers),1000):
+# 		batches.append(tickers[i:i+ 1000])
 		
-	with multiprocessing.Pool(8) as pool:
-		results = pool.map(fetch_stock_data,batches)
+# 	with multiprocessing.Pool(8) as pool:
+# 		results = pool.map(fetch_stock_data,batches)
 	
-	#for data in results:
-	#	print(data)
+# 	#for data in results:
+# 	#	print(data)
 
-if __name__ == "__main__":
-	start = datetime.datetime.now()
-	main()
+# if __name__ == "__main__":
+# 	start = datetime.datetime.now()
+# 	main()
 
-	#df = data.get_ticker_list()[:100]
-	#start = datetime.datetime.now()
-	#df = yf.download(df, period='max', threads=2)
-	print(datetime.datetime.now() - start)
+# 	#df = data.get_ticker_list()[:100]
+# 	#start = datetime.datetime.now()
+# 	#df = yf.download(df, period='max', threads=2)
+# 	print(datetime.datetime.now() - start)
 
 
 

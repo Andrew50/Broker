@@ -185,7 +185,7 @@ class d:
 							period = '5d'
 						else:
 							raise Exception('invalid timeframe to update')
-						ydf = yf.download(tickers = ticker, period = period, group_by='ticker', interval = ytf, ignore_tz = True, progress=False, show_errors = False, threads = True, prepost = True) 
+						ydf = yf.download(tickers = ticker, period = period, group_by='ticker', interval = ytf, ignore_tz = True, auto_adjust=True, progress=False, show_errors = False, threads = True, prepost = True) 
 						ydf.drop(axis=1, labels="Adj Close",inplFace = True)
 						ydf.dropna(inplace = True)
 						if Database.is_market_open() == 1: ydf.drop(ydf.tail(1).index,inplace=True)

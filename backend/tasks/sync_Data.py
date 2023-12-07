@@ -59,10 +59,6 @@ class Data:
 
 
 
-
-
-
-
 			
 	def get_trainer_queue_size(self,user_id,st):
 		return self.r.llen(str(user_id)+st)
@@ -86,17 +82,66 @@ class Data:
 		return data
 	
 
-
-
-
-	# Assuming you have defined screener_format function here
-	
 		
 	
+	def init_prev_close_cache(self):
+		
+		hash_data = self.r.hgetall('1d'+'chart')
+		#return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
+		for ticker, value in hash_data.items():
+			value = json.loads(value)
+			value = value[-1]['close']
+			self.r.hset('prev_close', ticker, pickle.dumps(value))
+			
+
+	def fetch_stock_data(tickers):
+    # Join tickers into a string for the yfinance call
+		args = " ".join(tickers)
+
+		# Download the data
+		ds = yf.download(args, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=True, keepna=False)
+
+		# Creating a dictionary to store the last non-NA close value for each ticker
+		last_close_values = {}
+
+		for ticker in tickers:
+			# Extracting the 'Close' data for the specific ticker
+			close_data = ds['Close', ticker]
+
+			# Dropping NA values and getting the last value
+			close_data = close_data.dropna()
+			if close_data.empty:
+				pass
+				#print(ticker)
+			else:
+				last_non_na_close = close_data.iloc[-1]
+
+				# Storing the result in the dictionary
+				last_close_values[ticker] = last_non_na_close
+
+		return last_close_values
+	
+	@staticmethod
+	def get_current_prices():
+		#from sync_Data import data
+	
+		tickers = data.get_ticker_list()
+		batches = []
+		for i in range(0,len(tickers),1000):
+			batches.append(tickers[i:i+ 1000])
+		
+		with multiprocessing.Pool(5) as pool:
+			results = pool.map(Data.fetch_stock_data,batches)
+		return {k: v for d in results for k, v in d.items()}
+
 	def get_ds(self,form = 'match',request='full',tf='1d', bars=0):
 		returns = []
 		
 		if request == 'full':
+			market_open = True#self.is_market_open()
+			if market_open:
+				current_prices = self.get_current_prices()
+			
 			if form == 'screener':
 				hash_data = self.r.hgetall(tf+form)
 				#return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
@@ -111,8 +156,17 @@ class Data:
 								pad_width = [(0, padding)] + [(0, 0)] * (value.ndim - 1)  # Pad only the first dimension
 								value = np.pad(value, pad_width, mode='constant', constant_values=0)
 							value = value[-bars:,:]
-						for ii in (2,3,4):
-							value[-1,ii] = value[-1,1]
+						if market_open:
+							price = current_prices[ticker]
+							change = price/pickle.loads(self.r.hget('prev_close',ticker)) - 1
+							print(f'{change} - {ticker}')
+							value = np.vstack([0] + [value,np.array([change for _ in range(4)])])
+						else:
+							for ii in (2,3,4):
+								value[-1,ii] = value[-1,1]
+						# print(value)
+						# print(ticker)
+						#time.sleep(50)
 						returns.append(value)
 						tickers.append(ticker)
 					except TimeoutError: 
