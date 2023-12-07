@@ -21,9 +21,7 @@ class Screener:
 		args = " ".join(tickers)
 		ds = yf.download(args, interval = '1m',period = '1d',prepost = True, auto_adjust = True,threads = True)
 		print(ds)
-		for df in ds:
-			time.sleep(50)
-			print(ds)
+		time.sleep(50)
 
 	def get_pm_prices():
 		from sync_Data import data
