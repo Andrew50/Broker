@@ -7,7 +7,7 @@ class Data:
 	
 	async def get_trainer_queue_size(self, user_id, st):
 		# Use await with aioredis operations
-		return await self.redis.llen(str(user_id) + st)
+		return await self.redis_pool.llen(str(user_id) + st)
 
 	#eng_project
 	async def init_async_conn(self):
@@ -17,6 +17,8 @@ class Data:
 		self.mysql_pool = await aiomysql.create_pool(
 			host='mysql', port=3306, user='root', password='7+WCy76_2$%g', 
 			db='broker', minsize=1, maxsize=20)
+		
+	
 
 	@staticmethod
 	def format_datetime(dt,reverse=False):
@@ -56,6 +58,10 @@ class Data:
 		while df[i,0] > dt:
 			i -= 1
 		return i
+	
+	async def get_current_price(self,ticker):
+		val = await self.redis_pool.hget('current_price',ticker)
+		return pickle.loads(val)
 
 	async def get_df(self, form='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
 		#async with self.redis_pool.get() as conn:

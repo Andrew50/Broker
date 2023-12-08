@@ -3,6 +3,7 @@ import datetime, uvicorn, importlib, sys, traceback, jwt, asyncio, time, json
 from redis import Redis
 from rq import Queue
 from rq.job import Job
+import pandas as pd
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -85,6 +86,25 @@ def create_app():
 			args += ['MSFT','1d',None][len(args):]
 			ticker,tf,dt = args
 			val = await data_.get_df('chart',ticker,tf,dt)
+			#if data_.is_extended_market_open:
+			if True:
+				current_price = await data_.get_current_price(ticker)
+				#print(current_price)
+				val = json.loads(val)
+				if current_price == None:
+					current_bar = val[-1]
+				else:
+					current_bar = {
+								'time': str(datetime.datetime.now())[:10],
+								'open': current_price,
+								'high':  current_price,
+								'low':  current_price,
+								'close':  current_price
+							}
+				
+				val.append(current_bar)
+				#print(val,flush=True)
+				val = json.dumps(val)
 			return val
 		elif func == 'create setup':
 			st, tf, setup_length = args

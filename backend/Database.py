@@ -19,7 +19,7 @@ from contextlib import closing
 
 
 
-class d:
+class Database:
 
 	def __init__(self):
 		self.inside_container = os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False)

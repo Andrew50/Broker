@@ -24,7 +24,7 @@ RUN apt-get update \
 # Copy your application code
 COPY api.py ./
 COPY tasks/ ./
-COPY models/ ./ 
+#COPY models/ ./models 
 
 # Compile any extensions
 RUN python Setup.py build_ext --inplace

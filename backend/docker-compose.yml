@@ -50,6 +50,7 @@ services:
         #command: python worker.py
         volumes: 
              - ./:/app
+             - shared-models:/app/models
         #command: python worker.py
         depends_on:
             - mysql
@@ -73,6 +74,7 @@ services:
 
 volumes:
     mysql-data:
+    shared-models:
 
 networks:
     my-network:    

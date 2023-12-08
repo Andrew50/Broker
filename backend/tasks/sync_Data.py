@@ -141,6 +141,8 @@ class Data:
 			market_open = True#self.is_market_open()
 			if market_open:
 				current_prices = self.get_current_prices()
+				for ticker, value in current_prices.items():
+					self.r.hset('current_price', ticker, pickle.dumps(value))
 			
 			if form == 'screener':
 				hash_data = self.r.hgetall(tf+form)
@@ -155,8 +157,9 @@ class Data:
 							if padding > 0:
 								pad_width = [(0, padding)] + [(0, 0)] * (value.ndim - 1)  # Pad only the first dimension
 								value = np.pad(value, pad_width, mode='constant', constant_values=0)
-							value = value[-bars:,:]
+							
 						if market_open:
+							value = value[-(bars-1):,:]
 							try:
 								price = current_prices[ticker]
 								change = price/pickle.loads(self.r.hget('prev_close',ticker)) - 1
@@ -165,6 +168,7 @@ class Data:
 							#print(f'{change} - {ticker}')
 							value = np.vstack( [value,np.array([0] +[change for _ in range(4)])])
 						else:
+							value = value[-bars:,:]
 							for ii in (2,3,4):
 								value[-1,ii] = value[-1,1]
 						# print(value)

@@ -1,3 +1,40 @@
+
+
+# df = pd.read_feather(f'C:/Stocks2/local/data/d_{st}.feather')[['ticker','dt','value']]
+# df['dt'] = df['dt'].astype(str).apply(data.format_datetime)
+# print(len(df[df['value'] == 1]))
+
+# #print(df[df['value'] == 1])
+
+
+# df = df.values.tolist()
+
+# user_id = 6
+# data.set_setup_sample(user_id,st,df)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # import ftplib
 # import os
 # ftp = ftplib.FTP("ftp.nasdaqtrader.com")
@@ -22,9 +59,13 @@
 # period = '25y'
 # import pandas as pd
 # ydf = yf.download(tickers = ticker, period = period, group_by='ticker', interval = ytf, ignore_tz = True, progress=False, show_errors = False, threads = True, prepost = True) 
+# import yfinance as yf
+# import datetime
+# args = 'AAPL'
+# start = datetime.datetime.now()
+# ds = yf.download(args, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=True, keepna=False)
+# print(datetime.datetime.now() - start)
 
-
-from sync_Data import data
 #data.init_prev_close_cache()
 
 # import yfinance as yf
@@ -166,16 +207,6 @@ from sync_Data import data
 #print(full_ticker_list)
 	
 #print(data.get_df('screener','HWBK','1d'))
-# df = pd.read_feather(f'C:/Stocks2/local/data/d_{st}.feather')[['ticker','dt','value']]
-# df['dt'] = df['dt'].astype(str).apply(data.format_datetime)
-# print(len(df[df['value'] == 1]))
 
-# #print(df[df['value'] == 1])
-
-
-# df = df.values.tolist()
-
-# user_id = 6
-# data.set_setup_sample(user_id,st,df)
 
 
