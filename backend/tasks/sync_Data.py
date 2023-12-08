@@ -157,10 +157,13 @@ class Data:
 								value = np.pad(value, pad_width, mode='constant', constant_values=0)
 							value = value[-bars:,:]
 						if market_open:
-							price = current_prices[ticker]
-							change = price/pickle.loads(self.r.hget('prev_close',ticker)) - 1
-							print(f'{change} - {ticker}')
-							value = np.vstack([0] + [value,np.array([change for _ in range(4)])])
+							try:
+								price = current_prices[ticker]
+								change = price/pickle.loads(self.r.hget('prev_close',ticker)) - 1
+							except:
+								change = 0
+							#print(f'{change} - {ticker}')
+							value = np.vstack( [value,np.array([0] +[change for _ in range(4)])])
 						else:
 							for ii in (2,3,4):
 								value[-1,ii] = value[-1,1]

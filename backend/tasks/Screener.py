@@ -1,18 +1,7 @@
 import json
 import tensorflow as tf
-import numpy as np
 from sync_Data import data
-import selenium.webdriver as webdriver
-from selenium.webdriver.common.by import By 
-from selenium.webdriver.firefox.options import Options 
-from selenium.webdriver.firefox.service import Service
-import pathlib, time, selenium, datetime, os, math, tensorflow
-import pandas as pd
 
-
-import yfinance as yf
-import datetime
-import multiprocessing
 
 
 class Screener:
