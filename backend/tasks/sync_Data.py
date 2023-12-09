@@ -140,6 +140,7 @@ class Data:
 		if request == 'full':
 			market_open = True#self.is_market_open()
 			if market_open:
+				self.init_prev_close_cache()
 				current_prices = self.get_current_prices()
 				for ticker, value in current_prices.items():
 					self.r.hset('current_price', ticker, pickle.dumps(value))
