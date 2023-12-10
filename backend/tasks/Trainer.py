@@ -128,20 +128,20 @@ class Trainer:
 
 		early_stopping = EarlyStopping(
 			monitor='val_auc_pr',
-			patience=15,
+			patience=5,
 			restore_best_weights=True,
 			mode='max',
 			verbose =1
 		)
 
-		history = model.fit(ds, y,epochs=50,batch_size=64,validation_data=(ds_val, y_val),)  # Use the actual validation set herecallbacks=[early_stopping],verbose=1)
+		history = model.fit(ds, y,epochs=30,batch_size=64,validation_data=(ds_val, y_val),)  # Use the actual validation set herecallbacks=[early_stopping],verbose=1)
 		
 		if not os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False):
-			print('saved model --------------------')
+			print('saved model -----------outside container so kinda useless god---------')
 			model.save(f'C:/dev/broker/backend/models/{user_id}_{st}', save_format='tf')
 			#model.save(f'C:/dev/broker/backend/models/{user_id}_{st}.h5')
 		else:
-			model.save(f'models/{user_id}_{st}', save_format='tf')
+			model.save(f'/app/models/{user_id}_{st}', save_format='tf')
 			#model.save(f'models/{user_id}_{st}.h5')
 			
 		tensorflow.keras.backend.clear_session()
@@ -193,7 +193,7 @@ class Trainer:
 
 def train(args,user_id):
 	st, = args
-	results = Trainer.run_generator(st,user_id)
+	results = Trainer.train_model(st,user_id)
 	return json.dumps(results)
 
 

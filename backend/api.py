@@ -3,6 +3,7 @@ import datetime, uvicorn, importlib, sys, traceback, jwt, asyncio, time, json
 from redis import Redis
 from rq import Queue
 from rq.job import Job
+import pandas as pd
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -85,6 +86,25 @@ def create_app():
 			args += ['MSFT','1d',None][len(args):]
 			ticker,tf,dt = args
 			val = await data_.get_df('chart',ticker,tf,dt)
+			#if data_.is_extended_market_open:
+			if True:
+				current_price = await data_.get_current_price(ticker)
+				#print(current_price)
+				val = json.loads(val)
+				if current_price == None:
+					current_bar = val[-1]
+				else:
+					current_bar = {
+								'time': str(datetime.datetime.now())[:10],
+								'open': current_price,
+								'high':  current_price,
+								'low':  current_price,
+								'close':  current_price
+							}
+				
+				val.append(current_bar)
+				#print(val,flush=True)
+				val = json.dumps(val)
 			return val
 		elif func == 'create setup':
 			st, tf, setup_length = args
@@ -100,23 +120,26 @@ def create_app():
 			return 'done'
 		elif func == 'get instance':
 			st, = args
-			instance = await data_.get_trainer_queue(user_id,st)
-			if instance == None:
+			queue_size = data_.get_trainer_queue_size(user_id,st)
+			if queue_size == 50:
 				q.enqueue(run_task, kwargs={'func': 'Trainer-start', 'args': args, 'user_id':user_id}, timeout=6000000)
-				while True:
-					instance = await data_.get_trainer_queue(user_id,st)
-					if instance != None:
-						break
-					await asyncio.sleep(.2)
-			
-			#while True:
-			#	instance = await data_.get_trainer_queue(user_id,st)
-
+				# if queue_size == 0:
+				# 	while True:
+				# 		instance = await data_.get_trainer_queue(user_id,st)
+				# 		if instance != None:
+				# 			break
+				# 		await asyncio.sleep(.2)
+			else:
+				instance = await data_.get_trainer_queue(user_id,st)
+				
 			return instance
 		elif func == 'study':
 			st,ticker,tf,dt,annotation = args
 			val = await data_.set_annotation(user_id,st,ticker,tf,dt,annotation)
 			return json.dumps(val)
+		elif func == 'watchlist':
+			ticker,watchlist_name,delete = args
+			await data_.set_watchlist(user_id,ticker,watchlist_name,delete)
 		else:
 			raise Exception('to code' + func)
 			
@@ -147,5 +170,5 @@ app = create_app()
 
 if __name__ == '__main__':
 	#data.init_cache(force=True)
-	data.init_cache(force=False)#default for quikc loading
+	#data.init_cache(force=False)#default for quikc loading
 	uvicorn.run("api:app", host="0.0.0.0", port=5057, reload=True)
