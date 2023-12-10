@@ -40,7 +40,7 @@ services:
             - my-network
 
     myproj_worker: 
-        build:
+        build: #satish was here
             context: ./
             dockerfile: ./Dockerfile
         restart: on-failure
