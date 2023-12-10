@@ -26,11 +26,13 @@ services:
         build:
             context: ./
             dockerfile: ./Dockerfile
+        restart: on-failure
         ports:
         - "5057:5057"
         working_dir: /app
         volumes:
-            - ./:/app/tasks
+            - ./:/app
+            #- ./:/app/tasks
            # - ./:/app
         command: 
             python api.py
@@ -38,15 +40,17 @@ services:
             - my-network
 
     myproj_worker: 
-        build:
+        build: #satish was here
             context: ./
             dockerfile: ./Dockerfile
+        restart: on-failure
         working_dir: /app
         #command: rq worker --url redis://redis:6379 my_queue
         command: /bin/sh -c "sleep 10 && rq worker --url redis://redis:6379 my_queue"
         #command: python worker.py
         volumes: 
-            - ./:/app/models
+             - ./:/app
+             - shared-models:/app/models
         #command: python worker.py
         depends_on:
             - mysql
@@ -70,6 +74,7 @@ services:
 
 volumes:
     mysql-data:
+    shared-models:
 
 networks:
     my-network:    
