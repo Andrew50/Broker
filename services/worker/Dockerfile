@@ -1,12 +1,16 @@
 FROM python:3.10.1-bullseye
 
+# Upgrade pip
+RUN pip install --upgrade pip
+
 # Set the working directory to /app
 WORKDIR /app
 
-# Upgrade pip and install Python dependencies
-RUN pip install --upgrade pip
-COPY requirements.txt .
+# Copy the requirements file and install Python dependencies
+COPY . .
 RUN pip install -r requirements.txt
+
+# Copy the rest of the application code
 
 # Set environment variables
 ENV AM_I_IN_A_DOCKER_CONTAINER Yes
@@ -21,9 +25,6 @@ RUN apt-get update \
     && rm geckodriver-v0.29.0-linux64.tar.gz \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy your application code
-
-COPY ./tasks ./
-
-RUN python Setup.py build_ext --inplace
-
+# Compile any extensions
+# Uncomment and modify the next line if you have a Setup.py
+# RUN python Setup.py build_ext --inplace

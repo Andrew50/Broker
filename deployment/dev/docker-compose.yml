@@ -14,35 +14,35 @@ services:
         command: redis-server
         mem_limit: 7G
 
-    myproj_api:
+    api:
         depends_on:
             - mysql
             - redis
         container_name: my_api
         build:
             context: ./
-            dockerfile: ./Dockerfile
+            dockerfile: C:/dev/broker/services/api/Dockerfile
         restart: on-failure
         ports:
         - "5057:5057"
         working_dir: /app
         volumes:
-            - ./api.py:/app/api.py
+            - C:/dev/broker/services/api/api.py:/app/api.py
         command: 
             python api.py
         networks:
             - my-network
 
-    myproj_worker: 
+    worker: 
         build: #satish was here
             context: ./
-            dockerfile: ./tasks/Dockerfile
+            dockerfile: C:/dev/broker/services/worker/Dockerfile
         restart: on-failure
         working_dir: /app
         command: /bin/sh -c "sleep 5 && rq worker --url redis://redis:6379 my_queue"
         volumes: 
-             - ./:/app
-             - ./models:/app/models
+             #- ./:/app
+             - C:/dev/broker/services/worker:/app
         depends_on:
             - mysql
             - redis
@@ -58,7 +58,7 @@ services:
             - "3307:3306"
         volumes:
             - mysql-data:/var/lib/mysql
-            - ./my.cnf:/etc/mysql/my.cnf
+            - C:/dev/broker/services/mysql/my.cnf:/etc/mysql/my.cnf
         networks:
             - my-network
 
