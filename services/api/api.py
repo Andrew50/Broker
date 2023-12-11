@@ -1,9 +1,8 @@
-from fastapi import FastAPI, HTTPException, status, Request as FastAPIRequest, Depends, Header
-import datetime, uvicorn, importlib, sys, traceback, jwt, asyncio, time, json
+from fastapi import FastAPI, HTTPException, status, Request as FastAPIRequest, Depends
+import datetime, uvicorn, importlib, sys, traceback, jwt, asyncio,  json
 from redis import Redis
 from rq import Queue
 from rq.job import Job
-import pandas as pd
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -11,8 +10,6 @@ from pydantic import BaseModel
 sys.path.append('./tasks')
 SECRET_KEY = "god"
 from async_Data import Data
-from sync_Data import data
-#import worker#######
 
 class Request(BaseModel):
 	function: str

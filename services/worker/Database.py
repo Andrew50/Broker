@@ -1,20 +1,13 @@
-
-
-from token import EXACT_TOKEN_TYPES
 import numpy as np
 import  pandas as pd, numpy as np, datetime, mysql.connector, pytz, redis, pickle,  multiprocessing
 import numpy as np
 import  pandas as pd, os, numpy as np, time,datetime, mysql.connector, pytz, redis, pickle,  multiprocessing, json
-from tqdm import tqdm
-from collections import defaultdict
 import yfinance as yf
-import asyncio
 from mysql.connector import errorcode
 
 import multiprocessing
 import redis
 import mysql.connector
-from contextlib import closing
 
 
 

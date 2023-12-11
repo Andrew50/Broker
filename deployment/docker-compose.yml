@@ -20,8 +20,8 @@ services:
             - redis
         container_name: my_api
         build:
-            context: ./
-            dockerfile: C:/dev/broker/services/api/Dockerfile
+            context: C:/dev/broker/services/api
+            dockerfile: Dockerfile
         restart: on-failure
         ports:
         - "5057:5057"
@@ -35,14 +35,14 @@ services:
 
     worker: 
         build: #satish was here
-            context: ./
-            dockerfile: C:/dev/broker/services/worker/Dockerfile
+            context: C:/dev/broker/services/worker
+            dockerfile: Dockerfile
         restart: on-failure
         working_dir: /app
         command: /bin/sh -c "sleep 5 && rq worker --url redis://redis:6379 my_queue"
         volumes: 
              #- ./:/app
-             - C:/dev/broker/services/worker:/app
+             - ./:/app
         depends_on:
             - mysql
             - redis
