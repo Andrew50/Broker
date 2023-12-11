@@ -23,30 +23,4 @@ RUN apt-get update \
 
 # Copy your application code
 COPY api.py ./
-COPY tasks/ ./
-#COPY models/ ./models 
-
-# Compile any extensions
-#RUN python Setup.py build_ext --inplace
-
-# Copy the current directory contents into the container at /usr/src/app
-COPY Database.py ./
-
-# Install cron
-RUN apt-get update && apt-get -y install cron
-
-# Add crontab file in the cron directory
-COPY crontab /etc/cron.d/my-cron-job
-
-# Give execution rights on the cron job and script
-RUN chmod 0644 /etc/cron.d/my-cron-job
-RUN chmod +x ./Database.py
-
-# Apply cron job
-RUN crontab /etc/cron.d/my-cron-job
-
-# Create the log file to be able to run tail
-RUN touch /var/log/cron.log
-
-# Run the command on container startup
-CMD cron && tail -f /var/log/cron.log
+COPY async_Data.py ./
