@@ -1,0 +1,135 @@
+{
+  ".svelte-kit/generated/server/internal.js": {
+    "file": "internal.js",
+    "imports": [
+      "_internal.js"
+    ],
+    "isEntry": true,
+    "src": ".svelte-kit/generated/server/internal.js"
+  },
+  "_candlestick-series.js": {
+    "file": "chunks/candlestick-series.js",
+    "imports": [
+      "_index2.js"
+    ]
+  },
+  "_index.js": {
+    "file": "chunks/index.js",
+    "imports": [
+      "_index2.js"
+    ]
+  },
+  "_index2.js": {
+    "file": "chunks/index2.js"
+  },
+  "_internal.js": {
+    "file": "chunks/internal.js",
+    "imports": [
+      "_index2.js"
+    ]
+  },
+  "_prod-ssr.js": {
+    "file": "chunks/prod-ssr.js"
+  },
+  "node_modules/@sveltejs/kit/src/runtime/components/error.svelte": {
+    "file": "entries/fallbacks/error.svelte.js",
+    "imports": [
+      "_index2.js"
+    ],
+    "isEntry": true,
+    "src": "node_modules/@sveltejs/kit/src/runtime/components/error.svelte"
+  },
+  "node_modules/@sveltejs/kit/src/runtime/components/layout.svelte": {
+    "file": "entries/fallbacks/layout.svelte.js",
+    "imports": [
+      "_index2.js"
+    ],
+    "isEntry": true,
+    "src": "node_modules/@sveltejs/kit/src/runtime/components/layout.svelte"
+  },
+  "node_modules/@sveltejs/kit/src/runtime/server/index.js": {
+    "file": "index.js",
+    "imports": [
+      "_prod-ssr.js",
+      "_internal.js",
+      "_index.js"
+    ],
+    "isEntry": true,
+    "src": "node_modules/@sveltejs/kit/src/runtime/server/index.js"
+  },
+  "src/routes/+page.css": {
+    "file": "_app/immutable/assets/_page.49ac5cd1.css",
+    "src": "src/routes/+page.css"
+  },
+  "src/routes/+page.svelte": {
+    "css": [
+      "_app/immutable/assets/_page.49ac5cd1.css"
+    ],
+    "file": "entries/pages/_page.svelte.js",
+    "imports": [
+      "_index2.js"
+    ],
+    "isEntry": true,
+    "src": "src/routes/+page.svelte"
+  },
+  "src/routes/auth/+page.css": {
+    "file": "_app/immutable/assets/_page.26c0b357.css",
+    "src": "src/routes/auth/+page.css"
+  },
+  "src/routes/auth/+page.svelte": {
+    "css": [
+      "_app/immutable/assets/_page.26c0b357.css"
+    ],
+    "file": "entries/pages/auth/_page.svelte.js",
+    "imports": [
+      "_index2.js",
+      "_index.js"
+    ],
+    "isEntry": true,
+    "src": "src/routes/auth/+page.svelte"
+  },
+  "src/routes/chart/+page.css": {
+    "file": "_app/immutable/assets/_page.10373c0f.css",
+    "src": "src/routes/chart/+page.css"
+  },
+  "src/routes/chart/+page.svelte": {
+    "css": [
+      "_app/immutable/assets/_page.10373c0f.css"
+    ],
+    "file": "entries/pages/chart/_page.svelte.js",
+    "imports": [
+      "_index2.js",
+      "_index.js",
+      "_candlestick-series.js",
+      "_prod-ssr.js"
+    ],
+    "isEntry": true,
+    "src": "src/routes/chart/+page.svelte"
+  },
+  "src/routes/stable/+page.css": {
+    "file": "_app/immutable/assets/_page.aefe0cbd.css",
+    "src": "src/routes/stable/+page.css"
+  },
+  "src/routes/stable/+page.svelte": {
+    "css": [
+      "_app/immutable/assets/_page.aefe0cbd.css"
+    ],
+    "file": "entries/pages/stable/_page.svelte.js",
+    "imports": [
+      "_index2.js",
+      "_index.js",
+      "_candlestick-series.js"
+    ],
+    "isEntry": true,
+    "src": "src/routes/stable/+page.svelte"
+  },
+  "src/routes/test/+page.svelte": {
+    "file": "entries/pages/test/_page.svelte.js",
+    "imports": [
+      "_index2.js",
+      "_index.js"
+    ],
+    "isEntry": true,
+    "src": "src/routes/test/+page.svelte"
+  }
+}
