@@ -112,11 +112,15 @@ class Database:
 
 	# Main Function
 	def init_cache(self,force = False):
-		if not force and self.r.exists('working'):
-			print('assuming redis already populated',flush = True)
-			return
+		#if not force and self.r.exists('working'):
+		#	print('assuming redis already populated',flush = True)
+			#return
 		global sql_pool
-		sql_pool = mysql.connector.pooling.MySQLConnectionPool(pool_name="mypool", pool_size=12, host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
+		if self.inside_container:
+			sql_pool = mysql.connector.pooling.MySQLConnectionPool(pool_name="mypool", pool_size=12, host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
+		else:
+			sql_pool = mysql.connector.pooling.MySQLConnectionPool(pool_name="mypool", pool_size=12, host='localhost',port='3307',user='root',password='7+WCy76_2$%g',database='broker')
+			
 		global redis_pool
 		redis_pool = self.r#redis.ConnectionPool(host='localhost', port=6379)
 		tickers = self.get_ticker_list()# get_unique_tickers()  # Define this function to get tickers from your DB
@@ -142,12 +146,28 @@ class Database:
 		return False
 
 
+
+	####to remove once method for pulling current ticker list exists
+	def get_ticker_list(self, type='full'):
+		cursor = self._conn.cursor(buffered=True)
+		if type == 'full':
+			query = "SELECT ticker FROM full_ticker_list"
+			cursor.execute(query)
+			data = cursor.fetchall()
+			cursor.close()
+			data = [item[0] for item in data]
+			return data
+		elif type == 'current':
+			raise Exception('need current func. has to pull from tv or something god')###################################################################################################################################
+	
+
+
 	def update(self,force_retrain=False,num = None):
 
 		with self._conn.cursor(buffered=True) as cursor:
 
 			def findex(df, dt):
-				dt = Data.format_datetime(dt)
+				dt = self.format_datetime(dt)
 				i = int(len(df)/2)		
 				k = int(i/2)
 				while k != 0:
@@ -163,13 +183,13 @@ class Database:
 					i -= 1
 				return i
 			
-			nasdaq_tickers = yf.Tickers('NASDAQ').tickers
-			nyse_tickers = yf.Tickers('NYSE').tickers
-			amex_tickers = yf.Tickers('AMEX').tickers
-			full_ticker_list = nasdaq_tickers + nyse_tickers + amex_tickers
-			df = [[x] for x in full_ticker_list]
-			insert_query = "INSERT IGNORE INTO full_ticker_list VALUES (%s)"
-			cursor.executemany(insert_query, df)
+
+			full_ticker_list = self.get_ticker_list()
+
+			# full_ticker_list = ?
+			# df = [[x] for x in full_ticker_list]
+			# insert_query = "INSERT IGNORE INTO full_ticker_list VALUES (%s)"
+			# cursor.executemany(insert_query, df)
 			
 				
 		
@@ -186,7 +206,8 @@ class Database:
 						else:
 							raise Exception('invalid timeframe to update')
 						ydf = yf.download(tickers = ticker, period = period, group_by='ticker', interval = ytf, ignore_tz = True, auto_adjust=True, progress=False, show_errors = False, threads = True, prepost = True) 
-						ydf.drop(axis=1, labels="Adj Close",inplFace = True)
+						#print(ydf)
+						#ydf.drop(axis=1, labels="Adj Close",inplace = True)
 						ydf.dropna(inplace = True)
 						if Database.is_market_open() == 1: ydf.drop(ydf.tail(1).index,inplace=True)
 						ydf.index = ydf.index.normalize() + pd.Timedelta(minutes = 570)
@@ -220,7 +241,26 @@ class Database:
 						print(ydf)
 			
 
-						
+	@staticmethod
+	def format_datetime(dt,reverse=False):
+		if reverse:
+			return datetime.datetime.fromtimestamp(dt)
+			
+		if type(dt) == int or type(dt) == float:
+			return dt
+		if dt is None or dt == '': return None
+		if dt == 'current': return datetime.datetime.now(pytz.timezone('EST'))
+		if isinstance(dt, str):
+			try: dt = datetime.datetime.strptime(dt, '%Y-%m-%d')
+			except: dt = datetime.datetime.strptime(dt, '%Y-%m-%d %H:%M:%S')
+		time = datetime.time(dt.hour, dt.minute, 0)
+		dt = datetime.datetime.combine(dt.date(), time)
+		if dt.hour == 0 and dt.minute == 0:
+			time = datetime.time(9, 30, 0)
+			dt = datetime.datetime.combine(dt.date(), time)
+		#return dt
+		dt = dt.timestamp()
+		return dt	
 
 	def close_connection(self):
 		self._conn.close()
@@ -343,7 +383,7 @@ class Database:
 db = Database()
 
 if __name__ == "__main__":
-	db.update()
+	#db.update()
 	db.init_cache()
 	db.close_connection()
 
