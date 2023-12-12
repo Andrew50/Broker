@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-deployment #the name of this service
+  labels: #used to link objects, organize, select. used to assoicate services with pods
+    app: mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb #used to link to service mabye other things
+  template: #I think this is the actual defining of the pod, defines each replica
+    metadata:
+      labels: #name not defined as new name will auto made for each instance (replica)
+        app: mongodb #same name as metadata (dplotmente), this links the pod to the deployment
+    spec: #describes desired state of the poid
+      containers: #define conatiners, can have multiple, usaully just one
+        - name: mongodb
+          image: mongo #the image of the container, will be a docker image when custom, this pulls mongodb image from docker hub
+          ports: #configure ports, can link to services so that container can talk to rest of cluster
+            - containerPort: 27017
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: mongo-root-username
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: mongo-root-password
+
+--- #delimeter
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-service
+spec:
+  selector:
+    app: mongodb
+  ports:
+    - protocol: TCP
+      port: 27017 #service port
+      targetPort: 27017 #container port
+      #these ports link to the containerport define in the deployment-container, same so they link together
