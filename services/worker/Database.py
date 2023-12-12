@@ -45,6 +45,7 @@ class Database:
 
 		except:
 			self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g')
+			self.r = redis.Redis(host='127.0.0.1', port=6379)
 			self.setup()
 		
 

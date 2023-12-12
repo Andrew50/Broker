@@ -6,15 +6,15 @@ metadata:
     kompose.version: 1.31.2 (a92241f79)
   creationTimestamp: null
   labels:
-    io.kompose.network/backend-my-network: "true"
-    io.kompose.service: myproj-api
-  name: myproj-api
+    io.kompose.network/deployment-my-network: "true"
+    io.kompose.service: api
+  name: api
 spec:
   containers:
     - args:
         - python
         - api.py
-      image: myproj-api
+      image: api
       name: my-api
       ports:
         - containerPort: 5057
@@ -23,11 +23,11 @@ spec:
       resources: {}
       volumeMounts:
         - mountPath: /app/api.py
-          name: myproj-api-claim0
+          name: C
       workingDir: /app
   restartPolicy: OnFailure
   volumes:
-    - name: myproj-api-claim0
+    - name: C
       persistentVolumeClaim:
-        claimName: myproj-api-claim0
+        claimName: C
 status: {}

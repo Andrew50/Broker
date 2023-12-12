@@ -22,7 +22,7 @@ spec:
         kompose.version: 1.31.2 (a92241f79)
       creationTimestamp: null
       labels:
-        io.kompose.network/backend-my-network: "true"
+        io.kompose.network/deployment-my-network: "true"
         io.kompose.service: mysql
     spec:
       containers:
@@ -40,13 +40,13 @@ spec:
             - mountPath: /var/lib/mysql
               name: mysql-data
             - mountPath: /etc/mysql/my.cnf
-              name: mysql-claim1
+              name: C
       restartPolicy: Always
       volumes:
         - name: mysql-data
           persistentVolumeClaim:
             claimName: mysql-data
-        - name: mysql-claim1
+        - name: C
           persistentVolumeClaim:
-            claimName: mysql-claim1
+            claimName: C
 status: {}

@@ -22,7 +22,7 @@ spec:
         kompose.version: 1.31.2 (a92241f79)
       creationTimestamp: null
       labels:
-        io.kompose.network/backend-my-network: "true"
+        io.kompose.network/deployment-my-network: "true"
         io.kompose.service: redis
     spec:
       containers:

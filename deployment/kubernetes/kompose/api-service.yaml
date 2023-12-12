@@ -6,14 +6,14 @@ metadata:
     kompose.version: 1.31.2 (a92241f79)
   creationTimestamp: null
   labels:
-    io.kompose.service: myproj-api
-  name: myproj_api
+    io.kompose.service: api
+  name: api
 spec:
   ports:
     - name: "5057"
       port: 5057
       targetPort: 5057
   selector:
-    io.kompose.service: myproj-api
+    io.kompose.service: api
 status:
   loadBalancer: {}
