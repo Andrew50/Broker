@@ -1,0 +1,14 @@
+name: Example Workflow
+
+on:
+  push:
+    branches:
+      - under_dev #dont run
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Echo a message
+        run: echo Hello, world!
