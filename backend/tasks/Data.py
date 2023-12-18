@@ -56,14 +56,13 @@ class Data:
 		def match_format(data):
 			# dt, open, high, low, close, volume 
 			# 0    1     2     3     4      5
+			
 			ohlcData = data[1:,1:5]/data[:-1, 4].reshape(-1, 1) - 1
 			mean = np.mean(ohlcData, axis=0)
 			std = np.std(ohlcData, axis=0)
 			ohlcData = (ohlcData - mean) / std
-			
 			return pickle.dumps(np.column_stack((data[1:, 0], data[1:, 4], ohlcData[:, 0], ohlcData[:, 1], ohlcData[:, 2], ohlcData[:, 3], data[1:, 5])))
-			#close_prices = data[:, 4]
-			#return pickle.dumps(np.column_stack((data[1:, 0], close_prices[1:], (data[1:, 1] / close_prices[:-1] - 1), (data[1:, 2]/close_prices[:-1] -1), (data[1:,3]/close_prices[:-1] - 1), (close_prices[1:] / close_prices[:-1]) - 1, data[1:, 5])))
+
 		
 		def screener_format(data):
 			dt = data[:,0]
@@ -218,6 +217,23 @@ class Data:
 				return returns, tickers
 	
 	def findex(df, dt):
+		'''dt = Data.format_datetime(dt)
+		left = 0
+		right = len(df)-1
+		i = int(len(df)/2)
+		while(left <= right):
+			
+			date = df[i, 0]
+			if date > dt:
+				right = i-1
+			elif date < dt:
+				left = i+1
+			i = (left+right)/2
+		while df[i, 0] < dt:
+			i += 1
+		while df[i, 0] > dt:
+			i -= 1
+		return i '''
 		dt = Data.format_datetime(dt)
 		i = int(len(df)/2)		
 		k = int(i/2)
@@ -402,10 +418,9 @@ class Data:
 		with self._conn.cursor(buffered=True) as cursor:
 
 			def findex(df, dt):
-				dt = Data.format_datetime(dt)
-				left = 0
-				right = len(df)-1
-				currIndex = len(df)/2
+				'''dt = Data.format_datetime(dt)
+				left, right = 0, int(len(df)-1)
+				currIndex = int(len(df)/2)
 				while left <= right:
 					
 					date = df.index[currIndex]
@@ -413,14 +428,13 @@ class Data:
 						right = currIndex-1
 					elif date < dt: 
 						left = currIndex+1
-					currIndex = (left+right)/2
+					currIndex = int((left+right)/2)
 					
 				while df.index[currIndex] < dt:
 					currIndex += 1
 				while df.index[currIndex] > dt:
 					currIndex -= 1
-				return currIndex
-				'''
+				return currIndex'''
 				dt = Data.format_datetime(dt)
 				i = int(len(df)/2)		
 				k = int(i/2)
@@ -435,7 +449,7 @@ class Data:
 					i += 1
 				while df.index[i] > dt:
 					i -= 1
-				return i'''
+				return i
 		
 			ticker_list = self.get_ticker_list('full')
 

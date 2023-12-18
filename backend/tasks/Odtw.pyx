@@ -40,7 +40,6 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=2] ySeq, np
     cdef double[:] cost = np.empty(2 * r + 1, dtype=np.float64)
     cdef double[:] cost_prev = np.empty(2 * r + 1, dtype=np.float64)
 
-
     for n in range(bars-1, total_length): # for the nth iteration, going through bars n-bars to n-1 
             
         if xSeq[n,1]*xSeq[n, 6] < 800000: continue # Filter out low dollar volume days 
@@ -92,7 +91,91 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=2] ySeq, np
                 k += 1
 
             cost, cost_prev = cost_prev, cost
+        k -= 1
+        scores.append([ticker, xSeq[n, 0], sqrt(cost_prev[k])])
+    return scores
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def normCalcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=2] ySeq, np.ndarray[double, ndim=1] upper, np.ndarray[double, ndim=1] lower, int bars, double cutoff, int r, str ticker):
+    scores = []
+    # Variables for the Lower Bound Check
+    cdef int total_length = xSeq.shape[0]
+    if total_length < bars: return scores
+    cdef Py_ssize_t n = 0
+    cdef Py_ssize_t b = 0
+    cdef double totalLowerBound = 0
+    cdef int zeroIndex = 0
+    cdef int start = 0 
+    cdef bint terminate = False
+
+    #Variables for full DTW
+
+    cdef Py_ssize_t i, j, k, columnIndexer
+    cdef double c, x, y, z, d
+    cdef double[:] cost = np.empty(2 * r + 1, dtype=np.float64)
+    cdef double[:] cost_prev = np.empty(2 * r + 1, dtype=np.float64)
+
+    cdef np.ndarray[double, ndim=2] curr_Array = np.empty([bars, 4], dtype=np.float64)
+    cdef np.ndarray[double, ndim=1] mean = np.empty(4, dtype=np.float64)
+    cdef np.ndarray[double, ndim=1] std = np.empty(4, dtype=np.float64)
+
+    for n in range(bars-1, total_length): # for the nth iteration, going through bars n-bars to n-1 
+
+        if xSeq[n,1]*xSeq[n, 6] < 800000: continue # Filter out low dollar volume days 
+
+        curr_Array = xSeq[n+1-bars:n+1, 2:6]
+        mean = np.mean(curr_Array, axis=0)
+        std = np.std(curr_Array, axis=0)
+        curr_Array = (curr_Array - mean)/std
+
+        totalLowerBound = 0.0
+        start = (bars-1) - (bars // 5)
+        terminate = False
+        for b in range(start, bars):
+            if curr_Array[b, 3] > upper[b] or curr_Array[b, 3] < lower[b]:
+                terminate = True
+                break
+        if terminate: continue
+        for b in range(0, start):
+            if curr_Array[b, 3] > upper[b]:
+                totalLowerBound += (curr_Array[b, 3] - upper[b]) ** 2
+            elif curr_Array[b, 3] < lower[b]:
+                totalLowerBound += (curr_Array[b, 3] - lower[b]) ** 2
+        if sqrt(totalLowerBound) > cutoff: continue
+
+
+        # Run full dtw 
+        # in original version, a = x sequence, b = y sequence. 
+
+        # Initialize cost and cost_prev arrays
+        k=0
+        for i in range(2 * r + 1):
+            cost[i] = float('inf')
+            cost_prev[i] = float('inf')
+
+        for i in range(bars):
+            k = max(0, r - i)
+
+            for j in range(max(0, i - r), min(bars - 1, i + r) + 1):
+                if i == 0 and j == 0:
+                    cost[k] = 0
+                    for columnIndexer in range(4):
+                        c = curr_Array[0, columnIndexer] - ySeq[0, columnIndexer]
+                        cost[k] += c * c
+                    k += 1
+                    continue
+
+                y = float('inf') if j - 1 < 0 or k - 1 < 0 else cost[k - 1]
+                x = float('inf') if i < 1 or k > 2 * r - 1 else cost_prev[k + 1]
+                z = float('inf') if i < 1 or j < 1 else cost_prev[k]
+                cost[k] = min(x, y, z)
+                for columnIndexer in range(4):
+                    d = curr_Array[i, columnIndexer] - ySeq[j, columnIndexer]
+                    cost[k] += d * d
+                k += 1
+
+            cost, cost_prev = cost_prev, cost
         k -= 1
         scores.append([ticker, xSeq[n, 0], sqrt(cost_prev[k])])
     return scores

@@ -33,12 +33,13 @@ class Match:
     def compute(ds,y, np_bars):
         radius = math.ceil(np_bars/10)
         upper, lower = Odtw.calcBounds(y[:, 3], radius)
-        cutoff = 100
+        cutoff = 1.6
         start = datetime.datetime.now()
         returns = []
         for tickerData in ds:
-            returns += heapq.nsmallest(5, Odtw.calcDtw(tickerData[1], y, upper, lower, np_bars, cutoff, radius, tickerData[0]), key=lambda x: x[2])
+            returns += heapq.nsmallest(3, Odtw.calcDtw(tickerData[1], y, upper, lower, np_bars, cutoff, radius, tickerData[0]), key=lambda x: x[2])
         top_scores = heapq.nsmallest(20, returns, key=lambda x: x[2])
+        print(f"Length of returns is {len(returns)}")
         print(f"time to complete match {datetime.datetime.now() - start}")
         print(top_scores)
         return [[ticker,str(format_datetime(dt=timestamp, reverse=True)),round(score,2)] for ticker,timestamp, score in top_scores]
@@ -78,8 +79,13 @@ def get(args,data,user_id = None):
     tf = args[1]
     np_bars = args[3]
     ds = data.get_ds(tf=tf,form='match')
+    # Getting the y timeseries
     y = asyncio.run(data.get_df('match',ticker,tf,dt, bars=np_bars))[:, 2:-1]
-    
+    # Experimental y value code
+    '''mean = np.mean(y, axis=0)
+    std = np.std(y, axis=0)
+    y = (y - mean)/ std'''
+    ## ends here 
     match_data = Match.compute(ds,y, np_bars)
     for i in range(len(match_data)): match_data[i][1] = match_data[i][1][:10]
     print(datetime.datetime.now() - start)
@@ -89,5 +95,5 @@ if __name__ == '__main__':
     from Data import data
     asyncio.run(data.init_async_conn())
     print('test')
-    print(get(['SYM','1d','2023-11-27', 10],data))
+    print(get(['SMCI','1d','2023-12-05', 10],data))
     print('test')
