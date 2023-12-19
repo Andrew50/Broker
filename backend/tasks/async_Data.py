@@ -59,6 +59,7 @@ class Data:
 		#async with self.redis_pool.get() as conn:
 		print(form,ticker,tf,dt,bars,pm,flush=True)
 		data = await self.redis_pool.hget(tf+form,ticker)
+		print(data,flush=True)
 		
 		if form == 'chart': 
 			
@@ -69,7 +70,9 @@ class Data:
 				
 				data = json.loads(data)
 				data = data[:index+1] 
+
 				data = json.dumps(data)
+
 			if bars:
 				raise Exception("to code")
 			
