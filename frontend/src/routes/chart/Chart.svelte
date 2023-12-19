@@ -5,9 +5,10 @@
 />
 
 <script>
-
-	import {ColorType, CrosshairMode} from 'lightweight-charts';
-    import {Chart, CandlestickSeries} from 'svelte-lightweight-charts';
+	
+	import './style.css';
+	import { onMount } from 'svelte';
+	import {chart} from './chart.js';
 	import {chart_data, backend_request, data_request} from '../store.js';
 
 	let innerWidth;
@@ -23,13 +24,25 @@
 
     
 
+	
+	let chartContainer;
 	const options = {
-        layout: {background: {type: ColorType.Solid,color: '#000000',},textColor: 'rgba(255, 255, 255, 0.9)',},
-        grid: {vertLines: {color: 'rgba(197, 203, 206, 0.5)',},horzLines: {color: 'rgba(197, 203, 206, 0.5)',},},
-        crosshair: {mode: CrosshairMode.Magnet,},
-        rightPriceScale: {borderColor: 'rgba(197, 203, 206, 0.8)',},timeScale: {borderColor: 'rgba(197, 203, 206, 0.8)',},
-    }
+		widthOffset: 500,
+		heightOffset: 20 ,
+		axesLabels: ["kilometres", 'price'],
+		styles: {
+		basic: 'gray',
+		sport: 'red'
+	}
+	}
 
+	onMount(() => {
+    const Chart = new chart(
+      chartContainer,
+      chart_data,
+      options
+    );
+	});
 	function resizeInputOnDynamicContent(node) {
 		
 		const measuringElement = document.createElement('div');
@@ -94,22 +107,7 @@
 
 </script>
 
-<Chart width={innerWidth - 500} height={innerHeight - 20} {...options}>
-    {#if $chart_data && Array.isArray($chart_data) && $chart_data.length > 0}
-    <CandlestickSeries
-        data={$chart_data}
-        reactive={true}
-        upColor="rgba(0,255, 0, 1)"
-        downColor="rgba(255, 0, 0, 1)"
-        borderDownColor="rgba(255, 0, 0, 1)"
-        borderUpColor="rgba(0,255, 0, 1)"
-        wickDownColor="rgba(255, 0, 0, 1)"
-        wickUpColor="rgba(0,255, 0, 1)"
-    />
-{/if}
-
-</Chart>
-
+<div bind:this={chartContainer} id="chartContainer" ></div>
 <input class = 'input-overlay' 
 	bind:this={TickerBox} 
 	bind:value={TickerBoxValue} 

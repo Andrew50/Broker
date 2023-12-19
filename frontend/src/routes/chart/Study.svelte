@@ -20,12 +20,6 @@
         annotation = ''
     }
 
-    function checkActiveElement() {
-    const activeElement = document.activeElement;
-        console.log("TagName:", activeElement.tagName);
-        console.log("Type:", activeElement.type);
-}
-
 </script>
 
 <div class="popout-menu"  style="min-height: {innerHeight}px;" class:visible={visible}>
@@ -43,7 +37,7 @@
         </div>
 
         <div>
-        <textarea bind:value={annotation} class="large-textarea" placeholder="Enter text here" on:focus = {checkActiveElement}></textarea>
+        <textarea bind:value={annotation} class="large-textarea" placeholder="Enter text here" ></textarea>
         </div>
         <div>
         <button on:click={next}>Next</button>
