@@ -10,6 +10,7 @@
 	import { onMount } from 'svelte';
 	import {chart} from './chart.js';
 	import {chart_data, backend_request, data_request} from '../store.js';
+    import Account from './Account.svelte';
 
 	let innerWidth;
     let innerHeight;
@@ -35,14 +36,16 @@
 		sport: 'red'
 	}
 	}
-
+	let Chart
 	onMount(() => {
-    const Chart = new chart(
+    Chart = new chart(
       chartContainer,
       chart_data,
       options
     );
+	chart_data.subscribe((value) => {Chart.updateData(value)});
 	});
+
 	function resizeInputOnDynamicContent(node) {
 		
 		const measuringElement = document.createElement('div');

@@ -1,7 +1,5 @@
 export class chart {
     constructor(container, chart_data, options) {
-        this.data = chart_data;
-
         this.axesLables = options.axesLabels;
         this.styles = options.styles;
 
@@ -14,11 +12,26 @@ export class chart {
         this.ctx = this.canvas.getContext("2d");
         this.margin = options.size * .1;
 
-        this.pixelBounds = this.#getPixelBounds();
-        this.dataBounds = this.#getDataBounds();
+       // this.#draw();
 
-        
+    }
 
+    updateData(chart_data) {
+       this.#convertData(chart_data);
+    }
+
+    #convertData(chart_data) {
+        if (Array.isArray(chart_data)) {
+            const flattenedData = chart_data.map(obj => Object.values(obj));
+            this.data = flattenedData;
+            console.log(this.data);
+            this.pixelBounds = this.#getPixelBounds();
+            this.dataBounds = this.#getDataBounds();
+            
+        } else {
+            console.error('data is not an array');
+        }
+      
     }
 
     #getPixelBounds() {
@@ -34,19 +47,25 @@ export class chart {
     }
 
     #getDataBounds() {
-        const { data } = this;
-        const x = data.map(s => s.point[0]);
-        const y = data.map(s => s.point[1]);
-        const minX = math.min(...x);
-        const maxX = math.max(...x);
-        const minY = math.min(...y);
-        const maxY = math.max(...y);
+        const dates = this.data.map(dataPoint => new Date(dataPoint[0]));
+        const high = this.data.map(dataPoint => dataPoint[3]);
+        const low = this.data.map(dataPoint => dataPoint[4]);
+
+        // Find the minimum and maximum dates
+        const minX = new Date(Math.min(...dates.map(date => date.getTime())));
+        const maxX = new Date(Math.max(...dates.map(date => date.getTime())));
+        const maxY = Math.max(...high);
+        const minY = Math.min(...low);
+            
+
         const bounds = {
             left: minX,
             right: maxX,
             top: maxY,
             bottom: minY
         }
+        console.log(bounds);
+
         return bounds;
     }
 
@@ -62,5 +81,5 @@ export class chart {
 
         }
     }
-
+    
 }
