@@ -1,4 +1,4 @@
-name: Example Workflow
+name: Deployment
 
 on:
   push:
@@ -6,9 +6,22 @@ on:
       - under_dev #dont run
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Echo a message
-        run: echo Hello, world!
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build Docker Image
+        run: |
+          docker build -t myapp:${{ github.sha }} .
+
+      - name: Push to Docker Hub
+        run: |
+          echo ${{ secrets.DOCKER_HUB_PASSWORD }} | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
+          docker push myapp:${{ github.sha }}
+
+      - name: Update Kubernetes Deployment
+        run: |
+          kubectl set image deployment/myapp-deployment myapp-container=myapp:${{ github.sha }}
+          kubectl rollout status deployment/myapp-deployment

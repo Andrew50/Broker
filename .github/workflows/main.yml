@@ -3,9 +3,7 @@ name: Python Unit Tests on Merge
 on:
   pull_request:
     branches:
-      - Beta
-      - Production
-
+      - none
 jobs:
   run-tests:
     runs-on: ubuntu-latest
