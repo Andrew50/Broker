@@ -1,4 +1,4 @@
-import 
+import { math } from './math.js';
 
 export class chart {
     constructor(container, chart_data, options) {
@@ -12,7 +12,7 @@ export class chart {
         container.appendChild(this.canvas);
 
         this.ctx = this.canvas.getContext("2d");
-        this.margin = options.size * .1;
+        this.margin = 30;
 
        // this.#draw();
 
@@ -25,10 +25,11 @@ export class chart {
     #convertData(chart_data) {
         if (Array.isArray(chart_data)) {
             const flattenedData = chart_data.map(obj => Object.values(obj));
-            this.data = flattenedData;
+            this.data = flattenedData.slice(0, 75);
             console.log(this.data);
             this.pixelBounds = this.#getPixelBounds();
             this.dataBounds = this.#getDataBounds();
+            this.#draw();
             
         } else {
             console.error('data is not an array');
@@ -49,13 +50,15 @@ export class chart {
     }
 
     #getDataBounds() {
-        const dates = this.data.map(dataPoint => new Date(dataPoint[0]));
+        //const dates = this.data.map(dataPoint => new Date(dataPoint[0]));
         const high = this.data.map(dataPoint => dataPoint[3]);
         const low = this.data.map(dataPoint => dataPoint[4]);
 
         // Find the minimum and maximum dates
-        const minX = new Date(Math.min(...dates.map(date => date.getTime())));
-        const maxX = new Date(Math.max(...dates.map(date => date.getTime())));
+        //const minX = new Date(Math.min(...dates.map(date => date.getTime())));
+        //const maxX = new Date(Math.max(...dates.map(date => date.getTime())));
+        const minX = 0;
+        const maxX = this.data.length;
         const maxY = Math.max(...high);
         const minY = Math.min(...low);
             
@@ -66,7 +69,6 @@ export class chart {
             top: maxY,
             bottom: minY
         }
-        console.log(bounds);
 
         return bounds;
     }
@@ -75,13 +77,39 @@ export class chart {
         const { ctx, canvas } = this;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         this.#drawData();
+        console.log(this.pixelBounds);
+        console.log(this.dataBounds);
     }
 
-    #drawData() {
-        const { ctx, data, dataBounds, pixleBounds } = this;
-        for (const candleStick of data) {
-
+   #drawData() {
+       const { ctx, data, dataBounds, pixelBounds } = this;
+       let i = 0;
+       const width = (Math.abs(pixelBounds.left - pixelBounds.right)/data.length)
+       for (const candleStick of data) {
+            const pixelLoc = [
+                math.remap(dataBounds.left, dataBounds.right, pixelBounds.left, pixelBounds.right, i),
+                math.remap(dataBounds.top, dataBounds.bottom, pixelBounds.top, pixelBounds.bottom, candleStick[1]),
+                math.remap(dataBounds.top, dataBounds.bottom, pixelBounds.top, pixelBounds.bottom, candleStick[2]),
+                math.remap(dataBounds.top, dataBounds.bottom, pixelBounds.top, pixelBounds.bottom, candleStick[3]),
+                math.remap(dataBounds.top, dataBounds.bottom, pixelBounds.top, pixelBounds.bottom, candleStick[4])
+           ];
+           i++;
+           this.#drawCandle(ctx,pixelLoc,width - 1);
         }
+   }
+
+    #drawCandle(ctx, pixelLoc, width) {
+        if (pixelLoc[1] < pixelLoc[4]) {
+            ctx.fillStyle = 'green';
+        }
+        else {
+            ctx.fillStyle = 'red';
+        }
+        //console.log(pixelLoc);  
+        ctx.fillRect(pixelLoc[0] - width/2, (pixelLoc[1] + pixelLoc[4]) / 2, width, Math.abs(pixelLoc[1] - pixelLoc[4]));
+        ctx.fillRect(pixelLoc[0] - width/6, (pixelLoc[2] + pixelLoc[3]) / 2, width/3, Math.abs(pixelLoc[2] - pixelLoc[3]));
+        //ctx.fillRect(100, 100, 20, 20);
     }
-    
+   
+   
 }
