@@ -17,22 +17,27 @@ spec:
           image: your-frontend-image:latest
           ports:
             - containerPort: 80
-          volumeMounts:
-            - name: frontend-files
-              mountPath: /app
-      volumes:
-        - name: frontend-files
-          configMap:
-            name: frontend-files-configmap
 ---
 apiVersion: v1
-kind: Service
+kind: PersistentVolume
 metadata:
-  name: frontend-service
+  name: frontend-pv
 spec:
-  selector:
-    app: frontend
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "home/aj/dev/Broker/services/frontend/build"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: frontend-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
