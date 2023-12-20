@@ -25,7 +25,7 @@ export class chart {
     #convertData(chart_data) {
         if (Array.isArray(chart_data)) {
             const flattenedData = chart_data.map(obj => Object.values(obj));
-            this.data = flattenedData.slice(0, 75);
+            this.data = flattenedData;
             console.log(this.data);
             this.pixelBounds = this.#getPixelBounds();
             this.dataBounds = this.#getDataBounds();
@@ -40,8 +40,8 @@ export class chart {
     #getPixelBounds() {
         const { canvas, margin } = this;
         const bounds = {
-            left: canvas.width - margin,
-            right: margin,
+            right: canvas.width - margin,
+            left: margin,
             top: margin,
             bottom: canvas.height - margin
 
