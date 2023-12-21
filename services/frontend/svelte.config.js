@@ -1,15 +1,15 @@
-import staticAdapter from '@sveltejs/adapter-static';
+import nodeAdapter from '@sveltejs/adapter-node';
 
-/** @type {import('@sveltejs/kit').Config} */
 const config = {
 	kit: {
-		adapter: staticAdapter({
+		// Use the Node adapter
+		adapter: nodeAdapter({
 			// default options are shown
-			pages: 'build',
-			assets: 'build',
-			fallback: null
+			//out: 'build',
+			//precompress: false,
+			//envPrefix: ''
 		}),
-		// ...
+		// ...other configurations
 	}
 };
 

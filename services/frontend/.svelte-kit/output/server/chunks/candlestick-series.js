@@ -1,4 +1,4 @@
-import { s as setContext, g as getContext, c as create_ssr_component, h as createEventDispatcher, i as spread, j as escape_object, k as escape_attribute_value } from "./index2.js";
+import { s as setContext, g as getContext, c as create_ssr_component, h as createEventDispatcher, i as spread, j as escape_object, k as escape_attribute_value } from "./ssr.js";
 function context(value) {
   if (typeof value !== "undefined") {
     setContext("lightweight-chart-context", value);
@@ -72,11 +72,7 @@ const Chart = create_ssr_component(($$result, $$props, $$bindings, slots) => {
       delete attrs.ref;
     }
   }
-  return `
-
-
-
-<div${spread(
+  return `  <div${spread(
     [
       escape_object(attrs),
       {
@@ -177,10 +173,7 @@ const Candlestick_series = create_ssr_component(($$result, $$props, $$bindings, 
     $$bindings.reactive(reactive);
   if ($$props.markers === void 0 && $$bindings.markers && markers !== void 0)
     $$bindings.markers(markers);
-  return `
-
-
-${``}`;
+  return `  ${``}`;
 });
 const CandlestickSeries = Candlestick_series;
 export {
