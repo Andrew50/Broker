@@ -4,7 +4,7 @@ metadata:
   name: app-ingress
 spec:
   rules:
-    - host: mywebsite.local
+    - host: broker.local
       http:
         paths:
           - pathType: Prefix
@@ -34,7 +34,7 @@ spec:
               service:
                 name: frontend-service
                 port:
-                  number: 3000
+                  number: 80
 
 ---
 apiVersion: v1
@@ -47,7 +47,7 @@ spec:
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 80
+      targetPort: 3000
 
 ---
 apiVersion: v1
