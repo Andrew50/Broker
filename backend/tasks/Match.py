@@ -95,5 +95,5 @@ if __name__ == '__main__':
     from Data import data
     asyncio.run(data.init_async_conn())
     print('test')
-    print(get(['SMCI','1d','2023-12-05', 10],data))
+    print(get(['JBL','1d','2023-10-02', 10],data))
     print('test')
