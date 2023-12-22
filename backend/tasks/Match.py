@@ -81,11 +81,6 @@ def get(args,data,user_id = None):
     ds = data.get_ds(tf=tf,form='match')
     # Getting the y timeseries
     y = asyncio.run(data.get_df('match',ticker,tf,dt, bars=np_bars))[:, 2:-1]
-    # Experimental y value code
-    '''mean = np.mean(y, axis=0)
-    std = np.std(y, axis=0)
-    y = (y - mean)/ std'''
-    ## ends here 
     match_data = Match.compute(ds,y, np_bars)
     for i in range(len(match_data)): match_data[i][1] = match_data[i][1][:10]
     print(datetime.datetime.now() - start)
