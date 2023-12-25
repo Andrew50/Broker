@@ -9,6 +9,7 @@
 	import './style.css';
 	import { onMount } from 'svelte';
 	import {chart} from './chart.js';
+	import {chart2} from './chart2.js';
 	import {chart_data, backend_request, data_request} from '../store.js';
     import Account from './Account.svelte';
 
@@ -30,15 +31,12 @@
 	const options = {
 		widthOffset: 500,
 		heightOffset: 20 ,
-		axesLabels: ["kilometres", 'price'],
-		styles: {
-		basic: 'gray',
-		sport: 'red'
-	}
+		margin: 30,
+		candleWidth: 10
 	}
 	let Chart
 	onMount(() => {
-    Chart = new chart(
+    Chart = new chart2(
       chartContainer,
       chart_data,
       options
@@ -106,18 +104,19 @@
 			}
 			TickerBox.focus();
 	}
-
+	 
 
 </script>
 
 <div bind:this={chartContainer} id="chartContainer" ></div>
+
 <input class = 'input-overlay' 
 	bind:this={TickerBox} 
 	bind:value={TickerBoxValue} 
 	style ="display: {TickerBoxVisible};"
     use:resizeInputOnDynamicContent
 />
-    
+		
 <style>
 	.input-overlay{
         position: absolute;
