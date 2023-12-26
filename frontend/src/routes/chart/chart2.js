@@ -11,6 +11,7 @@ export class chart2 {
         this.margin = options.margin;
         this.prev;
         this.a = 0;
+        this.wickWidth = 2;
         this.isDragging = false;
         this.#addEventListener();
         // this.#draw();
@@ -55,6 +56,20 @@ export class chart2 {
         this.canvas.onmouseup = () => {
             this.isDragging = false;
         }
+        this.canvas.onwheel = (evt) => {
+            this.candleWidth = this.candleWidth + evt.deltaY/10;
+            if (this.candleWidth < 1) {
+                this.candleWidth = 1;
+                this.wickWidth = 1;
+            }
+            else if (this.candleWidth > 40) {
+                this.candleWidth = 40;
+            }
+            else {
+                this.wickWidth = 2;
+            }
+            this.#draw();
+        }
     }
 
     #convertData(chart_data) {
@@ -77,7 +92,7 @@ export class chart2 {
     #getPixelBounds() {
         const { canvas, margin } = this;
         const bounds = {
-            right: canvas.width - margin,
+            right: canvas.width + this.candleWidth,
             left: 0,
             top: margin,
             bottom: canvas.height - margin,
@@ -153,7 +168,7 @@ export class chart2 {
         //const xOffset = 0;
         console.log(xOffset);
         ctx.fillRect(pixelLoc[0] - xOffset, ((pixelLoc[1] + pixelLoc[4]) - Math.abs(pixelLoc[1] - pixelLoc[4])) / 2, this.candleWidth, Math.abs(pixelLoc[1] - pixelLoc[4]));
-        ctx.fillRect(pixelLoc[0] - xOffset + this.candleWidth / 2 - 1 , ((pixelLoc[2] + pixelLoc[3]) - Math.abs(pixelLoc[2] - pixelLoc[3])) / 2, 2, Math.abs(pixelLoc[2] - pixelLoc[3]));
+        ctx.fillRect(pixelLoc[0] - xOffset + this.candleWidth / 2 - 1 , ((pixelLoc[2] + pixelLoc[3]) - Math.abs(pixelLoc[2] - pixelLoc[3])) / 2, this.wickWidth, Math.abs(pixelLoc[2] - pixelLoc[3]));
         
         
     }
