@@ -32,7 +32,8 @@ function getAuthHeaders() {
 
 export async function public_request(bind_variable, func, ...args) {
 
-    const url = `http://localhost:5057/public`;
+    //const url = `http://localhost:5057/public`;
+    const url = `http://broker.local:80/public`;
     const payload = {
         function: func,
         arguments: args
@@ -72,7 +73,8 @@ export async function public_request(bind_variable, func, ...args) {
 }
 
 export async function data_request(bind_variable, func, ...args) {
-    const url = `http://localhost:5057/data`;
+    //const url = `http://localhost:5057/data`;
+    const url = `http://broker.local:80/data`;
     const payload = {
         function: func,
         arguments: args
@@ -84,7 +86,8 @@ export async function data_request(bind_variable, func, ...args) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                ...getAuthHeaders() },
+                ...getAuthHeaders()
+            },
             body: JSON.stringify(payload) // Send the payload as a stringified JSON in the body
         });
 
@@ -94,7 +97,7 @@ export async function data_request(bind_variable, func, ...args) {
         let result = await response.json();
         try {
             result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
-        } catch (error){}
+        } catch (error) { }
         if (bind_variable == null) {
             return result
         }
@@ -102,17 +105,18 @@ export async function data_request(bind_variable, func, ...args) {
             bind_variable.set(result);
         }
 
-        
+
     }
-     catch (error) {
-    console.error('Error during backend request:', error);
-    bind_variable.set(null);
-}
+    catch (error) {
+        console.error('Error during backend request:', error);
+        bind_variable.set(null);
+    }
 }
 
 export async function backend_request(bind_variable, func, ...args) {
 
-    const url = `http://localhost:5057/backend`;
+    //const url = `http://localhost:5057/backend`;
+    const url = `http://broker.local:80/backend`;
     const payload = {
         function: func,
         arguments: args
@@ -120,14 +124,14 @@ export async function backend_request(bind_variable, func, ...args) {
     console.log('Request sent to:', url, 'func:', func, 'args:', args);
 
     try {
-        
+
 
         const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 ...getAuthHeaders()
-},
+            },
             body: JSON.stringify(payload) // Send the payload as a stringified JSON in the body
         });
 
