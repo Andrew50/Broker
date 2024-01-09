@@ -14,39 +14,47 @@ import mysql.connector
 
 class Database:
 
-	def __init__(self):
-		self.inside_container = os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False)
-		try:
-			if self.inside_container: #inside container
-				self.r = redis.Redis(host='redis', port=6379)
-				while True: #wait for redis to be ready
-					try:
-						if not self.r.info()['loading'] == 0: raise Exception('gosh')
-						self.r.ping()
-						break
-					except:
-						print('waiting for redis',flush=True)
-						time.sleep(1)
-				while True:
-					try:
-						self._conn = mysql.connector.connect(host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
-						break
-					except mysql.connector.errors.DatabaseError as e:
-						if (e.errno != errorcode.ER_ACCESS_DENIED_ERROR
-						and e.errno != errorcode.ER_BAD_DB_ERROR):
-							print('waiting for mysql',flush=True)
-							time.sleep(1)
-						else:
-							raise Exception(e)
-			else:
-				self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g',database='broker')
-				self.r = redis.Redis(host='127.0.0.1', port=6379)
+
+
+	def __init__ (self):
+
+
+
+
+
+	# def __init__(self):
+	# 	self.inside_container = os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False)
+	# 	try:
+	# 		if self.inside_container: #inside container
+	# 			self.r = redis.Redis(host='redis', port=6379)
+	# 			while True: #wait for redis to be ready
+	# 				try:
+	# 					if not self.r.info()['loading'] == 0: raise Exception('gosh')
+	# 					self.r.ping()
+	# 					break
+	# 				except:
+	# 					print('waiting for redis',flush=True)
+	# 					time.sleep(1)
+	# 			while True:
+	# 				try:
+	# 					self._conn = mysql.connector.connect(host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
+	# 					break
+	# 				except mysql.connector.errors.DatabaseError as e:
+	# 					if (e.errno != errorcode.ER_ACCESS_DENIED_ERROR
+	# 					and e.errno != errorcode.ER_BAD_DB_ERROR):
+	# 						print('waiting for mysql',flush=True)
+	# 						time.sleep(1)
+	# 					else:
+	# 						raise Exception(e)
+	# 		else:
+	# 			self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g',database='broker')
+	# 			self.r = redis.Redis(host='127.0.0.1', port=6379)
 		
 
-		except:
-			self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g')
-			self.r = redis.Redis(host='127.0.0.1', port=6379)
-			self.setup()
+	# 	except:
+	# 		self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g')
+	# 		self.r = redis.Redis(host='127.0.0.1', port=6379)
+	# 		self.setup()
 		
 
 	@staticmethod
@@ -260,8 +268,7 @@ class Database:
 		self._conn.close()
 
 	def setup(self):
-		print('overriding db in 30 seconds')
-		time.sleep(30)
+
 		with self._conn.cursor(buffered=True) as cursor:
 			cursor.execute("CREATE DATABASE IF NOT EXISTS broker DEFAULT CHARACTER SET 'utf8';")
 			self._conn.commit()
@@ -348,31 +355,7 @@ class Database:
 			commands = [cmd.strip() for cmd in sql_commands.split(';') if cmd.strip()]
 			for command in commands:cursor.execute(command)
 			
-
-
-
-		# 	df = pd.read_feather("C:/dev/Broker/old/sync/files/full_scan.feather")
-		# 	df = df['ticker'].tolist()
-		# 	df = [[x] for x in df]
-		# 	insert_query = "INSERT INTO full_ticker_list VALUES (%s)"
-		# 	cursor.executemany(insert_query, df)
-		# 	self._conn.commit()
-		# 	if True:
-				
-		# 		for tf in ['1d']:
-		# 			args = [[ticker, tf, 'C:/dev/broker/old/' + tf + '/' + ticker + '.feather'] for ticker in self.get_ticker_list()]
-		# 			for ticker, tf, path in tqdm(args,desc='Transfering Dataframes'):
-		# 				try:
-		# 					df = pd.read_feather(path)
-		# 					df['datetime']= (df['datetime'].astype(np.int64) // 10**9)
-		# 					df = df.values.tolist()
-		# 					rows = [[ticker, tf] + row for row in df]
-		# 					insert_query = "INSERT INTO dfs VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-		# 					cursor.executemany(insert_query, rows)
-		# 					self._conn.commit()
-		# 				except Exception as e: #if d doesnt exist or theres no data then this gets hit every loop
-		# 					print(e)
-		# self.update(num = int(input('num tickers to do')))
+			self._conn.commit()
 		
 db = Database()
 
