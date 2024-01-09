@@ -1,1 +1,0 @@
-0 16 * * * python /usr/src/app/Database.py >> /var/log/cron.log 2>&1

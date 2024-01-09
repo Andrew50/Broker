@@ -1,28 +1,15 @@
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: transfer
-spec:
-  template:
-    spec:
-      containers:
-        - name: python-container
-          image: your-repo/python-script:latest
-          command: ["python", "/path/to/your/script.py"]
-      restartPolicy: Never
----
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
   name: update
 spec:
-  schedule: "0 0 * * *" # This runs at midnight every night
+  schedule: "0 22 * * *"
   jobTemplate:
     spec:
       template:
         spec:
           containers:
-            - name: python-container
-              image: your-repo/python-script:latest
-              command: ["python", "/path/to/your/nightly_script.py"]
+            - name: app
+              image: billin19/jobs:latest
+              command: ["python", "app/database.py"]
           restartPolicy: OnFailure

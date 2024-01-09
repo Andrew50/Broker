@@ -1,0 +1,20 @@
+#!/bin/bash
+
+cd aj/home/dev/Broker
+git fetch
+if [ "$(git rev-parse HEAD)" != "$(git rev-parse @{u})" ]; then
+  git pull
+  python deployment/transfer.py
+  docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+  docker build -t billin19/frontend:latest /services/frontend
+  docker build -t billin19/backend:latest /services/backend
+  docker build -t billin19/worker:latest /services/worker
+  docker push billin19/frontend:latest
+  docker push billin19/backend:latest
+  docker push billin19/worker:latest
+  kubectl apply -f deployment/prod
+  kubectl rollout restart deployment/frontend
+  kubectl rollout restart deployment/backend
+  kubectl rollout restart deployment/worker
+fi
+  
