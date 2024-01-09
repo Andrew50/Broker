@@ -18,4 +18,20 @@ jobs:
         python-version: '3.10'
 
     - name: Run test script
-      run: python production/unittest.py
+      run: python deployment/unittest.py
+
+    - name: Rebuild and Push Docker images
+      run: |
+        docker build -t billin19/frontend:latest /services/frontend
+        docker build -t billin19/backend:latest /services/backend
+        docker build -t billin19/worker:latest /services/worker
+        docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+        docker push billin19/frontend:latest
+        docker push billin19/backend:latest
+        docker push billin19/worker:latest
+
+    - name: Apply Kubernetes YAMLs
+      run: kubectl apply -f deployment/prod
+
+    - name: Run transfer script
+      run: python deployment/transfer.py
