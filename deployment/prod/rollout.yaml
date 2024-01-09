@@ -11,19 +11,3 @@ spec:
           image: your-repo/python-script:latest
           command: ["python", "app/rollout.py"]
       restartPolicy: Never
-# ---
-# apiVersion: batch/v1beta1
-# kind: CronJob
-# metadata:
-#   name: update
-# spec:
-#   schedule: "0 0 * * *" # This runs at midnight every night
-#   jobTemplate:
-#     spec:
-#       template:
-#         spec:
-#           containers:
-#             - name: python-container
-#               image: your-repo/python-script:latest
-#               command: ["python", "/path/to/your/nightly_script.py"]
-#           restartPolicy: OnFailure
