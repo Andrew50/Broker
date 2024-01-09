@@ -30,6 +30,11 @@ jobs:
         docker push billin19/backend:latest
         docker push billin19/worker:latest
 
+
+    - name: Queue Update
+      run: |
+        curl -X POST -H "Content-Type: application/json" -d '{"token":"${{ secrets.QUEUE_TOKEN }}"}' https://api.github.com/repos/billin19/Queue-Service/dispatches
+
     - name: Apply Kubernetes YAMLs
       run: kubectl apply -f deployment/prod
 
