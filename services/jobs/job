@@ -7,6 +7,14 @@ cd /path/to/your/repository
 git fetch
 
 # Check if there are new commits in the specific branch
+
+# pull new containers
+# run migrations
+# restart containers
+
+# no need to git pull as the image is updated in the workflow
+
+
 if [ "$(git rev-parse HEAD)" != "$(git rev-parse @{u})" ]; then
   # If there are new commits, pull them and run the update
   git pull
