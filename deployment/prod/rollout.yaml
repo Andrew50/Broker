@@ -1,5 +1,4 @@
 apiVersion: batch/v1
-on: [push]
 kind: Job
 metadata:
   name: rollout
@@ -8,6 +7,6 @@ spec:
     spec:
       containers:
         - name: rollout
-          image: your-repo/python-script:latest
+          image: localhost:5000/jobs:latest
           command: ["python", "app/rollout.py"]
       restartPolicy: Never
