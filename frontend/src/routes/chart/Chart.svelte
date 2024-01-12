@@ -42,6 +42,8 @@
       options
     );
 	chart_data.subscribe((value) => {Chart.updateData(value)});
+	//innerWidth.subscribe((value) => {Chart.updateInnerWidth(value)});
+	//innerHeight.subscribe((value) => {Chart.updateInnerHeight(value)});
 	});
 
 	function resizeInputOnDynamicContent(node) {

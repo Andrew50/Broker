@@ -14,11 +14,21 @@ export class chart2 {
         this.wickWidth = 2;
         this.isDragging = false;
         this.#addEventListener();
+
         // this.#draw();
     }
 
     updateData(chart_data) {
         this.#convertData(chart_data);
+    }
+    updateInnerWidth(innerWidth) {
+        this.canvas.width = innerWidth - options.widthOffset;
+        console.log(innerWidth);
+        this.#draw();
+    }
+    updateInnerHeight(innerHeight) {
+        this.canvas.height = innerHeight - options.heightOffset;
+        this.#draw();
     }
 
     #addEventListener() {
@@ -68,6 +78,7 @@ export class chart2 {
             else {
                 this.wickWidth = 2;
             }
+            
             this.#draw();
         }
     }
@@ -130,8 +141,8 @@ export class chart2 {
         //clear area
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const dataSliced = this.data.slice(this.data.length + Math.ceil(this.a) - Math.ceil(canvas.width / this.candleWidth), this.data.length + Math.ceil(this.a));
-        console.log(Math.ceil(this.a) - Math.ceil(canvas.width / this.candleWidth));
-        console.log(Math.ceil(this.a));
+        //console.log(Math.ceil(this.a) - Math.ceil(canvas.width / this.candleWidth));
+        //console.log(Math.ceil(this.a));
         //const dataSliced = this.data.slice(0,50);
 
         // get bounds
@@ -146,6 +157,7 @@ export class chart2 {
             this.#drawData(i , candleStick);
             i++;
         }
+        this.#drawAxes();
     }
 
     #drawData(i,candleStick){
@@ -163,13 +175,40 @@ export class chart2 {
         else {
             ctx.fillStyle = 'green';
         }
-        //console.log(pixelLoc);
+        
         const xOffset = Math.abs(this.a - Math.floor(this.a)) * this.candleWidth;
         //const xOffset = 0;
-        console.log(xOffset);
+        
         ctx.fillRect(pixelLoc[0] - xOffset, ((pixelLoc[1] + pixelLoc[4]) - Math.abs(pixelLoc[1] - pixelLoc[4])) / 2, this.candleWidth, Math.abs(pixelLoc[1] - pixelLoc[4]));
         ctx.fillRect(pixelLoc[0] - xOffset + this.candleWidth / 2 - 1 , ((pixelLoc[2] + pixelLoc[3]) - Math.abs(pixelLoc[2] - pixelLoc[3])) / 2, this.wickWidth, Math.abs(pixelLoc[2] - pixelLoc[3]));
         
         
     }
+
+    #drawAxes() {
+        this.#drawText('X Axis', [this.canvas.width / 2, this.canvas.height - this.margin / 2], this.margin);
+        this.ctx.clearRect(this.canvas.width - this.margin, 0, this.margin, this.canvas.height);
+        //console.log(Math.ceil(this.dataBounds.bottom));
+        //console.log(Math.floor(this.dataBounds.top));
+        //console.log(Math.floor((this.dataBounds.top - this.dataBounds.bottom) / 10));
+        for (let i = Math.ceil(this.dataBounds.bottom); i < Math.floor(this.dataBounds.top); i += Math.floor((this.dataBounds.top - this.dataBounds.bottom) / 10)) {
+            const pixelLoc = math.remap(this.dataBounds.top, this.dataBounds.bottom, this.pixelBounds.top, this.pixelBounds.bottom, i);
+            this.#drawText( i , [this.canvas.width - 2, pixelLoc], this.margin * 0.5);
+        }
+        
+
+    }
+
+    #drawText(text,loc,size) {
+        const ctx = this.ctx
+
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.font = "bold " + size + "px Courier";
+        ctx.fillStyle = 'grey';
+        ctx.fillText(text, ...loc);
+    
+    }
+
+    
 }
