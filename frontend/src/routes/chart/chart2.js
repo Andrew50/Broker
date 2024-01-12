@@ -55,11 +55,14 @@ export class chart2 {
             this.prev = event.clientX;
         }
         this.canvas.onmousemove = (evt) => {
-            if (this.isDragging && (this.a + this.data.length + ((this.prev - event.clientX) / this.candleWidth)) <= this.data.length) {
+            if (this.isDragging) {
                 //console.log(this.candleWidth);
-                this.a = this.a + ((this.prev - event.clientX) / this.candleWidth);
+                if ((this.a + this.data.length + ((this.prev - event.clientX) / this.candleWidth)) < this.data.length) {
+                    this.a = this.a + ((this.prev - event.clientX) / this.candleWidth);
+                }
+                
                 this.prev = event.clientX;
-                this.#draw();
+                this.#draw()
                 //console.log("Mouse at: X=" + event.clientX + ", Y=" + event.clientY);
             }
         }
@@ -94,6 +97,7 @@ export class chart2 {
             //this.dataBounds = this.#getDataBounds();
                 
             this.#draw();
+            console.log(this.data[this.data.length - 1 ])
 
         } else {
             console.error('data is not an array');
@@ -104,7 +108,7 @@ export class chart2 {
     #getPixelBounds() {
         const { canvas, margin } = this;
         const bounds = {
-            right: canvas.width - this.candleWidth,
+            right: canvas.width - margin + this.candleWidth,
             left: 0,
             top: 0,
             bottom: canvas.height - margin,
@@ -141,7 +145,7 @@ export class chart2 {
         const { ctx, canvas } = this;
         //clear area
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const dataSliced = this.data.slice(this.data.length + Math.ceil(this.a) - Math.ceil(canvas.width / this.candleWidth), this.data.length + Math.ceil(this.a));
+        const dataSliced = this.data.slice(this.data.length + Math.ceil(this.a) - Math.floor(canvas.width / this.candleWidth), this.data.length + Math.ceil(this.a));
         //console.log(Math.ceil(this.a) - Math.ceil(canvas.width / this.candleWidth));
         //console.log(Math.ceil(this.a));
         //const dataSliced = this.data.slice(0,50);
@@ -192,13 +196,13 @@ export class chart2 {
         //console.log(Math.ceil(this.dataBounds.bottom));
         //console.log(Math.floor(this.dataBounds.top));
         //console.log(Math.floor((this.dataBounds.top - this.dataBounds.bottom) / 10));
-        for (let i = Math.ceil(this.dataBounds.bottom); i < Math.floor(this.dataBounds.top); i += Math.floor((this.dataBounds.top - this.dataBounds.bottom) / 10)) {
+        for (let i = Math.ceil(this.dataBounds.bottom); i < Math.floor(this.dataBounds.top); i += Math.floor((this.dataBounds.top - this.dataBounds.bottom) / 20)) {
             const pixelLoc = math.remap(this.dataBounds.top, this.dataBounds.bottom, this.pixelBounds.top, this.pixelBounds.bottom, i);
             this.#drawText(i, [this.canvas.width - 2, pixelLoc], this.margin * 0.5);
             this.ctx.beginPath();
             this.ctx.strokeStyle = 'white';
             this.ctx.moveTo(this.pixelBounds.left, pixelLoc);
-            this.ctx.lineTo(this.pixelBounds.right - this.margin, pixelLoc);
+            this.ctx.lineTo(this.canvas.width - this.margin, pixelLoc);
             this.ctx.stroke();
         }
         
