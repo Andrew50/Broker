@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
         - name: backend
-          image: localhost:5000/backend:latest
+          image: billin19/backend:latest
           ports:
-            - containerPort: 80
+            - containerPort: 5057

@@ -10,6 +10,6 @@ spec:
         spec:
           containers:
             - name: jobs
-              image: localhost:5000/jobs:latest
-              command: ["python", "app/database.py"]
+              image: billin19/jobs:latest
+              command: ["python", "Database.py"]
           restartPolicy: OnFailure

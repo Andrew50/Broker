@@ -22,7 +22,7 @@ spec:
               mountPath: /var/lib/mysql
           env:
             - name: MYSQL_ROOT_PASSWORD
-              value: mysecretpassword
+              value: 7+WCy76_2$%g
       volumes:
         - name: mysql-persistent-storage
           persistentVolumeClaim:
@@ -65,7 +65,7 @@ spec:
   volumeMode: Filesystem
   accessModes:
     - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
+  persistentVolumeReclaimPolicy: Delete
   storageClassName: local-storage
   local:
     path: /mnt/disks/ssd1

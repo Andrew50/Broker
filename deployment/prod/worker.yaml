@@ -13,4 +13,4 @@ spec:
     spec:
       containers:
         - name: worker
-          image: localhost:5000/worker:latest
+          image: billin19/worker:latest
