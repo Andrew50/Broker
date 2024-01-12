@@ -55,7 +55,7 @@ export class chart2 {
             this.prev = event.clientX;
         }
         this.canvas.onmousemove = (evt) => {
-            if (this.isDragging) {
+            if (this.isDragging && (this.a + this.data.length + ((this.prev - event.clientX) / this.candleWidth)) <= this.data.length) {
                 //console.log(this.candleWidth);
                 this.a = this.a + ((this.prev - event.clientX) / this.candleWidth);
                 this.prev = event.clientX;
@@ -92,6 +92,7 @@ export class chart2 {
             //console.log(this.data);
             //this.pixelBounds = this.#getPixelBounds();
             //this.dataBounds = this.#getDataBounds();
+                
             this.#draw();
 
         } else {
@@ -103,9 +104,9 @@ export class chart2 {
     #getPixelBounds() {
         const { canvas, margin } = this;
         const bounds = {
-            right: canvas.width + this.candleWidth,
+            right: canvas.width - this.candleWidth,
             left: 0,
-            top: margin,
+            top: 0,
             bottom: canvas.height - margin,
 
         }
@@ -193,7 +194,12 @@ export class chart2 {
         //console.log(Math.floor((this.dataBounds.top - this.dataBounds.bottom) / 10));
         for (let i = Math.ceil(this.dataBounds.bottom); i < Math.floor(this.dataBounds.top); i += Math.floor((this.dataBounds.top - this.dataBounds.bottom) / 10)) {
             const pixelLoc = math.remap(this.dataBounds.top, this.dataBounds.bottom, this.pixelBounds.top, this.pixelBounds.bottom, i);
-            this.#drawText( i , [this.canvas.width - 2, pixelLoc], this.margin * 0.5);
+            this.#drawText(i, [this.canvas.width - 2, pixelLoc], this.margin * 0.5);
+            this.ctx.beginPath();
+            this.ctx.strokeStyle = 'white';
+            this.ctx.moveTo(this.pixelBounds.left, pixelLoc);
+            this.ctx.lineTo(this.pixelBounds.right - this.margin, pixelLoc);
+            this.ctx.stroke();
         }
         
 
