@@ -7,7 +7,7 @@ cd /home/aj/dev/Broker
   docker login -u billin19 -p dckr_pat_BCGv9sTYRZlM59JitSidnJ2aKK8
   #docker build -t billin19/frontend:latest services/frontend
   #docker build -t billin19/backend:latest services/backend
-  #docker build -t billin19/worker:latest services/worker
+  #docker build -t billin19/worker:latest services/worker 
   docker build -t billin19/jobs:latest services/jobs
   #docker push billin19/frontend:latest
   #docker push billin19/backend:latest
