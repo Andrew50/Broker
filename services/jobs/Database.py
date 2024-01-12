@@ -16,38 +16,44 @@ class Database:
 
 
 	def __init__(self):
-		self.inside_container = os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False)
-		try:
-			if self.inside_container: #inside container
-				self.r = redis.Redis(host='redis', port=6379)
-				while True: #wait for redis to be ready
-					try:
-						if not self.r.info()['loading'] == 0: raise Exception('gosh')
-						self.r.ping()
-						break
-					except:
-						print('waiting for redis',flush=True)
-						time.sleep(1)
-				while True:
-					try:
-						self._conn = mysql.connector.connect(host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
-						break
-					except mysql.connector.errors.DatabaseError as e:
-						if (e.errno != errorcode.ER_ACCESS_DENIED_ERROR
-						and e.errno != errorcode.ER_BAD_DB_ERROR):
-							print('waiting for mysql',flush=True)
-							time.sleep(1)
-						else:
-							raise Exception(e)
-			else:
-				self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g',database='broker')
-				self.r = redis.Redis(host='127.0.0.1', port=6379)
+
+		redis_conn = redis.Redis(host='redis', port=6379)
+		mysql_conn = mysql.connector.connect(host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
+		self.r = redis_conn
+		self._conn = mysql_conn 
+
+		# self.inside_container = os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False)
+		# try:
+		# 	if self.inside_container: #inside container
+		# 		self.r = redis.Redis(host='redis', port=6379)
+		# 		while True: #wait for redis to be ready
+		# 			try:
+		# 				if not self.r.info()['loading'] == 0: raise Exception('gosh')
+		# 				self.r.ping()
+		# 				break
+		# 			except:
+		# 				print('waiting for redis',flush=True)
+		# 				time.sleep(1)
+		# 		while True:
+		# 			try:
+		# 				self._conn = mysql.connector.connect(host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
+		# 				break
+		# 			except mysql.connector.errors.DatabaseError as e:
+		# 				if (e.errno != errorcode.ER_ACCESS_DENIED_ERROR
+		# 				and e.errno != errorcode.ER_BAD_DB_ERROR):
+		# 					print('waiting for mysql',flush=True)
+		# 					time.sleep(1)
+		# 				else:
+		# 					raise Exception(e)
+		# 	else:
+		# 		self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g',database='broker')
+		# 		self.r = redis.Redis(host='127.0.0.1', port=6379)
 		
 
-		except:
-			self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g')
-			self.r = redis.Redis(host='127.0.0.1', port=6379)
-			self.setup()
+		# except:
+		# 	self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g')
+		# 	self.r = redis.Redis(host='127.0.0.1', port=6379)
+		# 	self.setup()
 		
 
 	@staticmethod
@@ -111,7 +117,8 @@ class Database:
 		#	print('assuming redis already populated',flush = True)
 			#return
 		global sql_pool
-		if self.inside_container:
+		#if self.inside_container:
+		if True:
 			sql_pool = mysql.connector.pooling.MySQLConnectionPool(pool_name="mypool", pool_size=12, host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
 		else:
 			sql_pool = mysql.connector.pooling.MySQLConnectionPool(pool_name="mypool", pool_size=12, host='localhost',port='3307',user='root',password='7+WCy76_2$%g',database='broker')
@@ -144,6 +151,8 @@ class Database:
 
 	####to remove once method for pulling current ticker list exists
 	def get_ticker_list(self, type='full'):
+		pd.read_csv('ticker_list.csv')
+		return pd.read_csv('ticker_list.csv')['ticker'].tolist()
 		cursor = self._conn.cursor(buffered=True)
 		if type == 'full':
 			query = "SELECT ticker FROM full_ticker_list"
@@ -155,6 +164,7 @@ class Database:
 		elif type == 'current':
 			raise Exception('need current func. has to pull from tv or something god')###################################################################################################################################
 	
+
 
 
 	def update(self,force_retrain=False,num = None):
@@ -353,7 +363,7 @@ class Database:
 db = Database()
 
 if __name__ == "__main__":
-	#db.update()
+	db.update()
 	db.init_cache()
 	db.close_connection()
 

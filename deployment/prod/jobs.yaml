@@ -1,4 +1,4 @@
-apiVersion: batch/v1beta1
+apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: jobs
@@ -11,5 +11,5 @@ spec:
           containers:
             - name: jobs
               image: billin19/jobs:latest
-              command: ["python", "app/database.py"]
+              command: ["python", "Database.py"]
           restartPolicy: OnFailure

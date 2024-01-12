@@ -16,4 +16,4 @@ ENV PYTHONPATH=/app
 #    && rm -rf /var/lib/apt/lists/*
 
 RUN python Setup.py build_ext --inplace
-CMD ["/bin/sh", "-c", "sleep 5 && rq worker --url redis://redis-service:6379 my_queue"]
+CMD ["/bin/sh", "-c", "sleep 5 && rq worker --url redis://redis:6379 my_queue"]
