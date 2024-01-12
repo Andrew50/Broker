@@ -2,19 +2,21 @@ import { bind } from 'svelte/internal';
 import { writable } from 'svelte/store';
 import { get } from 'svelte/store';
 
-export let screener_data = writable([])
+export let screener_data = writable([]);
 
-export let chart_data = writable([])
+export let chart_data = writable([]);
 
-export let match_data = writable([[], [], []])
+export let match_data = writable([[], [], []]);
 
-export let auth_data = writable(null)
+export let auth_data = writable(null);
 
-export let setups_list = writable([])
+export let setups_list = writable([]);
 
-export let watchlist_data = writable({})
+export let watchlist_data = writable({});
 
-export let settings = writable({})
+export let settings = writable({});
+
+export const focus = writable(null);
 
 const base_url = window.location.origin;
 
