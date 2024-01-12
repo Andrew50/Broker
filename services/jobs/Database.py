@@ -19,15 +19,8 @@ class Database:
 
 		redis_conn = redis.Redis(host='redis', port=6379)
 		mysql_conn = mysql.connector.connect(host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
-#redis_conn = mysql.connector.connect(host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
-
-
-
 		self.r = redis_conn
 		self._conn = mysql_conn 
-		
-
-
 
 		# self.inside_container = os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False)
 		# try:
