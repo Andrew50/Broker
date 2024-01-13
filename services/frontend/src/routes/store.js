@@ -18,8 +18,16 @@ export let settings = writable({});
 
 export const focus = writable(null);
 
-const base_url = window.location.origin;
 
+let base_url;
+
+if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost') {
+        base_url = 'http://localhost:5057';
+    } else {
+        base_url = window.location.origin;
+    }
+}
 function logout() {
     auth_data.set(null);
     goto('/auth');
@@ -35,8 +43,6 @@ function getAuthHeaders() {
 
 export async function public_request(bind_variable, func, ...args) {
 
-    //const url = `http://localhost:5057/public`;
-    //const url = `http://broker.local:80/public`;
     const url = `${base_url}/public`;
     const payload = {
         function: func,
@@ -77,8 +83,7 @@ export async function public_request(bind_variable, func, ...args) {
 }
 
 export async function data_request(bind_variable, func, ...args) {
-    //const url = `http://localhost:5057/data`;
-    //const url = `http://broker.local:80/data`;
+
     const url = `${base_url}/data`;
     const payload = {
         function: func,
@@ -120,8 +125,7 @@ export async function data_request(bind_variable, func, ...args) {
 
 export async function backend_request(bind_variable, func, ...args) {
 
-    //const url = `http://localhost:5057/backend`;
-    //const url = `http://broker.local:80/backend`;
+
     const url = `${base_url}/backend`;
     const payload = {
         function: func,

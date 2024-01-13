@@ -40,9 +40,10 @@ services:
         command: python Database.py
         networks:
             - compose_network
+        environment:
+            - DEV_ENV=True
 
     mysql:
-        container_name: mysql
         image: mysql:latest
         environment:
             MYSQL_ROOT_PASSWORD: 7+WCy76_2$%g
