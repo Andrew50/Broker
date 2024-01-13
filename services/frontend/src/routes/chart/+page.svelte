@@ -12,15 +12,16 @@
     import { goto } from '$app/navigation';
     import { get } from 'svelte/store';
     import { browser } from '$app/environment';
+    import './style.css';
 
     let active_menu = '';
 
     function toggle_menu(menuName) {
-    if (active_menu == menuName) {
-        active_menu = ''; // If the same menu is clicked again, close it
-    } else {
-        active_menu = menuName; // Open the clicked menu and store its name as the active one
-    }
+        if (active_menu == menuName) {
+            active_menu = ''; // If the same menu is clicked again, close it
+        } else {
+            active_menu = menuName; // Open the clicked menu and store its name as the active one
+        }
     console.log(active_menu)
     }
 
@@ -70,36 +71,3 @@
 <Chart/>
 
 
-<style>
-    .button-container {
-        position: fixed;
-        right: 20px;
-        top: 20px;
-    }
-
-    .button {
-        background-color: #007bff; /* Blue color, consistent with theme */
-        color: white;
-        border: none;
-        padding: 10px 10px;
-        margin-bottom: 7px;
-        cursor: pointer;
-        border-radius: 5px;
-        font-size: 10px;
-        transition: background-color 0.3s;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .button:hover {
-        background-color: #0056b3; /* Darker shade for hover effect */
-    }
-    .icon{
-        width:30px;
-        height:30px;
-    }
-  
-
-</style>

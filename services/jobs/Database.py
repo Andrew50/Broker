@@ -7,56 +7,67 @@ from mysql.connector import errorcode
 
 import multiprocessing
 import redis
+import datetime
 import mysql.connector
-
-
-
 
 class Database:
 
-
-	def __init__(self):
-
+	def run():
 		redis_conn = redis.Redis(host='redis', port=6379)
-		mysql_conn = mysql.connector.connect(host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
-		self.r = redis_conn
-		self._conn = mysql_conn 
+		mysql_conn = mysql.connector.connect(host='mysql', port='3306', user='root', password='7+WCy76_2$%g')
 
-		# self.inside_container = os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False)
-		# try:
-		# 	if self.inside_container: #inside container
-		# 		self.r = redis.Redis(host='redis', port=6379)
-		# 		while True: #wait for redis to be ready
-		# 			try:
-		# 				if not self.r.info()['loading'] == 0: raise Exception('gosh')
-		# 				self.r.ping()
-		# 				break
-		# 			except:
-		# 				print('waiting for redis',flush=True)
-		# 				time.sleep(1)
-		# 		while True:
-		# 			try:
-		# 				self._conn = mysql.connector.connect(host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
-		# 				break
-		# 			except mysql.connector.errors.DatabaseError as e:
-		# 				if (e.errno != errorcode.ER_ACCESS_DENIED_ERROR
-		# 				and e.errno != errorcode.ER_BAD_DB_ERROR):
-		# 					print('waiting for mysql',flush=True)
-		# 					time.sleep(1)
-		# 				else:
-		# 					raise Exception(e)
-		# 	else:
-		# 		self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g',database='broker')
-		# 		self.r = redis.Redis(host='127.0.0.1', port=6379)
-		
+		with mysql_conn.cursor() as cursor:
+			try:
+				cursor.execute("USE broker")
+			except mysql.connector.Error as err:
+				if err.errno == errorcode.ER_BAD_DB_ERROR:
+					Database.setup(mysql_conn)
+				else:
+					raise
+			finally:
+				if not os.getenv('DEV_ENV') == 'true' or not (last_update := pickle.loads(redis_conn.get("last_update"))) or datetime.datetime.now() - last_update > datetime.timedelta(days=1):
+					Database.update(mysql_conn)
+					Database.cache(redis_conn)
 
-		# except:
-		# 	self._conn = mysql.connector.connect(host='localhost',port='3307',user='root',password='7+WCy76_2$%g')
-		# 	self.r = redis.Redis(host='127.0.0.1', port=6379)
-		# 	self.setup()
-		
+		if False: #force recalc and recache
+			Database.cache(redis_conn)
 
-	@staticmethod
+	def is_market_open():
+		if (datetime.datetime.now().weekday() >= 5):
+			return False
+		dt = datetime.datetime.now(pytz.timezone('US/Eastern'))
+		hour = dt.hour
+		minute = dt.minute
+		if hour >= 10 and hour <= 16:
+			return True
+		elif hour == 9 and minute >= 30:
+			return True
+		return False
+
+	def format_datetime(dt,reverse=False):
+		if reverse:
+			return datetime.datetime.fromtimestamp(dt)
+			
+		if type(dt) == int or type(dt) == float:
+			return dt
+		if dt is None or dt == '': return None
+		if dt == 'current': return datetime.datetime.now(pytz.timezone('EST'))
+		if isinstance(dt, str):
+			try: dt = datetime.datetime.strptime(dt, '%Y-%m-%d')
+			except: dt = datetime.datetime.strptime(dt, '%Y-%m-%d %H:%M:%S')
+		time = datetime.time(dt.hour, dt.minute, 0)
+		dt = datetime.datetime.combine(dt.date(), time)
+		if dt.hour == 0 and dt.minute == 0:
+			time = datetime.time(9, 30, 0)
+			dt = datetime.datetime.combine(dt.date(), time)
+		#return dt
+		dt = dt.timestamp()
+		return dt	
+
+	####to remove once method for pulling current ticker list exists
+	def get_ticker_list():
+		return pd.read_csv('ticker_list.csv')['ticker'].tolist()
+
 	def process_ticker_data(bar):
 		try:
 			ticker,tf = bar
@@ -65,8 +76,6 @@ class Database:
 				with conn.cursor() as cursor:
 					cursor.execute("SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s and tf = %s", (ticker,tf))
 					data = np.array(cursor.fetchall())
-
-					# Process data
 					#print(data,flush=True)
 					for form in ('screener','chart','match'):
 						if form == 'screener':
@@ -112,67 +121,26 @@ class Database:
 			pass
 
 	# Main Function
-	def init_cache(self,force = False):
-		#if not force and self.r.exists('working'):
-		#	print('assuming redis already populated',flush = True)
-			#return
+	def cache(redis_conn):
 		global sql_pool
-		#if self.inside_container:
-		if True:
-			sql_pool = mysql.connector.pooling.MySQLConnectionPool(pool_name="mypool", pool_size=12, host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
-		else:
-			sql_pool = mysql.connector.pooling.MySQLConnectionPool(pool_name="mypool", pool_size=12, host='localhost',port='3307',user='root',password='7+WCy76_2$%g',database='broker')
-			
 		global redis_pool
-		redis_pool = self.r#redis.ConnectionPool(host='localhost', port=6379)
-		tickers = self.get_ticker_list()# get_unique_tickers()  # Define this function to get tickers from your DB
-		pool = multiprocessing.Pool(processes=8)  # Adjust number of processes as needed
-		self.r.set('working','working')
+		sql_pool = mysql.connector.pooling.MySQLConnectionPool(pool_name="mypool", pool_size=12, host='mysql',port='3306',user='root',password='7+WCy76_2$%g',database='broker')
+		redis_pool = redis_conn
+		tickers = Database.get_ticker_list()# get_unique_tickers()  # Define this function to get tickers from your DB
+		pool = multiprocessing.Pool(processes=2)  # Adjust number of processes as needed
 		for tf in ('1d',):
 			arglist = [[ticker,tf] for ticker in tickers]
-			pool.map(self.process_ticker_data, arglist)
+			pool.map(Database.process_ticker_data, arglist)
 		pool.close()
 		pool.join()
-		
-	@staticmethod
-	def is_market_open():
-		if (datetime.datetime.now().weekday() >= 5):
-			return False
-		dt = datetime.datetime.now(pytz.timezone('US/Eastern'))
-		hour = dt.hour
-		minute = dt.minute
-		if hour >= 10 and hour <= 16:
-			return True
-		elif hour == 9 and minute >= 30:
-			return True
-		return False
+		redis_conn.set("last_update", pickle.dumps(datetime.datetime.now()))
 
+	def update(mysql_conn):
 
-
-	####to remove once method for pulling current ticker list exists
-	def get_ticker_list(self, type='full'):
-		pd.read_csv('ticker_list.csv')
-		return pd.read_csv('ticker_list.csv')['ticker'].tolist()
-		cursor = self._conn.cursor(buffered=True)
-		if type == 'full':
-			query = "SELECT ticker FROM full_ticker_list"
-			cursor.execute(query)
-			data = cursor.fetchall()
-			cursor.close()
-			data = [item[0] for item in data]
-			return data
-		elif type == 'current':
-			raise Exception('need current func. has to pull from tv or something god')###################################################################################################################################
-	
-
-
-
-	def update(self,force_retrain=False,num = None):
-
-		with self._conn.cursor(buffered=True) as cursor:
+		with mysql_conn.cursor(buffered=True) as cursor:
 
 			def findex(df, dt):
-				dt = self.format_datetime(dt)
+				dt = Database.format_datetime(dt)
 				i = int(len(df)/2)		
 				k = int(i/2)
 				while k != 0:
@@ -187,17 +155,8 @@ class Database:
 				while df.index[i] > dt:
 					i -= 1
 				return i
-			
 
-			full_ticker_list = self.get_ticker_list()
-
-			# full_ticker_list = ?
-			# df = [[x] for x in full_ticker_list]
-			# insert_query = "INSERT IGNORE INTO full_ticker_list VALUES (%s)"
-			# cursor.executemany(insert_query, df)
-			
-				
-		
+			full_ticker_list = Database.get_ticker_list()
 			for ticker in full_ticker_list:
 				for tf in ['1d']:
 					try:
@@ -239,51 +198,20 @@ class Database:
 						volume = VALUES(volume)
 						"""
 						cursor.executemany(insert_query, ydf)
-						self._conn.commit()
-					
+						mysql_conn.commit()
 					except Exception as e:
-						print(f'{ticker} failed: {e}')
+						print(f'{ticker} failed: {e}', flush=True)
 						print(ydf)
 			
 
-	@staticmethod
-	def format_datetime(dt,reverse=False):
-		if reverse:
-			return datetime.datetime.fromtimestamp(dt)
-			
-		if type(dt) == int or type(dt) == float:
-			return dt
-		if dt is None or dt == '': return None
-		if dt == 'current': return datetime.datetime.now(pytz.timezone('EST'))
-		if isinstance(dt, str):
-			try: dt = datetime.datetime.strptime(dt, '%Y-%m-%d')
-			except: dt = datetime.datetime.strptime(dt, '%Y-%m-%d %H:%M:%S')
-		time = datetime.time(dt.hour, dt.minute, 0)
-		dt = datetime.datetime.combine(dt.date(), time)
-		if dt.hour == 0 and dt.minute == 0:
-			time = datetime.time(9, 30, 0)
-			dt = datetime.datetime.combine(dt.date(), time)
-		#return dt
-		dt = dt.timestamp()
-		return dt	
+	def setup(mysql_conn):
 
-	def close_connection(self):
-		self._conn.close()
-
-	def setup(self):
-
-		with self._conn.cursor(buffered=True) as cursor:
-			cursor.execute("CREATE DATABASE IF NOT EXISTS broker DEFAULT CHARACTER SET 'utf8';")
-			self._conn.commit()
+		with mysql_conn.cursor(buffered=True) as cursor:
+			cursor.execute("CREATE DATABASE broker DEFAULT CHARACTER SET 'utf8';")
+			mysql_conn.commit()
 			cursor.execute("USE broker;")
-			self._conn.commit()
+			mysql_conn.commit()
 			sql_commands = """
-			DROP TABLE IF EXISTS setup_data;
-			DROP TABLE IF EXISTS setups;
-			DROP TABLE IF EXISTS users;
-			DROP TABLE IF EXISTS dfs;
-			DROP TABLE IF EXISTS full_ticker_list;
-			DROP TABLE IF EXISTS current_ticker_list;
 			CREATE TABLE dfs(
 				ticker VARCHAR(5) NOT NULL,
 				tf VARCHAR(3) NOT NULL,
@@ -357,13 +285,8 @@ class Database:
 			"""
 			commands = [cmd.strip() for cmd in sql_commands.split(';') if cmd.strip()]
 			for command in commands:cursor.execute(command)
-			
-			self._conn.commit()
+			mysql_conn.commit()
 		
-db = Database()
-
 if __name__ == "__main__":
-	db.update()
-	db.init_cache()
-	db.close_connection()
+	Database.run()
 

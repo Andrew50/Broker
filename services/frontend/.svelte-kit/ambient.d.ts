@@ -26,74 +26,77 @@
  * ```
  */
 declare module '$env/static/private' {
-	export const USER: string;
-	export const npm_config_user_agent: string;
-	export const XDG_SESSION_TYPE: string;
-	export const npm_node_execpath: string;
-	export const SHLVL: string;
-	export const npm_config_noproxy: string;
-	export const HOME: string;
-	export const OLDPWD: string;
-	export const DESKTOP_SESSION: string;
-	export const npm_package_json: string;
-	export const GTK_MODULES: string;
-	export const npm_config_userconfig: string;
-	export const npm_config_local_prefix: string;
-	export const SYSTEMD_EXEC_PID: string;
-	export const DBUS_SESSION_BUS_ADDRESS: string;
-	export const npm_config_engine_strict: string;
-	export const COLORTERM: string;
+	export const ALLUSERSPROFILE: string;
+	export const APPDATA: string;
 	export const COLOR: string;
-	export const npm_config_metrics_registry: string;
-	export const IM_CONFIG_PHASE: string;
-	export const WAYLAND_DISPLAY: string;
-	export const LOGNAME: string;
-	export const _: string;
-	export const npm_config_prefix: string;
-	export const XDG_SESSION_CLASS: string;
-	export const USERNAME: string;
-	export const TERM: string;
-	export const npm_config_cache: string;
-	export const GNOME_DESKTOP_SESSION_ID: string;
-	export const npm_config_node_gyp: string;
-	export const PATH: string;
-	export const SESSION_MANAGER: string;
-	export const GDM_LANG: string;
-	export const NODE: string;
-	export const npm_package_name: string;
-	export const XDG_MENU_PREFIX: string;
-	export const GNOME_TERMINAL_SCREEN: string;
-	export const GNOME_SETUP_DISPLAY: string;
-	export const XDG_RUNTIME_DIR: string;
-	export const DISPLAY: string;
-	export const LANG: string;
-	export const XDG_CURRENT_DESKTOP: string;
-	export const XMODIFIERS: string;
-	export const XDG_SESSION_DESKTOP: string;
-	export const XAUTHORITY: string;
-	export const LS_COLORS: string;
-	export const GNOME_TERMINAL_SERVICE: string;
-	export const npm_lifecycle_script: string;
-	export const SSH_AGENT_LAUNCHER: string;
-	export const SSH_AUTH_SOCK: string;
-	export const SHELL: string;
-	export const npm_package_version: string;
-	export const npm_lifecycle_event: string;
-	export const QT_ACCESSIBILITY: string;
-	export const GDMSESSION: string;
-	export const QT_IM_MODULE: string;
-	export const npm_config_globalconfig: string;
-	export const npm_config_init_module: string;
-	export const PWD: string;
-	export const npm_config_globalignorefile: string;
-	export const npm_execpath: string;
-	export const XDG_DATA_DIRS: string;
-	export const npm_config_global_prefix: string;
-	export const npm_command: string;
-	export const VTE_VERSION: string;
-	export const INIT_CWD: string;
+	export const CommonProgramFiles: string;
+	export const CommonProgramW6432: string;
+	export const COMPUTERNAME: string;
+	export const ComSpec: string;
+	export const DriverData: string;
 	export const EDITOR: string;
+	export const EFC_11940: string;
+	export const FPS_BROWSER_APP_PROFILE_STRING: string;
+	export const FPS_BROWSER_USER_PROFILE_STRING: string;
+	export const GOPATH: string;
+	export const HOME: string;
+	export const HOMEDRIVE: string;
+	export const HOMEPATH: string;
+	export const IGCCSVC_DB: string;
+	export const INIT_CWD: string;
+	export const LOCALAPPDATA: string;
+	export const LOGONSERVER: string;
+	export const NODE: string;
 	export const NODE_ENV: string;
+	export const NODE_EXE: string;
+	export const NPM_CLI_JS: string;
+	export const npm_command: string;
+	export const npm_config_cache: string;
+	export const npm_config_engine_strict: string;
+	export const npm_config_globalconfig: string;
+	export const npm_config_global_prefix: string;
+	export const npm_config_init_module: string;
+	export const npm_config_local_prefix: string;
+	export const npm_config_node_gyp: string;
+	export const npm_config_noproxy: string;
+	export const npm_config_npm_version: string;
+	export const npm_config_prefix: string;
+	export const npm_config_userconfig: string;
+	export const npm_config_user_agent: string;
+	export const npm_execpath: string;
+	export const npm_lifecycle_event: string;
+	export const npm_lifecycle_script: string;
+	export const npm_node_execpath: string;
+	export const npm_package_json: string;
+	export const npm_package_name: string;
+	export const npm_package_version: string;
+	export const NPM_PREFIX_NPM_CLI_JS: string;
+	export const NUMBER_OF_PROCESSORS: string;
+	export const OneDrive: string;
+	export const OS: string;
+	export const Path: string;
+	export const PATHEXT: string;
+	export const PROCESSOR_ARCHITECTURE: string;
+	export const PROCESSOR_IDENTIFIER: string;
+	export const PROCESSOR_LEVEL: string;
+	export const PROCESSOR_REVISION: string;
+	export const ProgramData: string;
+	export const ProgramFiles: string;
+	export const ProgramW6432: string;
+	export const PROMPT: string;
+	export const PSModulePath: string;
+	export const PUBLIC: string;
+	export const SESSIONNAME: string;
+	export const SystemDrive: string;
+	export const SystemRoot: string;
+	export const TEMP: string;
+	export const TMP: string;
+	export const USERDOMAIN: string;
+	export const USERDOMAIN_ROAMINGPROFILE: string;
+	export const USERNAME: string;
+	export const USERPROFILE: string;
+	export const windir: string;
+	export const ZES_ENABLE_SYSMAN: string;
 }
 
 /**
@@ -110,11 +113,9 @@ declare module '$env/static/public' {
 }
 
 /**
- * This module provides access to runtime environment variables, as defined by the platform you're running on. For example if you're using [`adapter-node`](https://github.com/sveltejs/kit/tree/main/packages/adapter-node) (or running [`vite preview`](https://kit.svelte.dev/docs/cli)), this is equivalent to `process.env`. This module only includes variables that _do not_ begin with [`config.kit.env.publicPrefix`](https://kit.svelte.dev/docs/configuration#env) _and do_ start with [`config.kit.env.privatePrefix`](https://kit.svelte.dev/docs/configuration#env) (if configured).
+ * This module provides access to runtime environment variables, as defined by the platform you're running on. For example if you're using [`adapter-node`](https://github.com/sveltejs/kit/tree/master/packages/adapter-node) (or running [`vite preview`](https://kit.svelte.dev/docs/cli)), this is equivalent to `process.env`. This module only includes variables that _do not_ begin with [`config.kit.env.publicPrefix`](https://kit.svelte.dev/docs/configuration#env) _and do_ start with [`config.kit.env.privatePrefix`](https://kit.svelte.dev/docs/configuration#env) (if configured).
  * 
  * This module cannot be imported into client-side code.
- * 
- * Dynamic environment variables cannot be used during prerendering.
  * 
  * ```ts
  * import { env } from '$env/dynamic/private';
@@ -125,74 +126,77 @@ declare module '$env/static/public' {
  */
 declare module '$env/dynamic/private' {
 	export const env: {
-		USER: string;
-		npm_config_user_agent: string;
-		XDG_SESSION_TYPE: string;
-		npm_node_execpath: string;
-		SHLVL: string;
-		npm_config_noproxy: string;
-		HOME: string;
-		OLDPWD: string;
-		DESKTOP_SESSION: string;
-		npm_package_json: string;
-		GTK_MODULES: string;
-		npm_config_userconfig: string;
-		npm_config_local_prefix: string;
-		SYSTEMD_EXEC_PID: string;
-		DBUS_SESSION_BUS_ADDRESS: string;
-		npm_config_engine_strict: string;
-		COLORTERM: string;
+		ALLUSERSPROFILE: string;
+		APPDATA: string;
 		COLOR: string;
-		npm_config_metrics_registry: string;
-		IM_CONFIG_PHASE: string;
-		WAYLAND_DISPLAY: string;
-		LOGNAME: string;
-		_: string;
-		npm_config_prefix: string;
-		XDG_SESSION_CLASS: string;
-		USERNAME: string;
-		TERM: string;
-		npm_config_cache: string;
-		GNOME_DESKTOP_SESSION_ID: string;
-		npm_config_node_gyp: string;
-		PATH: string;
-		SESSION_MANAGER: string;
-		GDM_LANG: string;
-		NODE: string;
-		npm_package_name: string;
-		XDG_MENU_PREFIX: string;
-		GNOME_TERMINAL_SCREEN: string;
-		GNOME_SETUP_DISPLAY: string;
-		XDG_RUNTIME_DIR: string;
-		DISPLAY: string;
-		LANG: string;
-		XDG_CURRENT_DESKTOP: string;
-		XMODIFIERS: string;
-		XDG_SESSION_DESKTOP: string;
-		XAUTHORITY: string;
-		LS_COLORS: string;
-		GNOME_TERMINAL_SERVICE: string;
-		npm_lifecycle_script: string;
-		SSH_AGENT_LAUNCHER: string;
-		SSH_AUTH_SOCK: string;
-		SHELL: string;
-		npm_package_version: string;
-		npm_lifecycle_event: string;
-		QT_ACCESSIBILITY: string;
-		GDMSESSION: string;
-		QT_IM_MODULE: string;
-		npm_config_globalconfig: string;
-		npm_config_init_module: string;
-		PWD: string;
-		npm_config_globalignorefile: string;
-		npm_execpath: string;
-		XDG_DATA_DIRS: string;
-		npm_config_global_prefix: string;
-		npm_command: string;
-		VTE_VERSION: string;
-		INIT_CWD: string;
+		CommonProgramFiles: string;
+		CommonProgramW6432: string;
+		COMPUTERNAME: string;
+		ComSpec: string;
+		DriverData: string;
 		EDITOR: string;
+		EFC_11940: string;
+		FPS_BROWSER_APP_PROFILE_STRING: string;
+		FPS_BROWSER_USER_PROFILE_STRING: string;
+		GOPATH: string;
+		HOME: string;
+		HOMEDRIVE: string;
+		HOMEPATH: string;
+		IGCCSVC_DB: string;
+		INIT_CWD: string;
+		LOCALAPPDATA: string;
+		LOGONSERVER: string;
+		NODE: string;
 		NODE_ENV: string;
+		NODE_EXE: string;
+		NPM_CLI_JS: string;
+		npm_command: string;
+		npm_config_cache: string;
+		npm_config_engine_strict: string;
+		npm_config_globalconfig: string;
+		npm_config_global_prefix: string;
+		npm_config_init_module: string;
+		npm_config_local_prefix: string;
+		npm_config_node_gyp: string;
+		npm_config_noproxy: string;
+		npm_config_npm_version: string;
+		npm_config_prefix: string;
+		npm_config_userconfig: string;
+		npm_config_user_agent: string;
+		npm_execpath: string;
+		npm_lifecycle_event: string;
+		npm_lifecycle_script: string;
+		npm_node_execpath: string;
+		npm_package_json: string;
+		npm_package_name: string;
+		npm_package_version: string;
+		NPM_PREFIX_NPM_CLI_JS: string;
+		NUMBER_OF_PROCESSORS: string;
+		OneDrive: string;
+		OS: string;
+		Path: string;
+		PATHEXT: string;
+		PROCESSOR_ARCHITECTURE: string;
+		PROCESSOR_IDENTIFIER: string;
+		PROCESSOR_LEVEL: string;
+		PROCESSOR_REVISION: string;
+		ProgramData: string;
+		ProgramFiles: string;
+		ProgramW6432: string;
+		PROMPT: string;
+		PSModulePath: string;
+		PUBLIC: string;
+		SESSIONNAME: string;
+		SystemDrive: string;
+		SystemRoot: string;
+		TEMP: string;
+		TMP: string;
+		USERDOMAIN: string;
+		USERDOMAIN_ROAMINGPROFILE: string;
+		USERNAME: string;
+		USERPROFILE: string;
+		windir: string;
+		ZES_ENABLE_SYSMAN: string;
 		[key: `PUBLIC_${string}`]: undefined;
 		[key: `${string}`]: string | undefined;
 	}
@@ -202,8 +206,6 @@ declare module '$env/dynamic/private' {
  * Similar to [`$env/dynamic/private`](https://kit.svelte.dev/docs/modules#$env-dynamic-private), but only includes variables that begin with [`config.kit.env.publicPrefix`](https://kit.svelte.dev/docs/configuration#env) (which defaults to `PUBLIC_`), and can therefore safely be exposed to client-side code.
  * 
  * Note that public dynamic environment variables must all be sent from the server to the client, causing larger network requests — when possible, use `$env/static/public` instead.
- * 
- * Dynamic environment variables cannot be used during prerendering.
  * 
  * ```ts
  * import { env } from '$env/dynamic/public';

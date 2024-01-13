@@ -20,8 +20,6 @@
         annotation = ''
     }
 
-
-
 </script>
 
 <div class="popout-menu"  style="min-height: {innerHeight}px;" class:visible={visible}>
@@ -39,7 +37,7 @@
         </div>
 
         <div>
-        <textarea bind:value={annotation} class="large-textarea" placeholder="Enter text here"></textarea>
+        <textarea bind:value={annotation} class="large-textarea" placeholder="Enter text here" ></textarea>
         </div>
         <div>
         <button on:click={next}>Next</button>
