@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, status, Request as FastAPIRequest, Depends
-import datetime, uvicorn, importlib, sys, traceback, jwt, asyncio,  json
+import datetime, uvicorn, importlib, sys, traceback, jwt, asyncio,  json, yfinance as yf
 from redis import Redis
 from rq import Queue
 from rq.job import Job
@@ -85,9 +85,9 @@ def create_app():
 			ticker,tf,dt = args
 			val = await data_.get_df('chart',ticker,tf,dt)
 			#if data_.is_extended_market_open:
-			if True:
-				current_price = await data_.get_current_price(ticker)
-				#print(current_price)
+			if True: 
+				#current_price = await data_.get_current_price(ticker)
+				current_price = yf.download(ticker, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=False, keepna=False)['Close'][-1]
 				val = json.loads(val)
 				if current_price == None:
 					current_bar = val[-1]
