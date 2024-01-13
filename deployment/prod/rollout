@@ -26,16 +26,6 @@ cd /home/aj/dev/Broker
   #docker push billin19/worker:latest
   #docker push billin19/jobs:latest
 
-  #docker build -t 192.168.49.1:5000/frontend:latest services/frontend
-  #docker build -t 192.168.49.1:5000/backend:latest services/backend
-  #docker build -t 192.168.49.1:5000/worker:latest services/worker
-  #docker build -t 192.168.49.1:5000/jobs:latest services/jobs
-  #docker push 192.168.49.1:5000/frontend:latest
-  #docker push 192.168.49.1:5000/backend:latest
-  #docker push 192.168.49.1:5000/worker:latest
-  #docker push 192.168.49.1:5000/jobs:latest
-
-#kubectl set image cronjob/jobs jobs=192.168.49.1:5000/jobs:latest
 
   #this includes running of rollout.yaml => rollout.py
   kubectl apply -f deployment/prod
