@@ -6,7 +6,8 @@ RUN pip install -r requirements.txt
 
 ENV INSIDE_CONTAINER Yes
 ENV C_INCLUDE_PATH=/usr/local/lib/python3.10/site-packages/numpy/core/include:$C_INCLUDE_PATH
-ENV PYTHONPATH=/app
+#ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app:$PYTHONPATH
 
 #RUN apt-get update \
 #    && apt-get install -y wget gnupg firefox-esr gcc libpython3-dev \

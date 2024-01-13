@@ -32,6 +32,7 @@ def create_jwt_token(user_id: str) -> str:
 	}
 	return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
+#run_task = 'worker.run_task'
 def run_task(func,args,user_id):
 	try:
 		module_name, function_name = func.split('-')
