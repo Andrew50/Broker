@@ -2,52 +2,44 @@ version: '3.6'
 
 services:
 
-    redis:
-        image: redis:latest
-        ports:
-          - 6379:6379
-        networks:
-          - my-network
-        hostname: redis
-        volumes:
-          - redis-data:/data
-        command: redis-server
-        mem_limit: 7G
-
-    api:
+    backend:
         depends_on:
             - mysql
             - redis
-        container_name: my_api
         build:
-            context: C:/dev/broker/services/api
+            context: C:/dev/broker/services/backend
             dockerfile: Dockerfile
         restart: on-failure
         ports:
         - "5057:5057"
-        working_dir: /app
         volumes:
-            - C:/dev/broker/services/api/api.py:/app/api.py
-        #command: 
-        #    python api.py
+            - C:/dev/broker/services/backend/api.py:/app/api.py
         networks:
-            - my-network
+            - compose_network
 
     worker: 
         build: #satish was here
             context: C:/dev/broker/services/worker
             dockerfile: Dockerfile
         restart: on-failure
-        working_dir: /app
-        #command: /bin/sh -c "sleep 5 && rq worker --url redis://redis:6379 my_queue"
         volumes: 
-             #- ./:/app
              - ./:/app
         depends_on:
             - mysql
             - redis
         networks:
-            - my-network
+            - compose_network
+
+    jobs:
+        build:
+            context: C:/dev/broker/services/jobs
+            dockerfile: Dockerfile
+        restart: on-failure
+        volumes:
+            - C:/dev/broker/services/jobs:/app
+        command: python Database.py
+        networks:
+            - compose_network
 
     mysql:
         container_name: mysql
@@ -55,17 +47,29 @@ services:
         environment:
             MYSQL_ROOT_PASSWORD: 7+WCy76_2$%g
         ports:
-            - "3307:3306"
+            - "3306:3306"
         volumes:
             - mysql-data:/var/lib/mysql
-            - C:/dev/broker/services/mysql/my.cnf:/etc/mysql/my.cnf
+           # - C:/dev/broker/services/mysql/my.cnf:/etc/mysql/my.cnf
         networks:
-            - my-network
+            - compose_network
+            
+    redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+        networks:
+          - compose_network
+        hostname: redis
+        volumes:
+          - redis-data:/data
+        command: redis-server
+        mem_limit: 12G
 
 volumes:
     mysql-data:
     redis-data:
 
 networks:
-    my-network:    
+    compose_network:    
         driver: bridge

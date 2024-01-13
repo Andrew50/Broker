@@ -1,6 +1,15 @@
 import aiomysql, aioredis, pickle, datetime, pytz, json
 
 class Data:
+
+	async def init_async_conn(self):
+		# self.redis_pool = await aioredis.create_redis_pool(
+		# 	f'redis://redis', minsize=1, maxsize=20)
+	
+		self.redis_pool = aioredis.Redis(host='redis', port=6379)
+		self.mysql_pool = await aiomysql.create_pool(
+			host='mysql', port=3306, user='root', password='7+WCy76_2$%g', 
+			db='broker', minsize=1, maxsize=20)
 	
 	async def get_trainer_queue(self,user_id,st):
 		return await self.redis_pool.rpop(str(user_id)+st)
@@ -8,17 +17,6 @@ class Data:
 	async def get_trainer_queue_size(self, user_id, st):
 		# Use await with aioredis operations
 		return await self.redis_pool.llen(str(user_id) + st)
-
-	#eng_project
-	async def init_async_conn(self):
-		# self.redis_pool = await aioredis.create_redis_pool(
-		# 	f'redis://redis', minsize=1, maxsize=20)
-		self.redis_pool = aioredis.Redis(host='redis', port=6379)
-		self.mysql_pool = await aiomysql.create_pool(
-			host='mysql', port=3306, user='root', password='7+WCy76_2$%g', 
-			db='broker', minsize=1, maxsize=20)
-		
-	
 
 	@staticmethod
 	def format_datetime(dt,reverse=False):
@@ -75,24 +73,16 @@ class Data:
 				normal_data = await self.redis_pool.hget(tf+'screener',ticker)
 				normal_data = pickle.loads(normal_data)
 				index = Data.findex(normal_data,dt) + 1 #add 1 becuase screener format len is 1 less then chart len
-				
 				data = json.loads(data)
 				data = data[:index+1] 
-
 				data = json.dumps(data)
-
 			if bars:
 				raise Exception("to code")
-			
 			if not pm:
 				raise Exception('to code')
-				
 		else:
 			raise Exception('to code')
 		return data
-
-
-
 	#eng_project
 	async def get_user(self, email, password):
 		async with self.mysql_pool.acquire() as conn:
@@ -102,10 +92,6 @@ class Data:
 				if user_data and len(user_data) > 0:
 					if password == user_data[2]:  # Assuming password is at index 2
 						return user_data[0]   
-	
-
-
-
 	#eng_project
 	async def set_user(self, user_id=None, email=None, password=None, settings_string=None, delete=False):
 		async with self.mysql_pool.acquire() as conn:
@@ -203,8 +189,6 @@ class Data:
 				else:
 					raise Exception('missing args')
 			await conn.commit()
-			
-
 
 	async def set_single_setup_sample(self,user_id,st,ticker,dt,value):##################################### ix this shit bruhhg dododosoosdodsfdsiho
 		async with self.mysql_pool.acquire() as conn:

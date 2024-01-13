@@ -1,10 +1,4 @@
 
-
-
-
-
-
-
 # for new setup run:
 # minikube start
 # minikube addons enable ingress
