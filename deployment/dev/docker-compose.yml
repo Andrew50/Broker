@@ -34,10 +34,10 @@ services:
         build:
             context: C:/dev/broker/services/jobs
             dockerfile: Dockerfile
-        restart: on-failure
         volumes:
             - C:/dev/broker/services/jobs:/app
         command: python Database.py
+        restart: on-failure
         networks:
             - compose_network
         environment:
