@@ -1,10 +1,4 @@
 
-
-
-
-
-
-
 # for new setup run:
 # minikube start
 # minikube addons enable ingress
@@ -21,6 +15,9 @@ cd /home/aj/dev/Broker
   docker build -t billin19/backend:latest services/backend
   #docker build -t billin19/worker:latest services/worker
   #docker build -t billin19/jobs:latest services/jobs
+  #docker build -t billin19/backend:latest services/backend
+  #docker build -t billin19/worker:latest services/worker 
+  docker build -t billin19/jobs:latest services/jobs
   #docker push billin19/frontend:latest
   docker push billin19/backend:latest
   #docker push billin19/worker:latest

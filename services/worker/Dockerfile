@@ -4,7 +4,7 @@ COPY . .
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-ENV AM_I_IN_A_DOCKER_CONTAINER Yes
+ENV INSIDE_CONTAINER Yes
 ENV C_INCLUDE_PATH=/usr/local/lib/python3.10/site-packages/numpy/core/include:$C_INCLUDE_PATH
 ENV PYTHONPATH=/app
 
