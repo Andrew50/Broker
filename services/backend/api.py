@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, status, Request as FastAPIRequest, Depends
-import datetime, uvicorn, importlib, sys, traceback, jwt, asyncio,  json
+import datetime, uvicorn, importlib, sys, traceback, jwt, asyncio,  json, yfinance as yf
 from redis import Redis
 from rq import Queue
 from rq.job import Job
@@ -7,6 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 from pydantic import BaseModel
+
+from worker import run_task
+
 sys.path.append('./tasks')
 SECRET_KEY = "god"
 from async_Data import Data
@@ -32,15 +35,16 @@ def create_jwt_token(user_id: str) -> str:
 	}
 	return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
-def run_task(func,args,user_id):
-	try:
-		module_name, function_name = func.split('-')
-		module = importlib.import_module(module_name)
-		func = getattr(module, function_name, None)
-		return func(args,user_id)
-	except Exception as e:
-		raise Warning(str(traceback.format_exc() + str(e)))
-		return 'failed'
+#run_task = 'worker.run_task'
+# def run_task(func,args,user_id):
+# 	try:
+# 		module_name, function_name = func.split('-')
+# 		module = importlib.import_module(module_name)
+# 		func = getattr(module, function_name, None)
+# 		return func(args,user_id)
+# 	except Exception as e:
+# 		raise Warning(str(traceback.format_exc() + str(e)))
+# 		return 'failed'
 
 def create_app():
 	app = FastAPI()
@@ -85,9 +89,9 @@ def create_app():
 			ticker,tf,dt = args
 			val = await data_.get_df('chart',ticker,tf,dt)
 			#if data_.is_extended_market_open:
-			if True:
-				current_price = await data_.get_current_price(ticker)
-				#print(current_price)
+			if True: 
+				#current_price = await data_.get_current_price(ticker)
+				current_price = yf.download(ticker, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=False, keepna=False)['Close'][-1]
 				val = json.loads(val)
 				if current_price == None:
 					current_bar = val[-1]

@@ -1,6 +1,6 @@
 from setuptools import setup
 from Cython.Build import cythonize
-import numpy
+import numpy, os, sys
 # run the following commands -----------------
 # cd C:/dev/Broker/backend/tasks && python setup.py build_ext --inplace 
 # python setup.py build_ext --inplace 
