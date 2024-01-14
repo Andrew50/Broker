@@ -7,6 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 from pydantic import BaseModel
+
+from worker import run_task
+
 sys.path.append('./tasks')
 SECRET_KEY = "god"
 from async_Data import Data
@@ -33,15 +36,15 @@ def create_jwt_token(user_id: str) -> str:
 	return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
 #run_task = 'worker.run_task'
-def run_task(func,args,user_id):
-	try:
-		module_name, function_name = func.split('-')
-		module = importlib.import_module(module_name)
-		func = getattr(module, function_name, None)
-		return func(args,user_id)
-	except Exception as e:
-		raise Warning(str(traceback.format_exc() + str(e)))
-		return 'failed'
+# def run_task(func,args,user_id):
+# 	try:
+# 		module_name, function_name = func.split('-')
+# 		module = importlib.import_module(module_name)
+# 		func = getattr(module, function_name, None)
+# 		return func(args,user_id)
+# 	except Exception as e:
+# 		raise Warning(str(traceback.format_exc() + str(e)))
+# 		return 'failed'
 
 def create_app():
 	app = FastAPI()
