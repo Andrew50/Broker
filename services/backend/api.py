@@ -85,7 +85,6 @@ def create_app():
 							}
 				val.append(current_bar)
 				val = json.dumps(val)
-			print(val,flush=True)
 			return val
 		elif func == 'create setup':
 			st, tf, setup_length = args
@@ -123,12 +122,18 @@ def create_app():
 			ticker,watchlist_name,delete = args
 			await data_.set_watchlist(user_id,ticker,watchlist_name,delete)
 		else:
-			return await data_.queue_task(func,args,user_id)
+			raise Exception('to code' + func)
+		
+	@app.post('/backend',status_code=201)
+	async def backend(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
+		data_ = request.app.state.data
+		func, args = request_model.function, request_model.arguments
+		return await data_.queue_task(func,args,user_id)
 
 	@app.get('/poll/{job_id}')
 	async def get_result(job_id: str, request: FastAPIRequest):
 		data_ = request.app.state.data
-		result = await data_.fetch_job(job_id)
+		result = await data_.get_task_result(job_id)
 		print('result',result,flush=True)
 		return result
 

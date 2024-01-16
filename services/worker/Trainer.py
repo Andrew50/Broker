@@ -191,14 +191,12 @@ class Trainer:
 		return
 
 
-def train(args,user_id):
-	st, = args
+def train(st,user_id):
 	results = Trainer.train_model(st,user_id)
-	return json.dumps(results)
+	return results
 
 
-def start(args,user_id):
-	st, = args
+def start(st,user_id):
 	Trainer.run_generator(st,user_id)
 
 

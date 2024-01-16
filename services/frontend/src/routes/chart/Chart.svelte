@@ -3,7 +3,7 @@
 	import { onMount } from "svelte";
 	import { chart } from "./chart.js";
 	import { chart2 } from "./chart2.js";
-	import { chart_data, private_request } from "../store.js";
+	import { chart_data, private_request, backend_request } from "../store.js";
 	import Account from "./Account.svelte";
 
 	let innerWidth;

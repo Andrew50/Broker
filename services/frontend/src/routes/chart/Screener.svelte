@@ -6,6 +6,7 @@
         screener_data,
         setups_list,
         private_request,
+        backend_request,
         chart_data,
     } from "../store.js";
     import Table from "./Table.svelte";
@@ -62,10 +63,10 @@
 
         <form
             on:submit|preventDefault={() =>
-                private_request(
+                backend_request(
                     screener_data,
                     "Screener-get",
-                    ...selectedSetups,
+                    Array.from(selectedSetups),
                 )}
             class="input-form"
         >

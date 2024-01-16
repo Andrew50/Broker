@@ -1,5 +1,5 @@
 <script>
-    import { chart_data, setups_list, private_request } from "../store.js";
+    import { chart_data, setups_list, backend_request } from "../store.js";
     export let visible = false;
     let innerHeight;
     import { get } from "svelte/store";
@@ -39,7 +39,7 @@
                 </select>
                 <button
                     on:click={() =>
-                        private_request(null, "Study-get", selected_st)}
+                        backend_request(null, "Study-get", selected_st)}
                     >Fetch [dev]</button
                 >
             </div>

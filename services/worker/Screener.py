@@ -72,8 +72,8 @@ class Screener:
 		
 	
 	
-def get(args,user_id):
-	setup_types = args
+def get(setup_types,user_id):
+
 
 	results = Screener.screen(user_id,setup_types,'screener')
 	return json.dumps(results)

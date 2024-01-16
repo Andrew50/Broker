@@ -94,25 +94,47 @@ export async function private_request(bind_variable, func, ...args) {
             headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
             body: JSON.stringify(payload)
         });
-        const result = await response.json();
-        const task_id = result.task_id;
-        if (task_id) {
-            const checkStatus = async () => {
-                const response = await fetch(`http://localhost:5057/poll/${task_id}`);
-                const result = await response.json();
-                if (result === 'running') {
-                } else {
-                    clearInterval(intervalId);
-                }
-            };
-            const intervalId = setInterval(checkStatus, 200); // Check every .2 seconds
-        } else {
-        }
-        try {
-            result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
-        } catch { }
+        let result = await response.json();
+        result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
         bind_variable.set(result);
-        console.log(result);
+    } catch (error) {
+        console.error('Error during backend request:', error);
+        bind_variable.set(null);
+    }
+
+}
+
+export async function backend_request(bind_variable, func, ...args) {
+    const url = `${base_url}/backend`;
+    const payload = {
+        function: func,
+        arguments: args
+    };
+    console.log('Request sent to:', url, 'func:', func, 'args:', args);
+    try {
+        const reponse = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify(payload)
+        });
+        const task_id = await reponse.json();
+        console.log('polling');
+        let result;
+        const checkStatus = async () => {
+            const response = await fetch(`http://localhost:5057/poll/${task_id}`);
+            result = await response.json();
+            result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
+            if (result == 'running') {
+            } else {
+
+                bind_variable.set(result);
+                console.log('result: ', result);
+                console.log('result type : ', typeof result);
+                clearInterval(intervalId);
+            }
+        };
+        const intervalId = setInterval(checkStatus, 200); // Check every .2 seconds
+
     } catch (error) {
         console.error('Error during backend request:', error);
         bind_variable.set(null);

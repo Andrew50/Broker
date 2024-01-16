@@ -15,7 +15,8 @@ class Data:
 		task_id = str(uuid.uuid4())
 		task_data = {'id':task_id,'func':func_ident,'args':args,'user_id':user_id}
 		await self.redis_pool.lpush('task_queue_1',json.dumps(task_data))
-		return json.dumps({'task_id':task_id})
+		#return json.dumps({'task_id':task_id})
+		return task_id
 	
 	async def get_task_result(self,task_id):
 		return await self.redis_pool.get(f"result:{task_id}")

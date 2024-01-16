@@ -1,6 +1,11 @@
 <script>
     import { writable } from "svelte/store";
-    import { setups_list, chart_data, private_request } from "../store.js";
+    import {
+        setups_list,
+        chart_data,
+        private_request,
+        backend_request,
+    } from "../store.js";
     import Table from "./Table.svelte";
     export let visible = false;
     import { onMount } from "svelte";
@@ -145,7 +150,7 @@
         {#if selected_setup}
             <button
                 on:click={() =>
-                    private_request(null, "Trainer-train", selected_setup)}
+                    backend_request(null, "Trainer-train", selected_setup)}
                 >Train</button
             >
             <p>Is this a {selected_setup}?</p>
