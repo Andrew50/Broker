@@ -13,7 +13,8 @@ services:
         ports:
         - "5057:5057"
         volumes:
-            - C:/dev/broker/services/backend/api.py:/app/api.py
+            #- C:/dev/broker/services/backend/api.py:/app/api.py
+            - C:/dev/broker/services/backend/:/app/
         networks:
             - compose_network
 
@@ -23,7 +24,8 @@ services:
             dockerfile: Dockerfile
         restart: on-failure
         volumes: 
-             - ./:/app
+            - C:/dev/broker/services/worker/:/app/
+             #- ./:/app
         depends_on:
             - mysql
             - redis
@@ -34,10 +36,10 @@ services:
         build:
             context: C:/dev/broker/services/jobs
             dockerfile: Dockerfile
-        restart: on-failure
         volumes:
             - C:/dev/broker/services/jobs:/app
         command: python Database.py
+        restart: on-failure
         networks:
             - compose_network
         environment:

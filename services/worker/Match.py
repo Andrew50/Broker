@@ -25,7 +25,7 @@ class Match:
         top_scores = heapq.nsmallest(20, returns, key=lambda x: x[2])
         print(f"time to complete match {datetime.datetime.now() - start}")
         print(top_scores)
-        return [[ticker,str(format_datetime(dt=timestamp, reverse=True)),round(score,2)] for ticker,timestamp, score in top_scores]
+        return [[ticker,str(data.format_datetime(dt=timestamp, reverse=True)),round(score,2)] for ticker,timestamp, score in top_scores]
        
 
     def formatArray(data, onlyCloseAndVol = True, yValue = False, whichColumn=4):
