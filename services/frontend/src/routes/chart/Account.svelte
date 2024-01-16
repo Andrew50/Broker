@@ -1,20 +1,16 @@
-
 <script>
-    import { chart_data,  backend_request, match_data} from '../store.js';
+    import { chart_data, private_request, match_data } from "../store.js";
     export let visible = false;
-    let innerHeight
+    let innerHeight;
 </script>
 
-
-
-
-<div class="popout-menu"  style="min-height: {innerHeight}px;" class:visible={visible}>
+<div class="popout-menu" style="min-height: {innerHeight}px;" class:visible>
     {#if visible}
-
-        <p>account<p/>
+        <p>account</p>
+        <p />
     {/if}
 </div>
 
 <style>
-@import './style.css';
+    @import "./style.css";
 </style>

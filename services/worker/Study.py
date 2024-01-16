@@ -20,8 +20,7 @@ class Study:
 
 
 
-def get(args,user_id):
-    st, = args
+def get(st,user_id):
     Study.update(user_id,st)
 
 if __name__ == '__main__':
