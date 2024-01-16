@@ -121,7 +121,7 @@ export async function backend_request(bind_variable, func, ...args) {
         console.log('polling');
         let result;
         const checkStatus = async () => {
-            const response = await fetch(`http://localhost:5057/poll/${task_id}`);
+            const response = await fetch(`${base_url}/poll/${task_id}`);
             result = await response.json();
             result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
             if (result == 'running') {

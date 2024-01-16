@@ -15,6 +15,13 @@ spec:
                 port:
                   number: 80
           - pathType: Prefix
+            path: "/poll"
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 80
+          - pathType: Prefix
             path: "/public"
             backend:
               service:
