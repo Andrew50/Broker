@@ -136,12 +136,12 @@ class Trainer:
 
 		history = model.fit(ds, y,epochs=30,batch_size=64,validation_data=(ds_val, y_val),)  # Use the actual validation set herecallbacks=[early_stopping],verbose=1)
 		
-		if not os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False):
-			print('saved model -----------outside container so kinda useless god---------')
-			model.save(f'C:/dev/broker/backend/models/{user_id}_{st}', save_format='tf')
-			#model.save(f'C:/dev/broker/backend/models/{user_id}_{st}.h5')
-		else:
-			model.save(f'/app/models/{user_id}_{st}', save_format='tf')
+		# if not os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False):
+		# 	print('saved model -----------outside container so kinda useless god---------')
+		# 	model.save(f'C:/dev/broker/backend/models/{user_id}_{st}', save_format='tf')
+		# 	#model.save(f'C:/dev/broker/backend/models/{user_id}_{st}.h5')
+		# else:
+		model.save(f'models/{user_id}_{st}', save_format='tf')
 			#model.save(f'models/{user_id}_{st}.h5')
 			
 		tensorflow.keras.backend.clear_session()

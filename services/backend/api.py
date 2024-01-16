@@ -85,6 +85,7 @@ def create_app():
 							}
 				val.append(current_bar)
 				val = json.dumps(val)
+			print(val,flush=True)
 			return val
 		elif func == 'create setup':
 			st, tf, setup_length = args
@@ -127,7 +128,9 @@ def create_app():
 	@app.get('/poll/{job_id}')
 	async def get_result(job_id: str, request: FastAPIRequest):
 		data_ = request.app.state.data
-		return await data_.fetch_job(job_id)
+		result = await data_.fetch_job(job_id)
+		print('result',result,flush=True)
+		return result
 
 	return app
 

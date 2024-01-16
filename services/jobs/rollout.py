@@ -1,5 +1,3 @@
-
-
 import pandas as pd
 import os
 import datetime
@@ -10,16 +8,15 @@ import mysql.connector
 
 if os.environ.get('INSIDE_CONTAINER', False): #inside container
     mysql_host = 'mysql'
+    path = 'instances/'
 else:
     mysql_host = 'localhost'
+    path = 'C:/dev/broker/services/jobs/instances/'
+
 mysql_conn = mysql.connector.connect(host=mysql_host,port='3306',user='root',password='7+WCy76_2$%g',database='broker')
-import mysql.connector
-import redis
 
 
 
-redis_conn = redis.Redis(host='redis', port=6379)
-mysql_conn = mysql.connector.connect(host='mysql', port='3306', user='root', password='7+WCy76_2$%g',database  = 'broker')
 
 def set_setup_sample(user_id,st,data):##################################### ix this shit bruhhg dododosoosdodsfdsiho
     with mysql_conn.cursor(buffered=True) as cursor:
@@ -77,7 +74,6 @@ def get_user(email, password):
 user_id = get_user('user','pass')
 
 
-path = 'instances/'
 dirs = os.listdir(path)
 for f in dirs:
     st = f.split('.')[0]
