@@ -8,11 +8,22 @@ from fastapi.security import OAuth2PasswordBearer
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 from pydantic import BaseModel
 
-from worker import run_task
+#from worker import run_task
 
 sys.path.append('./tasks')
 SECRET_KEY = "god"
 from async_Data import Data
+
+#from celery import Celery
+
+
+
+# Use the Redis broker
+#celery_app = Celery('task_queue', broker='redis://redis:6379/0', backend = 'redis://redis:6379/0')
+
+
+
+
 
 class Request(BaseModel):
 	function: str
@@ -145,29 +156,63 @@ def create_app():
 		else:
 			raise Exception('to code' + func)
 			
+	# @app.post('/backend', status_code=201)
+	# async def backend_request(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
+	# 	func, args = request_model.function, request_model.arguments
+	# 	print(f'received backend request for {func}: {args}',flush=True)
+	# 	job = q.enqueue(run_task, kwargs={'func': func, 'args': args, 'user_id':user_id}, timeout=600)
+	# 	#job = q.enqueue_call('worker.run_task', kwargs={'func': func, 'args': args, 'user_id':user_id}, timeout=600)
+	# 	return {'task_id': job.get_id()}
+	
+	# async def fetch_job(job_id):
+	# 	loop = asyncio.get_event_loop()
+	# 	job = await loop.run_in_executor(None, Job.fetch, job_id, redis_conn)
+	# 	return job
+		
+	# 	@app.get('/poll/{job_id}')
+	# async def get_result(job_id: str):
+	# 	job = await fetch_job(job_id)
+	# 	if job.is_finished:
+	# 		return {"status": "done", "result": job.result}
+	# 	elif job.is_failed:
+	# 		return {"status": "failed"}
+	# 	else:
+	# 		return {"status": "in progress"}
+	# return app
+		
 	@app.post('/backend', status_code=201)
 	async def backend_request(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
 		func, args = request_model.function, request_model.arguments
-		print(f'received backend request for {func}: {args}',flush=True)
-		job = q.enqueue(run_task, kwargs={'func': func, 'args': args, 'user_id':user_id}, timeout=600)
-		#job = q.enqueue_call('worker.run_task', kwargs={'func': func, 'args': args, 'user_id':user_id}, timeout=600)
-		return {'task_id': job.get_id()}
-	
-	async def fetch_job(job_id):
-		loop = asyncio.get_event_loop()
-		job = await loop.run_in_executor(None, Job.fetch, job_id, redis_conn)
-		return job
+		task_id = data_.queue_task(func,args,user_id)
 
+	
 	@app.get('/poll/{job_id}')
 	async def get_result(job_id: str):
 		job = await fetch_job(job_id)
-		if job.is_finished:
-			return {"status": "done", "result": job.result}
-		elif job.is_failed:
-			return {"status": "failed"}
-		else:
-			return {"status": "in progress"}
-	return app
+
+	# @app.post('/backend', status_code=201)
+	# async def backend_request(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
+	# 	func, args = request_model.function, request_model.arguments
+	# 	print(f'received backend request for {func}: {args}', flush=True)
+	# 	job = celery_app.send_task('run_task', kwargs={'func': func, 'args': args, 'user_id': user_id})
+	# 	return {'task_id': job.id}
+
+	# async def fetch_job(job_id):
+	# 	loop = asyncio.get_event_loop()
+	# 	job = await loop.run_in_executor(None, celery_app.AsyncResult, job_id)
+	# 	return job
+
+	# @app.get('/poll/{job_id}')
+	# async def get_result(job_id: str):
+	# 	job = await fetch_job(job_id)
+	# 	if job.ready():
+	# 		if job.successful():
+	# 			return {"status": "done", "result": job.result}
+	# 		else:
+	# 			return {"status": "failed"}
+	# 	else:
+	# 		return {"status": "in progress"}
+	# return app
 
 app = create_app()
 
