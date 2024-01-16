@@ -8,7 +8,7 @@ spec:
     - http:
         paths:
           - pathType: Prefix
-            path: "/data"
+            path: "/private"
             backend:
               service:
                 name: backend-service
