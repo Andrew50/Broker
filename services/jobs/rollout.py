@@ -4,33 +4,36 @@ import pandas as pd
 import os
 import datetime
 import pytz
+import mysql.connector
 
 
-from Database import db
+
+if os.environ.get('INSIDE_CONTAINER', False): #inside container
+    mysql_host = 'mysql'
+else:
+    mysql_host = 'localhost'
+mysql_conn = mysql.connector.connect(host=mysql_host,port='3306',user='root',password='7+WCy76_2$%g',database='broker')
 
 
-def set_setup_sample(self,user_id,st,data):##################################### ix this shit bruhhg dododosoosdodsfdsiho
-    with self.mysql_conn.cursor(buffered=True) as cursor:
+def set_setup_sample(user_id,st,data):##################################### ix this shit bruhhg dododosoosdodsfdsiho
+    with mysql_conn.cursor(buffered=True) as cursor:
         cursor.execute('SELECT setup_id from setups WHERE user_id = %s AND name = %s',(user_id,st))
         setup_id = cursor.fetchone()[0]
         print(setup_id)
         query = [[setup_id,ticker,dt,classification] for ticker,dt,classification in data]
         #cursor.executemany("INSERT IGNORE INTO setup_data VALUES (%s, %s, %s,%s)", query)
         cursor.executemany("INSERT INTO setup_data VALUES (%s, %s, %s,%s)", query)
-    self.mysql_conn.commit()
+    mysql_conn.commit()
 
 
-def get_user(self, email, password):
-    with self.mysql_pool.acquire() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
-            user_data = cursor.fetchone()
-            if user_data and len(user_data) > 0:
-                if password == user_data[2]:  # Assuming password is at index 2
-                    return user_data[0]
-
-db.get_user = get_user
-db.set_setup_sample = set_setup_sample
+def get_user(email, password):
+    
+    with mysql_conn.cursor() as cursor:
+        cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+        user_data = cursor.fetchone()
+        if user_data and len(user_data) > 0:
+            if password == user_data[2]:  # Assuming password is at index 2
+                return user_data[0]
 
 
 def format_datetime(dt,reverse=False):
@@ -55,10 +58,8 @@ def format_datetime(dt,reverse=False):
 
 
 
-user_id = db.get_user('user','pass')
-
-
-path = 'instances'
+user_id = get_user('user','pass')
+path = 'C:/dev/broker/services/jobs/instances/'
 dirs = os.listdir(path)
 for f in dirs:
     st = f.split('.')[0]
@@ -66,6 +67,6 @@ for f in dirs:
     df = df[['ticker','dt','value']]
     df['dt'] = df['dt'].astype(str).apply(format_datetime)
     df = df.values.tolist()
-    db.set_setup_sample(user_id,st,df)
+    set_setup_sample(user_id,st,df)
 
 
