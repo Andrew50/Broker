@@ -13,6 +13,13 @@ class Data:
 		self.redis_conn = redis.Redis(host=redis_host, port=6379)
 		self.mysql_conn = mysql.connector.connect(host=mysql_host,port='3306',user='root',password='7+WCy76_2$%g',database='broker')
 
+	def check_connection(self):
+		try:
+			self.redis_conn.ping()
+			self.mysql_conn.ping()
+		except:
+			self.__init__()
+
 	def get_trainer_queue_size(self,user_id,st):
 		return self.redis_conn.llen(str(user_id)+st)
 
@@ -43,7 +50,7 @@ class Data:
 			value = value[-1]['close']
 			self.redis_conn.hset('prev_close', ticker, pickle.dumps(value))
 			
-
+	@staticmethod
 	def fetch_stock_data(tickers):
 		args = " ".join(tickers)
 		ds = yf.download(args, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=True, keepna=False)
@@ -58,14 +65,14 @@ class Data:
 				last_close_values[ticker] = last_non_na_close
 		return last_close_values
 	
-	@staticmethod
-	def get_current_prices():
-		tickers = data.get_ticker_list()
+	
+	def get_current_prices(self):
+		tickers = self.get_ticker_list()
 		batches = []
 		for i in range(0,len(tickers),1000):
 			batches.append(tickers[i:i+ 1000])
 		with multiprocessing.Pool(5) as pool:
-			results = pool.map(Data.fetch_stock_data,batches)
+			results = pool.map(self.fetch_stock_data,batches)
 		return {k: v for d in results for k, v in d.items()}
 
 	def get_ds(self,form = 'match',request='full',tf='1d', bars=0):
@@ -274,4 +281,3 @@ class Data:
 			cursor.executemany("INSERT INTO setup_data VALUES (%s, %s, %s,%s)", query)
 		self.mysql_conn.commit()
 
-data = Data()
