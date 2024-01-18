@@ -3,29 +3,31 @@ import importlib
 import traceback
 import redis
 import json, time
+from sync_Data import Data
+import datetime
 
 def process_tasks():
 	r = redis.Redis(host='redis', port=6379)
+	data = Data()
 	while True:
-		try:
-			_, task_message = r.brpop('task_queue_1')
-		except:
-			time.sleep(1)
+		_, task_message = r.brpop('task_queue_1', timeout=100000)
+		if not task_message:
+			data.check_connection()
 		else:
+			print(f"starting {func_ident} {args}", flush=True)
 			task_data = json.loads(task_message)
 			task_id, func_ident, args, user_id = task_data['id'], task_data['func'], task_data['args'], task_data['user_id']
 			module_name, function_name = func_ident.split('-')
+		try:
 			module = importlib.import_module(module_name)
 			func = getattr(module, function_name, None)
-			print(f"starting {func_ident} {args}", flush=True)
-			try:
-				r.set(f"result:{task_id}", json.dumps('running'))
-				result = func(*args, user_id)
-				r.set(f"result:{task_id}", json.dumps(result))
-			except:
-				r.set(f"result:{task_id}", json.dumps('failed'))
-				traceback.print_exc()
-
+			r.set(f"result:{task_id}", json.dumps('running'))
+			result = func(data,user_id,*args)
+			r.set(f"result:{task_id}", json.dumps(result))
+		except:
+			exception = traceback.format_exc()
+			r.set(f"result:{task_id}", json.dumps('error: ' + exception))
+			print(exception, flush=True)
 if __name__ == "__main__":
 	process_tasks()
 
