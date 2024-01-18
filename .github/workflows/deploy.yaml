@@ -1,0 +1,23 @@
+name: Deploy
+
+on:
+    pull_request:
+        branches:
+            - prod-beta_block
+jobs:
+    run-tests:
+        runs-on: ubuntu-latest
+
+        steps:
+        - name: Checkout repository
+          uses: actions/checkout@v2
+
+        - name: Send rollout request
+          run: |
+            curl -X POST \
+            -H "Content-Type: application/json" \
+            -d '{"key": "value"}' \
+            https://26b9-72-42-165-242.ngrok-free.app/rollout
+
+
+    
