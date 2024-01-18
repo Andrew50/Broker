@@ -14,10 +14,10 @@ def process_tasks():
 		if not task_message:
 			data.check_connection()
 		else:
-			print(f"starting {func_ident} {args}", flush=True)
 			task_data = json.loads(task_message)
 			task_id, func_ident, args, user_id = task_data['id'], task_data['func'], task_data['args'], task_data['user_id']
 			module_name, function_name = func_ident.split('-')
+			print(f"starting {func_ident} {args}", flush=True)
 		try:
 			module = importlib.import_module(module_name)
 			func = getattr(module, function_name, None)
@@ -28,6 +28,7 @@ def process_tasks():
 			exception = traceback.format_exc()
 			r.set(f"result:{task_id}", json.dumps('error: ' + exception))
 			print(exception, flush=True)
+
 if __name__ == "__main__":
 	process_tasks()
 
