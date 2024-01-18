@@ -75,7 +75,7 @@ def get(data, user_id, setup_types):
 
 
 	results = Screener.screen(data,user_id,setup_types,'screener')
-	return json.dumps(results)
+	return results
 			
 if __name__ == '__main__':
 	print(Screener.screen(6,['EP'],'screener'))
