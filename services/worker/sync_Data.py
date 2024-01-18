@@ -50,7 +50,7 @@ class Data:
 			value = value[-1]['close']
 			self.redis_conn.hset('prev_close', ticker, pickle.dumps(value))
 			
-
+	@staticmethod
 	def fetch_stock_data(tickers):
 		args = " ".join(tickers)
 		ds = yf.download(args, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=True, keepna=False)
@@ -72,7 +72,7 @@ class Data:
 		for i in range(0,len(tickers),1000):
 			batches.append(tickers[i:i+ 1000])
 		with multiprocessing.Pool(5) as pool:
-			results = pool.map(Data.fetch_stock_data,batches)
+			results = pool.map(self.fetch_stock_data,batches)
 		return {k: v for d in results for k, v in d.items()}
 
 	def get_ds(self,form = 'match',request='full',tf='1d', bars=0):
