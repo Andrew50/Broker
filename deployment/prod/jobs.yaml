@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: jobs
+spec:
+  schedule: "0 22 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: jobs
+              image: billin19/jobs:latest
+              command: ["python", "Database.py"]
+          restartPolicy: OnFailure
+# ---
+# apiVersion: batch/v1
+# kind: Job
+# metadata:
+#   name: database
+# spec:
+#   template:
+#     spec:
+#       containers:
+#         - name: rollout
+#           image: billin19/jobs:latest
+#           command: ["python", "Database.py"]
+#       restartPolicy: Never

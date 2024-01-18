@@ -1,0 +1,78 @@
+version: '3.6'
+
+services:
+
+    backend:
+        depends_on:
+            - mysql
+            - redis
+        build:
+            context: C:/dev/broker/services/backend
+            dockerfile: Dockerfile
+        restart: on-failure
+        ports:
+        - "5057:5057"
+        volumes:
+            #- C:/dev/broker/services/backend/api.py:/app/api.py
+            - C:/dev/broker/services/backend/:/app/
+        networks:
+            - compose_network
+
+    worker: 
+        build: #satish was here
+            context: C:/dev/broker/services/worker
+            dockerfile: Dockerfile
+        restart: on-failure
+        volumes: 
+            - C:/dev/broker/services/worker/:/app/
+             #- ./:/app
+        depends_on:
+            - mysql
+            - redis
+        networks:
+            - compose_network
+
+    jobs:
+        build:
+            context: C:/dev/broker/services/jobs
+            dockerfile: Dockerfile
+        volumes:
+            - C:/dev/broker/services/jobs:/app
+        command: python Database.py
+        restart: on-failure
+        networks:
+            - compose_network
+        environment:
+            - DEV_ENV=True
+
+    mysql:
+        image: mysql:latest
+        environment:
+            MYSQL_ROOT_PASSWORD: 7+WCy76_2$%g
+        ports:
+            - "3306:3306"
+        volumes:
+            - mysql-data:/var/lib/mysql
+           # - C:/dev/broker/services/mysql/my.cnf:/etc/mysql/my.cnf
+        networks:
+            - compose_network
+            
+    redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+        networks:
+          - compose_network
+        hostname: redis
+        volumes:
+          - redis-data:/data
+        command: redis-server
+        mem_limit: 12G
+
+volumes:
+    mysql-data:
+    redis-data:
+
+networks:
+    compose_network:    
+        driver: bridge

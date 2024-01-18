@@ -9,11 +9,13 @@
 *.user
 *.userosscache
 *.sln.docstates
+deployment/venv
 backend/database/database_dump.sql
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 backend/1d
-backend/tasks/Setup.py
+.gitattributes
+# backend/tasks/Setup.py
 # backend/tasks/Test.py
 # Mono auto generated files
 mono_crash.*
@@ -34,6 +36,7 @@ bld/
 [Oo]ut/
 [Ll]og/
 [Ll]ogs/
+old/
 backend/scripts/d
 backend/tasks/d
 backend/tasks/local

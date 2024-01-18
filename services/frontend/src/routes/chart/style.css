@@ -1,0 +1,57 @@
+.popout-menu {
+    display: none;
+    position: fixed;
+    right: 80px;
+    top: 10px;
+    background-color: #f9f9f9;
+    min-width: 3px;
+    min-width: 385px; /* Ensure minimum width is 400px */
+    width: 300px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+}
+
+.popout-menu.visible {
+    display: block;
+}
+
+h1 {
+    font-weight: 5;
+    color: forestgreen;
+}
+
+#chartContainer {
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translate(0,-50%);
+}
+.button-container {
+    position: fixed;
+    right: 20px;
+    top: 20px;
+}
+
+.button {
+    background-color: #007bff; /* Blue color, consistent with theme */
+    color: white;
+    border: none;
+    padding: 10px 10px;
+    margin-bottom: 7px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 10px;
+    transition: background-color 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.button:hover {
+    background-color: #0056b3; /* Darker shade for hover effect */
+}
+
+.icon {
+    width: 30px;
+    height: 30px;
+}
