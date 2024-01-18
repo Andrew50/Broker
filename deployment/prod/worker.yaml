@@ -1,3 +1,28 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: worker-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /mnt/disks/ssd2
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: worker-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,3 +39,10 @@ spec:
       containers:
         - name: worker
           image: billin19/worker:latest
+          volumeMounts:
+            - name: worker-volume
+              mountPath: /app/models
+      volumes:
+        - name: worker-volume
+          persistentVolumeClaim:
+            claimName: worker-pvc
