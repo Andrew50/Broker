@@ -10,6 +10,7 @@
 *.userosscache
 *.sln.docstates
 backend/database/database_dump.sql
+deployment/venv
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 backend/1d
