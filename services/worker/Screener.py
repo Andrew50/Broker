@@ -1,6 +1,5 @@
 import json
 import tensorflow as tf
-from sync_Data import data
 
 
 
@@ -13,7 +12,7 @@ class Screener:
 	def load_model(user_id,st):
 		return tf.keras.models.load_model(f'/app/models/{user_id}_{st}')
 
-	def screen(user_id,setup_types, _format, query = None,threshold = .65, model = None):
+	def screen(data,user_id,setup_types, _format, query = None,threshold = .65, model = None):
 		results = []
 		
 		if _format == 'screener':
@@ -72,10 +71,10 @@ class Screener:
 		
 	
 	
-def get(setup_types,user_id):
+def get(data, user_id, setup_types):
 
 
-	results = Screener.screen(user_id,setup_types,'screener')
+	results = Screener.screen(data,user_id,setup_types,'screener')
 	return json.dumps(results)
 			
 if __name__ == '__main__':

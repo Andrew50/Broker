@@ -13,6 +13,13 @@ class Data:
 		self.redis_conn = redis.Redis(host=redis_host, port=6379)
 		self.mysql_conn = mysql.connector.connect(host=mysql_host,port='3306',user='root',password='7+WCy76_2$%g',database='broker')
 
+	def check_connection(self):
+		try:
+			self.redis_conn.ping()
+			self.mysql_conn.ping()
+		except:
+			self.__init__()
+
 	def get_trainer_queue_size(self,user_id,st):
 		return self.redis_conn.llen(str(user_id)+st)
 
@@ -274,4 +281,3 @@ class Data:
 			cursor.executemany("INSERT INTO setup_data VALUES (%s, %s, %s,%s)", query)
 		self.mysql_conn.commit()
 
-data = Data()

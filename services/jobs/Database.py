@@ -11,7 +11,7 @@ import datetime
 import mysql.connector
 
 
-TICKER_CAP = 10 #number of tickers to setup in the database. Set to None to use all tickers in ticker_list.csv
+TICKER_CAP = None#number of tickers to setup in the database. None = all tickers
 FORCE_RECALC = False #set to True to force the recalculation of all cached data. This should be done if recalc methods are changed
 
 class Database:
