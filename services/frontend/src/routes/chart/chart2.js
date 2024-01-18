@@ -55,11 +55,15 @@ export class chart2 {
             this.prev = event.clientX;
         }
         this.canvas.onmousemove = (evt) => {
-            if (this.isDragging && (this.a + this.data.length + ((this.prev - event.clientX) / this.candleWidth)) <= this.data.length) {
+            if (this.isDragging) {
                 //console.log(this.candleWidth);
-                this.a = this.a + ((this.prev - event.clientX) / this.candleWidth);
+                if ((this.a + ((this.prev - event.clientX) / this.candleWidth)) < 0) {
+                    this.a = this.a + ((this.prev - event.clientX) / this.candleWidth);
+                }
+
                 this.prev = event.clientX;
-                this.#draw();
+                //console.log(this.data.length + Math.ceil(this.a) - Math.floor((this.canvas.width - this.margin) / this.candleWidth));
+                this.#draw()
                 //console.log("Mouse at: X=" + event.clientX + ", Y=" + event.clientY);
             }
         }
@@ -67,33 +71,40 @@ export class chart2 {
             this.isDragging = false;
         }
         this.canvas.onwheel = (evt) => {
-            this.candleWidth = this.candleWidth + evt.deltaY/10;
+            // add two candles onto screen
+            // 2 + screen size / width = screen size / new width
+            // 
+            //this.candleWidth = (this.canvas.width - this.margin) / ((evt.deltaY / 100) - (this.canvas.width - this.margin) * (this.candleWidth));
+            this.candleWidth = (this.canvas.width - this.margin) / (( evt.deltaY / (this.candleWidth^.5) ) + (this.canvas.width - this.margin) / (this.candleWidth));
+            console.log(this.candleWidth);
             if (this.candleWidth < 1) {
-                this.candleWidth = 1;
+                this.candleWidth = 1; 
                 this.wickWidth = 1;
             }
-            else if (this.candleWidth > 40) {
-                this.candleWidth = 40;
+            else if (this.candleWidth > 80) {
+                this.candleWidth = 80;
             }
             else {
                 this.wickWidth = 2;
             }
-            
+            console.log((this.canvas.width - this.margin)/ this.candleWidth);
             this.#draw();
+
         }
     }
 
     #convertData(chart_data) {
         if (Array.isArray(chart_data)) {
-           
+
             this.data = chart_data.map(obj => Object.values(obj));
             //this.data = flattenedData.slice(flattenedData.length - b, flattenedData.length - a);
             //this.data = flattenedData;
             //console.log(this.data);
             //this.pixelBounds = this.#getPixelBounds();
             //this.dataBounds = this.#getDataBounds();
-                
+
             this.#draw();
+            console.log(this.data[this.data.length - 1])
 
         } else {
             console.error('data is not an array');
@@ -104,7 +115,7 @@ export class chart2 {
     #getPixelBounds() {
         const { canvas, margin } = this;
         const bounds = {
-            right: canvas.width - this.candleWidth,
+            right: canvas.width - margin + this.candleWidth,
             left: 0,
             top: 0,
             bottom: canvas.height - margin,
@@ -141,7 +152,11 @@ export class chart2 {
         const { ctx, canvas } = this;
         //clear area
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const dataSliced = this.data.slice(this.data.length + Math.ceil(this.a) - Math.ceil(canvas.width / this.candleWidth), this.data.length + Math.ceil(this.a));
+        console.log(this.data.length + Math.ceil(this.a) - Math.floor((this.canvas.width - this.margin) / this.candleWidth));
+        console.log(this.data.length + Math.ceil(this.a));
+        const dataSliced = this.data.slice(this.data.length + Math.ceil(this.a) - Math.floor((this.canvas.width - this.margin) / this.candleWidth), this.data.length + Math.ceil(this.a));
+        
+
         //console.log(Math.ceil(this.a) - Math.ceil(canvas.width / this.candleWidth));
         //console.log(Math.ceil(this.a));
         //const dataSliced = this.data.slice(0,50);
@@ -155,13 +170,13 @@ export class chart2 {
         let i = 0;
         //console.log(dataSliced);
         for (const candleStick of dataSliced) {
-            this.#drawData(i , candleStick);
+            this.#drawData(i, candleStick);
             i++;
         }
         this.#drawAxes();
     }
 
-    #drawData(i,candleStick){
+    #drawData(i, candleStick) {
         const { ctx, data, dataBounds, pixelBounds } = this;
         const pixelLoc = [
             math.remap(dataBounds.left, dataBounds.right, pixelBounds.left, pixelBounds.right, i),
@@ -176,14 +191,14 @@ export class chart2 {
         else {
             ctx.fillStyle = 'green';
         }
-        
+
         const xOffset = Math.abs(this.a - Math.floor(this.a)) * this.candleWidth;
         //const xOffset = 0;
-        
+
         ctx.fillRect(pixelLoc[0] - xOffset, ((pixelLoc[1] + pixelLoc[4]) - Math.abs(pixelLoc[1] - pixelLoc[4])) / 2, this.candleWidth, Math.abs(pixelLoc[1] - pixelLoc[4]));
-        ctx.fillRect(pixelLoc[0] - xOffset + this.candleWidth / 2 - 1 , ((pixelLoc[2] + pixelLoc[3]) - Math.abs(pixelLoc[2] - pixelLoc[3])) / 2, this.wickWidth, Math.abs(pixelLoc[2] - pixelLoc[3]));
-        
-        
+        ctx.fillRect(pixelLoc[0] - xOffset + this.candleWidth / 2 - 1, ((pixelLoc[2] + pixelLoc[3]) - Math.abs(pixelLoc[2] - pixelLoc[3])) / 2, this.wickWidth, Math.abs(pixelLoc[2] - pixelLoc[3]));
+
+
     }
 
     #drawAxes() {
@@ -198,14 +213,14 @@ export class chart2 {
             this.ctx.beginPath();
             this.ctx.strokeStyle = 'white';
             this.ctx.moveTo(this.pixelBounds.left, pixelLoc);
-            this.ctx.lineTo(this.pixelBounds.right - this.margin, pixelLoc);
+            this.ctx.lineTo(this.canvas.width - this.margin, pixelLoc);
             this.ctx.stroke();
         }
-        
+
 
     }
 
-    #drawText(text,loc,size) {
+    #drawText(text, loc, size) {
         const ctx = this.ctx
 
         ctx.textAlign = 'right';
@@ -213,8 +228,8 @@ export class chart2 {
         ctx.font = "bold " + size + "px Courier";
         ctx.fillStyle = 'grey';
         ctx.fillText(text, ...loc);
-    
+
     }
 
-    
+
 }
