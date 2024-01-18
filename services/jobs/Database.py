@@ -126,7 +126,6 @@ class Database:
 										'low': row[3],
 										'close': row[4]
 										}for row in list_of_lists]
-									print(list_of_lists[:10],flush=True)
 									processed_data = json.dumps(list_of_lists)
 								redis_conn.hset(tf+form, ticker, processed_data)
 						except Exception as e:
