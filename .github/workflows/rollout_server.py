@@ -7,12 +7,15 @@ app = Flask(__name__)
 @app.route('/rollout', methods=['POST'])
 def rollout():
     try:
-        os.chdir('/home/aj/dev/Broker')
+        # Change to the desired directory
+        os.chdir('/path/to/your/directory')
+
+        # Run the script
+        print("Running rollout script...")
         result = subprocess.run(['bash', 'rollout'], capture_output=True, text=True)
-        if result.returncode == 0:
-            return jsonify({"status": "success", "output": result.stdout}), 200
-        else:
-            return jsonify({"status": "error", "output": result.stderr}), 500
+
+        # Return the result
+        return jsonify({"status": "success", "output": result.stdout}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
