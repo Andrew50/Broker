@@ -1,3 +1,28 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: worker-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /mnt/disks/ssd2
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: worker-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,19 +39,10 @@ spec:
       containers:
         - name: worker
           image: billin19/worker:latest
-          resources:
-            requests:
-              cpu: "100m"
-# ---
-# apiVersion: autoscaling/v1
-# kind: HorizontalPodAutoscaler
-# metadata:
-#   name: worker-hpa
-# spec:
-#   scaleTargetRef:
-#     apiVersion: apps/v1
-#     kind: Deployment
-#     name: worker
-#   minReplicas: 1
-#   maxReplicas: 10
-#   targetCPUUtilizationPercentage: 50
+          volumeMounts:
+            - name: worker-volume
+              mountPath: /app/models
+      volumes:
+        - name: worker-volume
+          persistentVolumeClaim:
+            claimName: worker-pvc
