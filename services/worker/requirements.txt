@@ -1,7 +1,7 @@
 #redis==3.3.11
 redis>=3.4.0
 Click==7.0
-tensorflow
+tensorflow==2.15.0
 cython==3.0.5
 mysql-connector-python==8.1.0
 numpy==1.23.5

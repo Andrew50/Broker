@@ -140,7 +140,8 @@ class Trainer:
 		# 	model.save(f'C:/dev/broker/backend/models/{user_id}_{st}', save_format='tf')
 		# 	#model.save(f'C:/dev/broker/backend/models/{user_id}_{st}.h5')
 		# else:
-		model.save(f'models/{user_id}_{st}', save_format='tf')
+		
+		model.save(f'models/{user_id}_{st}',save_format = 'tf')
 			#model.save(f'models/{user_id}_{st}.h5')
 			
 		tensorflow.keras.backend.clear_session()
