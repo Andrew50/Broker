@@ -58,9 +58,9 @@ class Data:
 				last_close_values[ticker] = last_non_na_close
 		return last_close_values
 	
-	@staticmethod
-	def get_current_prices():
-		tickers = data.get_ticker_list()
+	
+	def get_current_prices(self):
+		tickers = self.get_ticker_list()
 		batches = []
 		for i in range(0,len(tickers),1000):
 			batches.append(tickers[i:i+ 1000])
