@@ -8,7 +8,14 @@ spec:
     - http:
         paths:
           - pathType: Prefix
-            path: "/data"
+            path: "/private"
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 80
+          - pathType: Prefix
+            path: "/poll"
             backend:
               service:
                 name: backend-service

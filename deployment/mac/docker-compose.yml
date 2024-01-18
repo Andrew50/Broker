@@ -7,24 +7,24 @@ services:
             - mysql
             - redis
         build:
-            context: C:/dev/broker/services/backend
+            context: /Users/taeyoon/VisualStudio/Broker/services/backend
             dockerfile: Dockerfile
         restart: on-failure
         ports:
         - "5057:5057"
         volumes:
-            #- C:/dev/broker/services/backend/api.py:/app/api.py
-            - C:/dev/broker/services/backend/:/app/
+            #- /Users/taeyoon/VisualStudio/Broker/services/backend/api.py:/app/api.py
+            - /Users/taeyoon/VisualStudio/Broker/services/backend/:/app/
         networks:
             - compose_network
 
     worker: 
         build: #satish was here
-            context: C:/dev/broker/services/worker
+            context: /Users/taeyoon/VisualStudio/Broker/services/worker
             dockerfile: Dockerfile
         restart: on-failure
         volumes: 
-            - C:/dev/broker/services/worker/:/app/
+            - /Users/taeyoon/VisualStudio/Broker/services/worker/:/app/
              #- ./:/app
         depends_on:
             - mysql
@@ -34,10 +34,10 @@ services:
 
     jobs:
         build:
-            context: C:/dev/broker/services/jobs
+            context: /Users/taeyoon/VisualStudio/Broker/services/jobs
             dockerfile: Dockerfile
         volumes:
-            - C:/dev/broker/services/jobs:/app
+            - /Users/taeyoon/VisualStudio/Broker/services/jobs:/app
         command: python Database.py
         restart: on-failure
         networks:
@@ -53,7 +53,7 @@ services:
             - "3306:3306"
         volumes:
             - mysql-data:/var/lib/mysql
-           # - C:/dev/broker/services/mysql/my.cnf:/etc/mysql/my.cnf
+           # - /Users/taeyoon/VisualStudio/Broker/services/mysql/my.cnf:/etc/mysql/my.cnf
         networks:
             - compose_network
             

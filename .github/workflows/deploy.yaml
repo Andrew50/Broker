@@ -1,0 +1,24 @@
+name: Deploy
+
+on:
+    pull_request:
+        branches:
+            - prod-beta
+jobs:
+    run-tests:
+        runs-on: ubuntu-latest
+
+        steps:
+        - name: Checkout repository
+          uses: actions/checkout@v2
+
+        - name: Send rollout request
+          run: |
+            response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            -H "Content-Type: application/json" \
+            -d '{"key": "value"}' \
+            https://26b9-72-42-165-242.ngrok-free.app/rollout)
+            if [ "$response" -ne 200 ]; then
+              echo "Rollout failed with status code $response"
+              exit 1
+            fi

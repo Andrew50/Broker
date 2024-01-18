@@ -14,7 +14,6 @@ try:
 	import matplotlib.pyplot as plt
 except: pass
 from tensorflow.keras.callbacks import EarlyStopping
-from sync_Data import data
 import json
 from imblearn.over_sampling import SMOTE
 
@@ -37,7 +36,7 @@ class Trainer:
 
 
 
-	def get_sample(st, user_id):
+	def get_sample(data,st, user_id):
 		training_ratio, validation_ratio, oversample = .25, .05, 1.5
 		
 		all_instances, tf, setup_length = data.get_setup_sample(user_id, st)
@@ -78,9 +77,9 @@ class Trainer:
 
 	
 	
-	def train_model(st, user_id):
+	def train_model(data,st, user_id):
 
-		ds, y, ds_val, y_val = Trainer.get_sample(st, user_id)
+		ds, y, ds_val, y_val = Trainer.get_sample(data,st, user_id)
 		_, num_time_steps, input_dim = ds.shape
 		model = Sequential()
 
@@ -136,12 +135,13 @@ class Trainer:
 
 		history = model.fit(ds, y,epochs=30,batch_size=64,validation_data=(ds_val, y_val),)  # Use the actual validation set herecallbacks=[early_stopping],verbose=1)
 		
-		if not os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False):
-			print('saved model -----------outside container so kinda useless god---------')
-			model.save(f'C:/dev/broker/backend/models/{user_id}_{st}', save_format='tf')
-			#model.save(f'C:/dev/broker/backend/models/{user_id}_{st}.h5')
-		else:
-			model.save(f'/app/models/{user_id}_{st}', save_format='tf')
+		# if not os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False):
+		# 	print('saved model -----------outside container so kinda useless god---------')
+		# 	model.save(f'C:/dev/broker/backend/models/{user_id}_{st}', save_format='tf')
+		# 	#model.save(f'C:/dev/broker/backend/models/{user_id}_{st}.h5')
+		# else:
+		
+		model.save(f'models/{user_id}_{st}',save_format = 'tf')
 			#model.save(f'models/{user_id}_{st}.h5')
 			
 		tensorflow.keras.backend.clear_session()
@@ -151,7 +151,7 @@ class Trainer:
 	
 
 
-	def run_generator(st,user_id):
+	def run_generator(data,st,user_id):
 		i = 0
 		model = Screener.load_model(user_id,st)
 		prev_length = None
@@ -191,15 +191,13 @@ class Trainer:
 		return
 
 
-def train(args,user_id):
-	st, = args
-	results = Trainer.train_model(st,user_id)
-	return json.dumps(results)
+def train(data,user_id,st):
+	results = Trainer.train_model(data,st,user_id)
+	return results
 
 
-def start(args,user_id):
-	st, = args
-	Trainer.run_generator(st,user_id)
+def start(data,user_id,st):
+	Trainer.run_generator(data,st,user_id)
 
 
 if __name__ == '__main__':

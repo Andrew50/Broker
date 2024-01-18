@@ -25,7 +25,7 @@ class Match:
         top_scores = heapq.nsmallest(20, returns, key=lambda x: x[2])
         print(f"time to complete match {datetime.datetime.now() - start}")
         print(top_scores)
-        return [[ticker,str(format_datetime(dt=timestamp, reverse=True)),round(score,2)] for ticker,timestamp, score in top_scores]
+        return [[ticker,str(data.format_datetime(dt=timestamp, reverse=True)),round(score,2)] for ticker,timestamp, score in top_scores]
        
 
     def formatArray(data, onlyCloseAndVol = True, yValue = False, whichColumn=4):
@@ -55,11 +55,10 @@ class Match:
         raise AttributeError
         return d 
 
-def get(args,user_id = None):
+def get(ticker,tf,dt,user_id = None):
     #asyncio.run(data.init_async_conn())
     
     start = datetime.datetime.now()
-    ticker,tf,dt = args
     ds = data.get_ds(tf=tf,form='match')
     
     y = data.get_df('match',ticker,tf,dt, bars=np_bars)[:, 2:-1]
@@ -67,7 +66,7 @@ def get(args,user_id = None):
     match_data = Match.compute(ds,y)
     for i in range(len(match_data)): match_data[i][1] = match_data[i][1][:10]
     print(datetime.datetime.now() - start)
-    return json.dumps(match_data)
+    return match_data
 
 if __name__ == '__main__':
     print('test')
