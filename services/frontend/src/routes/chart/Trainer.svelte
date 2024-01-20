@@ -80,7 +80,7 @@
 
     function select_setup(setup) {
         selected_setup = setup;
-        private_request(current_instance, "get instance", selected_setup);
+        //private_request(current_instance, "get instance", selected_setup); #TODO fix this and turn it back on
         // Assuming setupTimeframe needs to be fetched or set here
     }
 
