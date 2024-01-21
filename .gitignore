@@ -15,6 +15,7 @@ deployment/venv
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 backend/1d
+deployment/prod/env
 .gitattributes
 # backend/tasks/Setup.py
 # backend/tasks/Test.py
