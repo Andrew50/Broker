@@ -8,6 +8,8 @@ app = Flask(__name__)
 def rollout():
     try:
         print("Rollout request received", flush=True)
+        os.chdir('/home/aj/dev/Broker')
+        subprocess.run(['git', 'pull','origin','prod-beta'], capture_output=True, text=True)
         os.chdir('/home/aj/dev/Broker/deployment/prod')
         result = subprocess.run(['bash', 'rollout'], capture_output=True, text=True)
         if result.returncode == 0:
