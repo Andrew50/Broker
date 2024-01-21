@@ -133,7 +133,7 @@ export async function backend_request(bind_variable, func, ...args) {
                 clearInterval(intervalId);
             }
         };
-        const intervalId = setInterval(checkStatus, 200); // Check every .2 seconds
+        const intervalId = setInterval(checkStatus, 500); // Check every .2 seconds
 
     } catch (error) {
         console.error('Error during backend request:', error);

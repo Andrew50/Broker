@@ -11,6 +11,7 @@
 *.sln.docstates
 deployment/venv
 backend/database/database_dump.sql
+deployment/venv
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 backend/1d
@@ -19,6 +20,7 @@ backend/1d
 # backend/tasks/Test.py
 # Mono auto generated files
 mono_crash.*
+services/worker/models
 /backend/scripts/local
 # Build results
 [Dd]ebug/
@@ -37,17 +39,9 @@ bld/
 [Ll]og/
 [Ll]ogs/
 old/
-backend/scripts/d
-backend/tasks/d
-backend/tasks/local
-backend/tasks/1min
-backend/database
-backend/old/1d
-backend/old/1min
-old/1d
-backend/kt
-frontend/node_modules
-frontend/.svelte-kit
+services/frontend/node_modules
+services/frontend/.svelte-kit
+services/worker/models
 build
 
 
