@@ -16,6 +16,7 @@ deployment/venv
 *.userprefs
 backend/1d
 .gitattributes
+deployment/prod/env
 # backend/tasks/Setup.py
 # backend/tasks/Test.py
 # Mono auto generated files
