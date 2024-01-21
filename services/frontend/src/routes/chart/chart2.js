@@ -57,7 +57,7 @@ export class chart2 {
         this.canvas.onmousemove = (evt) => {
             if (this.isDragging) {
                 //console.log(this.candleWidth);
-                if ((this.a + ((this.prev - event.clientX) / this.candleWidth)) < 0) {
+                if ((this.a + ((this.prev - event.clientX) / this.candleWidth)) < 0 && (this.data.length + (this.a) - Math.floor((this.canvas.width - this.margin) / this.candleWidth) + (this.prev - event.clientX) / this.candleWidth) >=      ){
                     this.a = this.a + ((this.prev - event.clientX) / this.candleWidth);
                 }
 
@@ -73,9 +73,18 @@ export class chart2 {
         this.canvas.onwheel = (evt) => {
             // add two candles onto screen
             // 2 + screen size / width = screen size / new width
-            // 
+            //
             //this.candleWidth = (this.canvas.width - this.margin) / ((evt.deltaY / 100) - (this.canvas.width - this.margin) * (this.candleWidth));
-            this.candleWidth = (this.canvas.width - this.margin) / (( evt.deltaY / (this.candleWidth^.5) ) + (this.canvas.width - this.margin) / (this.candleWidth));
+            const newCandleWidth = (this.canvas.width - this.margin) / ((evt.deltaY / (this.candleWidth ^ .5)) + (this.canvas.width - this.margin) / (this.candleWidth));
+            if ((this.data.length + (this.a) - Math.floor((this.canvas.width - this.margin) / newCandleWidth)) >= -1) {
+                this.candleWidth = newCandleWidth;//this.candleWidth = evt.deltaY / 50 + this.candleWidth;
+            }
+            else {
+                //display max candles
+                
+                this.a = Math.ceil(this.a)
+                this.candleWidth = ((this.canvas.width - this.margin) / (this.data.length + this.a));
+            }
             console.log(this.candleWidth);
             if (this.candleWidth < 1) {
                 this.candleWidth = 1; 
@@ -87,7 +96,7 @@ export class chart2 {
             else {
                 this.wickWidth = 2;
             }
-            console.log((this.canvas.width - this.margin)/ this.candleWidth);
+            //console.log((this.canvas.width - this.margin)/ this.candleWidth);
             this.#draw();
 
         }
@@ -102,9 +111,10 @@ export class chart2 {
             //console.log(this.data);
             //this.pixelBounds = this.#getPixelBounds();
             //this.dataBounds = this.#getDataBounds();
-
+            this.a = 0;
+            this.candleWidth = 10;
             this.#draw();
-            console.log(this.data[this.data.length - 1])
+            console.log(this.data[0])
 
         } else {
             console.error('data is not an array');
@@ -152,8 +162,8 @@ export class chart2 {
         const { ctx, canvas } = this;
         //clear area
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        console.log(this.data.length + Math.ceil(this.a) - Math.floor((this.canvas.width - this.margin) / this.candleWidth));
-        console.log(this.data.length + Math.ceil(this.a));
+        //console.log(this.data.length + Math.ceil(this.a) - Math.floor((this.canvas.width - this.margin) / this.candleWidth));
+        //console.log(this.data.length + Math.ceil(this.a));
         const dataSliced = this.data.slice(this.data.length + Math.ceil(this.a) - Math.floor((this.canvas.width - this.margin) / this.candleWidth), this.data.length + Math.ceil(this.a));
         
 
@@ -196,7 +206,7 @@ export class chart2 {
         //const xOffset = 0;
 
         ctx.fillRect(pixelLoc[0] - xOffset, ((pixelLoc[1] + pixelLoc[4]) - Math.abs(pixelLoc[1] - pixelLoc[4])) / 2, this.candleWidth, Math.abs(pixelLoc[1] - pixelLoc[4]));
-        ctx.fillRect(pixelLoc[0] - xOffset + this.candleWidth / 2 - 1, ((pixelLoc[2] + pixelLoc[3]) - Math.abs(pixelLoc[2] - pixelLoc[3])) / 2, this.wickWidth, Math.abs(pixelLoc[2] - pixelLoc[3]));
+        ctx.fillRect(pixelLoc[0] - xOffset + this.candleWidth / 2 - this.wickWidth/2, ((pixelLoc[2] + pixelLoc[3]) - Math.abs(pixelLoc[2] - pixelLoc[3])) / 2, this.wickWidth, Math.abs(pixelLoc[2] - pixelLoc[3]));
 
 
     }
@@ -207,7 +217,8 @@ export class chart2 {
         //console.log(Math.ceil(this.dataBounds.bottom));
         //console.log(Math.floor(this.dataBounds.top));
         //console.log(Math.floor((this.dataBounds.top - this.dataBounds.bottom) / 10));
-        for (let i = Math.ceil(this.dataBounds.bottom); i < Math.floor(this.dataBounds.top); i += Math.floor((this.dataBounds.top - this.dataBounds.bottom) / 10)) {
+        //for (let i = Math.ceil(this.dataBounds.bottom); i < Math.floor(this.dataBounds.top); i += Math.floor((this.dataBounds.top - this.dataBounds.bottom) / 10)) {
+        for (let i = (this.dataBounds.bottom); i < (this.dataBounds.top); i += ((this.dataBounds.top - this.dataBounds.bottom) / 10)) {
             const pixelLoc = math.remap(this.dataBounds.top, this.dataBounds.bottom, this.pixelBounds.top, this.pixelBounds.bottom, i);
             this.#drawText(i, [this.canvas.width - 2, pixelLoc], this.margin * 0.5);
             this.ctx.beginPath();
