@@ -95,6 +95,12 @@
         //instance_queue[selected_setup].shift()
         private_request(current_instance, "get instance", selected_setup);
     }
+
+    function train_all() {
+        $setups_list.forEach((setup) => {
+            backend_request(null, "Trainer-train", setup[0]);
+        });
+    }
 </script>
 
 <div class="popout-menu" class:visible>
@@ -166,6 +172,8 @@
                 </button>
             </div>
         {/if}
+
+        <button on:click={train_all}>Train All</button>
     {/if}
 </div>
 
