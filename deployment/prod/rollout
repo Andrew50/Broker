@@ -25,7 +25,7 @@ cd /home/aj/dev/Broker
 
 
   #this includes running of rollout.yaml => runs rollout.py
-  kubectl apply -f deployment/prod
+  kubectl apply -f deployment/prod/config
 
   kubectl rollout restart deployment/frontend
   kubectl rollout restart deployment/backend
