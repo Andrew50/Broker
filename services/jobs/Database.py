@@ -13,7 +13,12 @@ import mysql.connector
 
 FORCE_RECALC = False #set to True to force the recalculation of all cached data. This should be done if recalc methods are changed
 
+
+
+
 class Database:
+
+
 
 	def run():
 		redis_conn = redis.Redis(host='redis', port=6379)

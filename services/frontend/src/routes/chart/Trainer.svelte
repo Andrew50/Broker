@@ -80,7 +80,7 @@
 
     function select_setup(setup) {
         selected_setup = setup;
-        private_request(current_instance, "get instance", selected_setup);
+        //private_request(current_instance, "get instance", selected_setup); #TODO fix this and turn it back on
         // Assuming setupTimeframe needs to be fetched or set here
     }
 
@@ -94,6 +94,12 @@
         );
         //instance_queue[selected_setup].shift()
         private_request(current_instance, "get instance", selected_setup);
+    }
+
+    function train_all() {
+        $setups_list.forEach((setup) => {
+            backend_request(null, "Trainer-train", setup[0]);
+        });
     }
 </script>
 
@@ -166,6 +172,8 @@
                 </button>
             </div>
         {/if}
+
+        <button on:click={train_all}>Train All</button>
     {/if}
 </div>
 
