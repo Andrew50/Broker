@@ -7,6 +7,9 @@ app = Flask(__name__)
 @app.route('/rollout', methods=['POST'])
 def rollout():
     try:
+        print('Rolling out...', flush=True)
+        os.chdir('/home/aj/dev/Broker')  # Replace with the actual path to your prod-beta repository
+        result = subprocess.run(['git', 'pull', 'origin', 'prod-beta'], capture_output=True, text=True)
         os.chdir('/home/aj/dev/Broker/deployment/prod')
         result = subprocess.run(['bash', 'rollout'], capture_output=True, text=True)
         if result.returncode == 0:
