@@ -21,6 +21,7 @@ backend/1d
 .gitattributes
 # backend/tasks/Setup.py
 # backend/tasks/Test.py
+\services\frontend\.svelk-kit
 # Mono auto generated files
 mono_crash.*
 services/worker/models

@@ -20988,7 +20988,7 @@ static PyObject *__pyx_pf_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_self, PyA
  *                 for columnIndexer in range(4):
  *                     d = xSeq[i+zeroIndex, 2+columnIndexer] - ySeq[j, columnIndexer]             # <<<<<<<<<<<<<<
  *                     cost[k] += d * d
- *                 k += 1
+ *                 cost[k] *= 1.0 / (1 + i)##new AJ
  */
           __pyx_t_12 = (__pyx_v_i + __pyx_v_zeroIndex);
           __pyx_t_13 = (2 + __pyx_v_columnIndexer);
@@ -21000,7 +21000,7 @@ static PyObject *__pyx_pf_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_self, PyA
  *                 for columnIndexer in range(4):
  *                     d = xSeq[i+zeroIndex, 2+columnIndexer] - ySeq[j, columnIndexer]
  *                     cost[k] += d * d             # <<<<<<<<<<<<<<
- *                 k += 1
+ *                 cost[k] *= 1.0 / (1 + i)##new AJ
  * 
  */
           __pyx_t_15 = __pyx_v_k;
@@ -21010,16 +21010,31 @@ static PyObject *__pyx_pf_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_self, PyA
         /* "Odtw.pyx":92
  *                     d = xSeq[i+zeroIndex, 2+columnIndexer] - ySeq[j, columnIndexer]
  *                     cost[k] += d * d
+ *                 cost[k] *= 1.0 / (1 + i)##new AJ             # <<<<<<<<<<<<<<
+ * 
+ *                 k += 1
+ */
+        __pyx_t_27 = (1 + __pyx_v_i);
+        if (unlikely(__pyx_t_27 == 0)) {
+          PyErr_SetString(PyExc_ZeroDivisionError, "float division");
+          __PYX_ERR(0, 92, __pyx_L1_error)
+        }
+        __pyx_t_15 = __pyx_v_k;
+        *((double *) ( /* dim=0 */ (__pyx_v_cost.data + __pyx_t_15 * __pyx_v_cost.strides[0]) )) *= (1.0 / ((double)__pyx_t_27));
+
+        /* "Odtw.pyx":94
+ *                 cost[k] *= 1.0 / (1 + i)##new AJ
+ * 
  *                 k += 1             # <<<<<<<<<<<<<<
  * 
- *             cost, cost_prev = cost_prev, cost
+ * 
  */
         __pyx_v_k = (__pyx_v_k + 1);
         __pyx_L20_continue:;
       }
 
-      /* "Odtw.pyx":94
- *                 k += 1
+      /* "Odtw.pyx":97
+ * 
  * 
  *             cost, cost_prev = cost_prev, cost             # <<<<<<<<<<<<<<
  * 
@@ -21039,7 +21054,7 @@ static PyObject *__pyx_pf_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_self, PyA
       __pyx_t_31.data = NULL;
     }
 
-    /* "Odtw.pyx":96
+    /* "Odtw.pyx":99
  *             cost, cost_prev = cost_prev, cost
  * 
  *         k -= 1             # <<<<<<<<<<<<<<
@@ -21048,7 +21063,7 @@ static PyObject *__pyx_pf_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_self, PyA
  */
     __pyx_v_k = (__pyx_v_k - 1);
 
-    /* "Odtw.pyx":97
+    /* "Odtw.pyx":100
  * 
  *         k -= 1
  *         scores.append([ticker, xSeq[n, 0], sqrt(cost_prev[k]) * 100])             # <<<<<<<<<<<<<<
@@ -21057,28 +21072,28 @@ static PyObject *__pyx_pf_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_self, PyA
  */
     __pyx_t_15 = __pyx_v_n;
     __pyx_t_14 = 0;
-    __pyx_t_6 = PyFloat_FromDouble((*__Pyx_BufPtrStrided2d(double *, __pyx_pybuffernd_xSeq.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_xSeq.diminfo[0].strides, __pyx_t_14, __pyx_pybuffernd_xSeq.diminfo[1].strides))); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 97, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble((*__Pyx_BufPtrStrided2d(double *, __pyx_pybuffernd_xSeq.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_xSeq.diminfo[0].strides, __pyx_t_14, __pyx_pybuffernd_xSeq.diminfo[1].strides))); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 100, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __pyx_t_14 = __pyx_v_k;
-    __pyx_t_7 = PyFloat_FromDouble((sqrt((*((double *) ( /* dim=0 */ (__pyx_v_cost_prev.data + __pyx_t_14 * __pyx_v_cost_prev.strides[0]) )))) * 100.0)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 97, __pyx_L1_error)
+    __pyx_t_7 = PyFloat_FromDouble((sqrt((*((double *) ( /* dim=0 */ (__pyx_v_cost_prev.data + __pyx_t_14 * __pyx_v_cost_prev.strides[0]) )))) * 100.0)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 100, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    __pyx_t_5 = PyList_New(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 97, __pyx_L1_error)
+    __pyx_t_5 = PyList_New(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 100, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_INCREF(__pyx_v_ticker);
     __Pyx_GIVEREF(__pyx_v_ticker);
-    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 0, __pyx_v_ticker)) __PYX_ERR(0, 97, __pyx_L1_error);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 0, __pyx_v_ticker)) __PYX_ERR(0, 100, __pyx_L1_error);
     __Pyx_GIVEREF(__pyx_t_6);
-    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 1, __pyx_t_6)) __PYX_ERR(0, 97, __pyx_L1_error);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 1, __pyx_t_6)) __PYX_ERR(0, 100, __pyx_L1_error);
     __Pyx_GIVEREF(__pyx_t_7);
-    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 2, __pyx_t_7)) __PYX_ERR(0, 97, __pyx_L1_error);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_5, 2, __pyx_t_7)) __PYX_ERR(0, 100, __pyx_L1_error);
     __pyx_t_6 = 0;
     __pyx_t_7 = 0;
-    __pyx_t_32 = __Pyx_PyList_Append(__pyx_v_scores, __pyx_t_5); if (unlikely(__pyx_t_32 == ((int)-1))) __PYX_ERR(0, 97, __pyx_L1_error)
+    __pyx_t_32 = __Pyx_PyList_Append(__pyx_v_scores, __pyx_t_5); if (unlikely(__pyx_t_32 == ((int)-1))) __PYX_ERR(0, 100, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __pyx_L4_continue:;
   }
 
-  /* "Odtw.pyx":98
+  /* "Odtw.pyx":101
  *         k -= 1
  *         scores.append([ticker, xSeq[n, 0], sqrt(cost_prev[k]) * 100])
  *     return scores             # <<<<<<<<<<<<<<
