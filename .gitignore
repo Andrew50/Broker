@@ -20,6 +20,7 @@ backend/1d
 # backend/tasks/Test.py
 # Mono auto generated files
 mono_crash.*
+services/worker/models
 /backend/scripts/local
 # Build results
 [Dd]ebug/
