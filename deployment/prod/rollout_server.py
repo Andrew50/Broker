@@ -17,6 +17,7 @@ def rollout():
         else:
             return jsonify({"status": "error", "output": result.stderr}), 500
     except Exception as e:
+        print(str(e), flush=True)
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
