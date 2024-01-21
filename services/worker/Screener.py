@@ -7,7 +7,7 @@ class Screener:
 
 	
 
-	
+	#god
 	
 	def load_model(user_id,st):
 		return tf.keras.models.load_model(f'/app/models/{user_id}_{st}')
