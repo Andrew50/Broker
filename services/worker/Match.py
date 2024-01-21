@@ -9,7 +9,7 @@ import math
 import asyncio
 import time #temp import
 np_bars = 10
-from sync_Data import data
+from sync_Data import Data
 
 
 class Match: 
@@ -55,7 +55,7 @@ class Match:
         raise AttributeError
         return d 
 
-def get(ticker,tf,dt,user_id = None):
+def get(data,user_id,ticker,tf,dt):
     #asyncio.run(data.init_async_conn())
     
     start = datetime.datetime.now()
@@ -70,5 +70,5 @@ def get(ticker,tf,dt,user_id = None):
 
 if __name__ == '__main__':
     print('test')
-    print(get(['CELH','1d','2023-08-10']))
+    print(get(Data(),None,['CELH','1d','2023-08-10']))
     print('test')
