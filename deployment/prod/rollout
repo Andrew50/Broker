@@ -11,6 +11,8 @@ cd /home/aj/dev/Broker
 #if [ "$(git rev-parse HEAD)" != "$(git rev-parse @{u})" ]; then
   #git pull
   #docker login -u billin19 -p dckr_pat_BCGv9sTYRZlM59JitSidnJ2aKK8
+  git login -u Andrew50 -p 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
+  git pull origin prod-beta
   docker build -t billin19/frontend:latest services/frontend
   docker build -t billin19/backend:latest services/backend
   docker build -t billin19/worker:latest services/worker
