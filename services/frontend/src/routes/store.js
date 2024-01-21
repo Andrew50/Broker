@@ -129,7 +129,9 @@ export async function backend_request(bind_variable, func, ...args) {
 
                 bind_variable.set(result);
                 console.log('result: ', result);
+
                 console.log('result type : ', typeof result);
+
                 clearInterval(intervalId);
             }
         };

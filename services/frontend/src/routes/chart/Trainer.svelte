@@ -98,7 +98,7 @@
 
     function train_all() {
         $setups_list.forEach((setup) => {
-            backend_request(null, "Trainer-train", setup[0]);
+            private_request(null, "Trainer-train", setup[0]);
         });
     }
 </script>

@@ -25,6 +25,7 @@ def process_tasks():
 			r.set(f"result:{task_id}", json.dumps('running'))
 			result = func(data,user_id,*args)
 			r.set(f"result:{task_id}", json.dumps(result))
+			print(f"finished {func_ident} {args}", flush=True)
 		except:
 			exception = traceback.format_exc()
 			r.set(f"result:{task_id}", json.dumps('error: ' + exception))

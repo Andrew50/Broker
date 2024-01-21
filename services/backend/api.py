@@ -122,7 +122,9 @@ def create_app():
 			ticker,watchlist_name,delete = args
 			await data_.set_watchlist(user_id,ticker,watchlist_name,delete)
 		else:
-			raise Exception('to code' + func)
+			return await data_.queue_task(func,args,user_id)
+
+			#raise Exception('to code' + func)
 		
 	@app.post('/backend',status_code=201)
 	async def backend(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
