@@ -24,6 +24,13 @@ spec:
             limits:
               cpu: 2000m
               memory: 30000Mi
+          volumeMounts: # Add this section
+            - name: redis-pvc
+              mountPath: /data
+  volumes: # Add this section
+    - name: redis-pvc
+      persistentVolumeClaim:
+        claimName: redis-pvc
 ---
 # Redis Service
 apiVersion: v1
@@ -37,3 +44,30 @@ spec:
     - protocol: TCP
       port: 6379
       targetPort: 6379
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: redis-pv
+spec:
+  capacity:
+    storage: 100Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /mnt/disks/ssd3

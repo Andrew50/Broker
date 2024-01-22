@@ -76,11 +76,3 @@ spec:
   storageClassName: local-storage
   local:
     path: /mnt/disks/ssd1
-  nodeAffinity:
-    required:
-      nodeSelectorTerms:
-        - matchExpressions:
-            - key: kubernetes.io/hostname
-              operator: In
-              values:
-                - example-node
