@@ -26,7 +26,7 @@ deployment/prod/env
 \services\frontend\.svelk-kit
 # Mono auto generated files
 mono_crash.*
-services/worker/models
+services/worker/models/
 /backend/scripts/local
 # Build results
 [Dd]ebug/

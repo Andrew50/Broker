@@ -33,5 +33,5 @@ cd /home/aj/dev/Broker
   kubectl rollout restart deployment/frontend
   kubectl rollout restart deployment/backend
   kubectl rollout restart deployment/worker
-  kubectl set image cronjob/jobs jobs=localhost:5000/jobs:latest
+  kubectl set image cronjob/jobs jobs=billin19/jobs:latest
 #fi
