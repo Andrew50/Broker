@@ -74,7 +74,7 @@ def create_app():
 				current_price = yf.download(ticker, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=False, keepna=False)['Close'][-1]
 				val = json.loads(val)
 				print(val,flush=True)
-				val = val[-10:]
+				val = val[-500:]
 				if current_price == None:
 					current_bar = val[-1]
 				else:
