@@ -14,6 +14,7 @@ spec:
       labels:
         app: backend
     spec:
+      restartPolicy: OnFailure # Add this line
       containers:
         - name: backend
           image: billin19/backend:latest
