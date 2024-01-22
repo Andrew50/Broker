@@ -28,6 +28,7 @@ kind: Deployment
 metadata:
   name: worker
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: worker
@@ -46,3 +47,13 @@ spec:
         - name: worker-volume
           persistentVolumeClaim:
             claimName: worker-pvc
+  autoscaling:
+    minReplicas: 1
+    maxReplicas: 5
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 80
