@@ -96,6 +96,7 @@ export async function private_request(bind_variable, func, ...args) {
         });
         let result = await response.json();
         result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
+        console.log('result: ', result);
         bind_variable.set(result);
     } catch (error) {
         console.error('Error during backend request:', error);

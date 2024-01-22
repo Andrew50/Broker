@@ -28,6 +28,10 @@
 	onMount(() => {
 		Chart = new chart2(chartContainer, chart_data, options);
 		chart_data.subscribe((value) => {
+			// console.log("chart_data", value);
+			// if (!Array.isArray(value)) {
+			// 	value = [];
+			// }
 			Chart.updateData(value);
 		});
 		//innerWidth.subscribe((value) => {Chart.updateInnerWidth(value)});
