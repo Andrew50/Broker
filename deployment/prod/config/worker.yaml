@@ -40,6 +40,13 @@ spec:
       containers:
         - name: worker
           image: billin19/worker:latest
+          resources:
+            requests:
+              cpu: 2000m
+              memory: 5000Mi
+            limits:
+              cpu: 4000m
+              memory: 10000Mi
           volumeMounts:
             - name: worker-volume
               mountPath: /app/models

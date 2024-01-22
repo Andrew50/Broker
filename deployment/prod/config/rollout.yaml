@@ -9,4 +9,11 @@ spec:
         - name: rollout
           image: billin19/jobs:latest
           command: ["python", "rollout.py"]
+          resources:
+            requests:
+              cpu: 2000m
+              memory: 5000Mi
+            limits:
+              cpu: 4000m
+              memory: 10000Mi
       restartPolicy: Never
