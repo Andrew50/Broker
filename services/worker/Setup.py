@@ -5,7 +5,7 @@ import numpy, os, sys
 # cd C:/dev/Broker/backend/tasks && python setup.py build_ext --inplace 
 # python setup.py build_ext --inplace 
 #or>>>>>>>>>
-# py setup.py build_ext --inplace 
+# py setup.py build_ext --inplace   -
 
 setup(
     ext_modules = cythonize("Odtw.pyx"),
