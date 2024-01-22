@@ -12,6 +12,9 @@
 deployment/venv
 backend/database/database_dump.sql
 deployment/venv
+deployment/prod/env
+services/frontend/.svelte-kit
+services/worker/models
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 backend/1d
@@ -19,6 +22,7 @@ deployment/prod/env
 .gitattributes
 # backend/tasks/Setup.py
 # backend/tasks/Test.py
+\services\frontend\.svelk-kit
 # Mono auto generated files
 mono_crash.*
 services/worker/models
