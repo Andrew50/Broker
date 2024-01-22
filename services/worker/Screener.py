@@ -26,7 +26,7 @@ class Screener:
 				for score in scores:
 					if score > threshold:
 						ticker = ticker_list[i]
-						results.append([ticker,int(100*score)])
+						results.append([ticker,st,int(100*score)])
 					i += 1
 			
 			results.sort(key=lambda x: x[1],reverse=True)
