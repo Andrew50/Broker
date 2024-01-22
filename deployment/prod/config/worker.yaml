@@ -48,7 +48,7 @@ spec:
           persistentVolumeClaim:
             claimName: worker-pvc
 ---
-apiVersion: autoscaling/v2beta2
+apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:
   name: worker-hpa
@@ -59,10 +59,4 @@ spec:
     name: worker
   minReplicas: 1
   maxReplicas: 10
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 80
+  targetCPUUtilizationPercentage: 80
