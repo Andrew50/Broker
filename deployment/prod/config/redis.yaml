@@ -24,13 +24,13 @@ spec:
             limits:
               cpu: 2000m
               memory: 30000Mi
-          volumeMounts: # Add this section
+          volumeMounts:
             - name: redis-pvc
               mountPath: /data
-  volumes: # Add this section
-    - name: redis-pvc
-      persistentVolumeClaim:
-        claimName: redis-pvc
+      volumes:
+        - name: redis-pvc
+          persistentVolumeClaim:
+            claimName: redis-pvc
 ---
 # Redis Service
 apiVersion: v1
@@ -71,3 +71,11 @@ spec:
   storageClassName: local-storage
   local:
     path: /mnt/disks/ssd3
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - minikube
