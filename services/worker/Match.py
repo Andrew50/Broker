@@ -3,7 +3,7 @@ import numpy as np
 import json
 import math, heapq
 sqrt = math.sqrt
-import datetime
+import datetime 
 import Odtw
 import math
 import asyncio
@@ -70,5 +70,6 @@ def get(data,user_id,ticker,tf,dt):
 
 if __name__ == '__main__':
     start = datetime.datetime.now()
-    print(get(Data(),None,'CELH','1d','2023-08-10'))
+    #print(get(Data(),None,'CELH','1d','2023-08-10'))
+    print(get(Data(),None,'MRK','1d','2022-11-17'))
     print(f'total time: {datetime.datetime.now() - start}')

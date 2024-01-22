@@ -73,6 +73,8 @@ def create_app():
 				#current_price = await data_.get_current_price(ticker)
 				current_price = yf.download(ticker, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=False, keepna=False)['Close'][-1]
 				val = json.loads(val)
+				print(val,flush=True)
+				val = val[-500:]
 				if current_price == None:
 					current_bar = val[-1]
 				else:
@@ -84,6 +86,11 @@ def create_app():
 								'close':  current_price
 							}
 				val.append(current_bar)
+				print(val,flush=True)
+				val = json.dumps(val)
+			else:
+				val = json.loads(val)
+				val = val[-100:]
 				val = json.dumps(val)
 			return val
 		elif func == 'create setup':

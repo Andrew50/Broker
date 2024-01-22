@@ -20988,7 +20988,7 @@ static PyObject *__pyx_pf_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_self, PyA
  *                 for columnIndexer in range(4):
  *                     d = xSeq[i+zeroIndex, 2+columnIndexer] - ySeq[j, columnIndexer]             # <<<<<<<<<<<<<<
  *                     cost[k] += d * d
- *                 cost[k] *= 1.0 / (1 + i)##new AJ
+ *                 #cost[k] *= 1.0 / (1 + i)##new AJ
  */
           __pyx_t_12 = (__pyx_v_i + __pyx_v_zeroIndex);
           __pyx_t_13 = (2 + __pyx_v_columnIndexer);
@@ -21000,30 +21000,15 @@ static PyObject *__pyx_pf_4Odtw_2calcDtw(CYTHON_UNUSED PyObject *__pyx_self, PyA
  *                 for columnIndexer in range(4):
  *                     d = xSeq[i+zeroIndex, 2+columnIndexer] - ySeq[j, columnIndexer]
  *                     cost[k] += d * d             # <<<<<<<<<<<<<<
- *                 cost[k] *= 1.0 / (1 + i)##new AJ
+ *                 #cost[k] *= 1.0 / (1 + i)##new AJ
  * 
  */
           __pyx_t_15 = __pyx_v_k;
           *((double *) ( /* dim=0 */ (__pyx_v_cost.data + __pyx_t_15 * __pyx_v_cost.strides[0]) )) += (__pyx_v_d * __pyx_v_d);
         }
 
-        /* "Odtw.pyx":92
- *                     d = xSeq[i+zeroIndex, 2+columnIndexer] - ySeq[j, columnIndexer]
- *                     cost[k] += d * d
- *                 cost[k] *= 1.0 / (1 + i)##new AJ             # <<<<<<<<<<<<<<
- * 
- *                 k += 1
- */
-        __pyx_t_27 = (1 + __pyx_v_i);
-        if (unlikely(__pyx_t_27 == 0)) {
-          PyErr_SetString(PyExc_ZeroDivisionError, "float division");
-          __PYX_ERR(0, 92, __pyx_L1_error)
-        }
-        __pyx_t_15 = __pyx_v_k;
-        *((double *) ( /* dim=0 */ (__pyx_v_cost.data + __pyx_t_15 * __pyx_v_cost.strides[0]) )) *= (1.0 / ((double)__pyx_t_27));
-
         /* "Odtw.pyx":94
- *                 cost[k] *= 1.0 / (1 + i)##new AJ
+ *                 #cost[k] *= 1.0 / (1 + i)##new AJ
  * 
  *                 k += 1             # <<<<<<<<<<<<<<
  * 

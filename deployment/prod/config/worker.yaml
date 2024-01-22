@@ -40,6 +40,13 @@ spec:
       containers:
         - name: worker
           image: billin19/worker:latest
+          resources:
+            requests:
+              cpu: 2000m
+              memory: 5000Mi
+            limits:
+              cpu: 4000m
+              memory: 10000Mi
           volumeMounts:
             - name: worker-volume
               mountPath: /app/models
@@ -47,13 +54,16 @@ spec:
         - name: worker-volume
           persistentVolumeClaim:
             claimName: worker-pvc
-  autoscaling:
-    minReplicas: 1
-    maxReplicas: 5
-    metrics:
-      - type: Resource
-        resource:
-          name: cpu
-          target:
-            type: Utilization
-            averageUtilization: 80
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: worker-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: worker
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80

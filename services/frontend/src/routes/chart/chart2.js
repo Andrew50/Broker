@@ -67,7 +67,7 @@ export class chart2 {
             this.isDragging = false;
         }
         this.canvas.onwheel = (evt) => {
-            this.candleWidth = this.candleWidth + evt.deltaY/10;
+            this.candleWidth = this.candleWidth + evt.deltaY / 10;
             if (this.candleWidth < 1) {
                 this.candleWidth = 1;
                 this.wickWidth = 1;
@@ -78,21 +78,21 @@ export class chart2 {
             else {
                 this.wickWidth = 2;
             }
-            
+
             this.#draw();
         }
     }
 
     #convertData(chart_data) {
         if (Array.isArray(chart_data)) {
-           
+
             this.data = chart_data.map(obj => Object.values(obj));
             //this.data = flattenedData.slice(flattenedData.length - b, flattenedData.length - a);
             //this.data = flattenedData;
             //console.log(this.data);
             //this.pixelBounds = this.#getPixelBounds();
             //this.dataBounds = this.#getDataBounds();
-                
+
             this.#draw();
 
         } else {
@@ -155,13 +155,13 @@ export class chart2 {
         let i = 0;
         //console.log(dataSliced);
         for (const candleStick of dataSliced) {
-            this.#drawData(i , candleStick);
+            this.#drawData(i, candleStick);
             i++;
         }
-        this.#drawAxes();
+        //this.#drawAxes();
     }
 
-    #drawData(i,candleStick){
+    #drawData(i, candleStick) {
         const { ctx, data, dataBounds, pixelBounds } = this;
         const pixelLoc = [
             math.remap(dataBounds.left, dataBounds.right, pixelBounds.left, pixelBounds.right, i),
@@ -176,14 +176,14 @@ export class chart2 {
         else {
             ctx.fillStyle = 'green';
         }
-        
+
         const xOffset = Math.abs(this.a - Math.floor(this.a)) * this.candleWidth;
         //const xOffset = 0;
-        
+
         ctx.fillRect(pixelLoc[0] - xOffset, ((pixelLoc[1] + pixelLoc[4]) - Math.abs(pixelLoc[1] - pixelLoc[4])) / 2, this.candleWidth, Math.abs(pixelLoc[1] - pixelLoc[4]));
-        ctx.fillRect(pixelLoc[0] - xOffset + this.candleWidth / 2 - 1 , ((pixelLoc[2] + pixelLoc[3]) - Math.abs(pixelLoc[2] - pixelLoc[3])) / 2, this.wickWidth, Math.abs(pixelLoc[2] - pixelLoc[3]));
-        
-        
+        ctx.fillRect(pixelLoc[0] - xOffset + this.candleWidth / 2 - 1, ((pixelLoc[2] + pixelLoc[3]) - Math.abs(pixelLoc[2] - pixelLoc[3])) / 2, this.wickWidth, Math.abs(pixelLoc[2] - pixelLoc[3]));
+
+
     }
 
     #drawAxes() {
@@ -201,11 +201,11 @@ export class chart2 {
             this.ctx.lineTo(this.pixelBounds.right - this.margin, pixelLoc);
             this.ctx.stroke();
         }
-        
+
 
     }
 
-    #drawText(text,loc,size) {
+    #drawText(text, loc, size) {
         const ctx = this.ctx
 
         ctx.textAlign = 'right';
@@ -213,8 +213,8 @@ export class chart2 {
         ctx.font = "bold " + size + "px Courier";
         ctx.fillStyle = 'grey';
         ctx.fillText(text, ...loc);
-    
+
     }
 
-    
+
 }
