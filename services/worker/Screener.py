@@ -16,7 +16,6 @@ class Screener:
 		results = []
 		
 		if _format == 'screener':
-			
 			for st in setup_types:
 				model = Screener.load_model(user_id,st)
 				tf, setup_length = data.get_setup_info(user_id,st)

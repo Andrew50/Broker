@@ -63,11 +63,9 @@
 
         <form
             on:submit|preventDefault={() =>
-                backend_request(
-                    screener_data,
-                    "Screener-get",
-                    Array.from(selectedSetups),
-                )}
+                selectedSetups.forEach((setup) => {
+                    backend_request(screener_data, "Screener-get", [setup]);
+                })}
             class="input-form"
         >
             <div class="form-group">
