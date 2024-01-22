@@ -20,7 +20,7 @@ services/worker/models
 backend/1d
 deployment/prod/env
 .gitattributes
-
+deployment/prod/env
 # backend/tasks/Setup.py
 # backend/tasks/Test.py
 \services\frontend\.svelk-kit
