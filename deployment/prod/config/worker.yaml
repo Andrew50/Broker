@@ -42,10 +42,10 @@ spec:
           image: billin19/worker:latest
           resources:
             requests:
-              cpu: 2000m
+              cpu: 500m
               memory: 5000Mi
             limits:
-              cpu: 4000m
+              cpu: 2000m
               memory: 10000Mi
           volumeMounts:
             - name: worker-volume
@@ -65,5 +65,5 @@ spec:
     kind: Deployment
     name: worker
   minReplicas: 1
-  maxReplicas: 10
-  targetCPUUtilizationPercentage: 80
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 5

@@ -19,10 +19,10 @@ spec:
             - containerPort: 6379
           resources:
             requests:
-              cpu: 2000m
+              cpu: 1000m
               memory: 5000Mi
             limits:
-              cpu: 4000m
+              cpu: 2000m
               memory: 30000Mi
 ---
 # Redis Service

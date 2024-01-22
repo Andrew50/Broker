@@ -26,10 +26,10 @@ spec:
           resources:
             requests:
               cpu: 5000m
-              memory: 5000Mi
+              memory: 3000Mi
             limits:
               cpu: 10000m
-              memory: 20000Mi
+              memory: 10000Mi
       volumes:
         - name: mysql-persistent-storage
           persistentVolumeClaim:
