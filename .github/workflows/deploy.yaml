@@ -1,8 +1,8 @@
 name: Deploy
 
-on:
+on: 
     push:
-        branches:
+        branches: 
             - prod-beta
 jobs:
     run-tests:
