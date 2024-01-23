@@ -72,9 +72,7 @@ class Screener:
 	
 def get(data, user_id, setup_types):
 
-
-	results = Screener.screen(data,user_id,setup_types,'screener')
-	return results
+	return Screener.screen(data,user_id,setup_types,'screener')
 			
 if __name__ == '__main__':
 	print(Screener.screen(6,['EP'],'screener'))
