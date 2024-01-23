@@ -1,6 +1,7 @@
 FROM python:3.10.1-bullseye
 WORKDIR /app
 COPY . .
+RUN rm -rf /app/models
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 ENV INSIDE_CONTAINER Yes
