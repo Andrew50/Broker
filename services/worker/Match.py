@@ -10,7 +10,7 @@ import asyncio
 import time #temp import
 from sync_Data import Data
 
-NUM_BARS = 10
+NUM_BARS = 25
 CUTOFF = 100*100
 
 
@@ -46,7 +46,7 @@ class Match:
         x = data.get_df('match',ticker2,tf,dt2, bars=NUM_BARS)#[:, 2:-1]
         x = Match.normalize(x)
         y = Match.normalize(y)
-        y = y
+        y = y[:, 2:-1]
         radius = math.ceil(NUM_BARS/10)
         upper, lower = Odtw.calcBounds(y[:, 3], radius)
         distance = Odtw.calcDtw(x, y, upper, lower, NUM_BARS, CUTOFF, radius, ticker2,use_bounds = False)
@@ -60,11 +60,11 @@ if __name__ == '__main__':
     #print(get(Data(),None,'CELH','1d','2023-08-10'))
     data = Data()
     ticker, tf, dt = 'MRK', '1d', '2022-11-17'
-    print(Match.compare(data,ticker,tf,dt,'EGY','2022-02-28'))
+    #print(Match.compare(data,ticker,tf,dt,'EGY','2022-02-28'))
     #ticker, tf, dt = 'CHGG', '1d', '2021-11-02'
     #print(Match.compare(data,ticker,tf,dt,'PTON','2021-11-05'))
     
-    #print(get(data,None,ticker,tf,dt))
+    print(get(data,None,ticker,tf,dt))
 
 
 
