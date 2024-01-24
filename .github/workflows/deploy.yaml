@@ -5,7 +5,7 @@ on:
         branches: #test
             - prod-beta
 jobs:
-    run-tests:
+    deploy:
         runs-on: ubuntu-latest
 
         steps:
