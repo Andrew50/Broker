@@ -9,7 +9,7 @@ services:
         build:
             context: /Users/taeyoon/Broker/services/backend
             dockerfile: Dockerfile
-        restart: on-failure
+        restart: always
         ports:
         - "5057:5057"
         volumes:
