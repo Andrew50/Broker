@@ -13,6 +13,7 @@ export class chart2 {
         this.a = 0;
         this.wickWidth = 2;
         this.isDragging = false;
+        this.xAxisOffset = 0;
         this.#addEventListener();
     }
 
@@ -36,10 +37,12 @@ export class chart2 {
         }
         this.canvas.onmousemove = (evt) => {
             if (this.isDragging && event.clientX < this.canvas.width - this.margin) {
+                const neww = event.clientX;
                 if ((this.a + ((this.prev - event.clientX) / this.candleWidth)) < 0 && (this.data.length + (this.a) - Math.floor((this.pixelBounds.right) / this.candleWidth) + (this.prev - event.clientX) / this.candleWidth) >= -1) {
-                    this.a = this.a + ((this.prev - event.clientX) / this.candleWidth);
+                    this.xAxisOffset = this.xAxisOffset - ((this.prev - neww) / this.candleWidth);
+                    this.a = this.a + ((this.prev - neww) / this.candleWidth);
                 }
-                this.prev = event.clientX;
+                this.prev = neww;
                 this.#draw()
             }
             else {
@@ -60,7 +63,7 @@ export class chart2 {
             }
             else{
                 //display max candles
-                console.log()
+                //console.log()
                 this.a = Math.ceil(this.a)
                 this.candleWidth = ((this.pixelBounds.right) / (this.data.length + this.a));
             }
@@ -170,8 +173,9 @@ export class chart2 {
     }
 
     #drawAxes() {
-        this.#drawText('X Axis', [this.canvas.width / 2, this.canvas.height - this.margin / 2], this.margin);
         this.ctx.clearRect(this.canvas.width - this.margin, 0, this.margin, this.canvas.height);
+        const xOffset = Math.abs(this.a - Math.floor(this.a)) * this.candleWidth
+        // if the top - the bottom / 10 
         for (let i = (this.dataBounds.bottom); i < (this.dataBounds.top); i += ((this.dataBounds.top - this.dataBounds.bottom) / 10)) {
             const pixelLoc = math.remap(this.dataBounds.top, this.dataBounds.bottom, this.pixelBounds.top, this.pixelBounds.bottom, i);
             this.#drawText(this.#sigFigs(i, 3), [this.canvas.width - 2, pixelLoc], this.margin * 0.5);
@@ -181,6 +185,26 @@ export class chart2 {
             this.ctx.lineTo(this.canvas.width - this.margin, pixelLoc);
             this.ctx.stroke();
         }
+        if (this.xAxisOffset > (this.pixelBounds.right) / this.candleWidth / 5) {
+            this.xAxisOffset = 0;
+            this.a = Math.ceil(this.a);
+        }
+        else if (this.xAxisOffset < 0) {
+            this.xAxisOffset = Math.floor((this.pixelBounds.right) / this.candleWidth / 5) ;
+            this.a = Math.ceil(this.a);
+        }
+        for (let i = this.xAxisOffset; i < (this.canvas.width - this.margin) / this.candleWidth; i += ((this.canvas.width - this.margin) / this.candleWidth / 5)) {
+            const pixelLoc = math.remap(this.dataBounds.left, this.dataBounds.right, this.pixelBounds.left, this.pixelBounds.right, Math.floor(i));
+            this.#drawText("works", [pixelLoc - xOffset, this.pixelBounds.right - this.margin/2], this.margin * 0.5);
+            this.ctx.beginPath();
+            this.ctx.strokeStyle = 'white';
+            this.ctx.moveTo(pixelLoc - xOffset, this.pixelBounds.bottom - this.margin);
+            this.ctx.lineTo(pixelLoc - xOffset, this.pixelBounds.top);
+            this.ctx.stroke();
+        }
+        console.log(this.xAxisOffset);
+        console.log(this.a);
+        
 
 
     }
