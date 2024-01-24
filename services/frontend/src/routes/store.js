@@ -101,6 +101,7 @@ export async function private_request(bind_variable, func, ...args) {
     } catch (error) {
         console.error('Error during backend request:', error);
         bind_variable.set(null);
+        return "Ticker Unavailable"
     }
 
 }

@@ -5,7 +5,7 @@
 	import { chart2 } from "./chart2.js";
 	import { chart_data, private_request, backend_request } from "../store.js";
 	import Account from "./Account.svelte";
-
+// hi
 	let innerWidth;
 	let innerHeight;
 	let ticker = "AAPL";
@@ -17,6 +17,7 @@
 	let TickerBoxValue = "";
 	let TickerBoxVisible = "none";
 
+	let errorMessage = "";
 	let chartContainer;
 	const options = {
 		widthOffset: 500,
@@ -102,13 +103,30 @@
 		} else if (event.key == "Enter") {
 			TickerBoxVisible = "none";
 			ticker = TickerBoxValue.toUpperCase();
-			private_request(chart_data, "chart", ticker);
+			private_request(chart_data, "chart", ticker)
+			.then(result => {
+				errorMessage = result;
+				console.log(errorMessage)
+			})
+			.catch(error => {
+				errorMessage = error.message;
+			});
+
+			// if (! $chart_data) {
+			// 	errorMessage = "Ticker Unavailable"}
 			TickerBoxValue = "";
 			popup = false;
 		}
 		TickerBox.focus();
 	}
 </script>
+
+{#if errorMessage}
+    <div class="error-message">
+        {errorMessage}
+    </div>
+{/if}
+
 
 <svelte:window on:keydown={onKeydown} bind:innerWidth bind:innerHeight />
 
@@ -142,4 +160,24 @@
 		font-size: 40pt;
 		text-transform: uppercase;
 	}
+    .error-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10000; /* High z-index to ensure it's on top */
+    color: #D8000C; /* Modified error color for better visibility */
+    background-color: #FFD2D2; /* Light red background for contrast */
+    padding: 20px 40px; /* Increased padding for a larger appearance */
+    border-radius: 10px; /* Larger border radius for a softer look */
+    border: 2px solid #D8000C; /* Thicker border */
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.7); /* More pronounced shadow for depth */
+    font-size: 20px; /* Larger font size for better readability */
+    font-weight: bold; /* Bold font for emphasis */
+    text-align: center;
+    max-width: 600px; /* Fixed max-width for consistent sizing */
+    word-wrap: break-word;
+    box-sizing: border-box; /* Ensures padding doesn't affect the overall width */
+}
+
 </style>
