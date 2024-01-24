@@ -9,7 +9,6 @@
 <main class="main-container">
   <div class="container">
     <h1 class="title" style="font-size: 32px;">EdgeFinder</h1>
-    <h1 class="title" style="font-size: 32px;">God</h1>
     <button
       class="sign-in-button"
       on:click={signIn}

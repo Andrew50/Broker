@@ -26,8 +26,23 @@
  * ```
  */
 declare module '$env/static/private' {
-	export const TERM_PROGRAM: string;
-	export const NODE: string;
+	export const ALLUSERSPROFILE: string;
+	export const APPDATA: string;
+	export const COLOR: string;
+	export const CommonProgramFiles: string;
+	export const CommonProgramW6432: string;
+	export const COMPUTERNAME: string;
+	export const ComSpec: string;
+	export const DriverData: string;
+	export const EDITOR: string;
+	export const EFC_10200: string;
+	export const FPS_BROWSER_APP_PROFILE_STRING: string;
+	export const FPS_BROWSER_USER_PROFILE_STRING: string;
+	export const GOPATH: string;
+	export const HOME: string;
+	export const HOMEDRIVE: string;
+	export const HOMEPATH: string;
+	export const IGCCSVC_DB: string;
 	export const INIT_CWD: string;
 	export const TERM: string;
 	export const SHELL: string;
@@ -93,7 +108,7 @@ declare module '$env/static/private' {
  * ```
  */
 declare module '$env/static/public' {
-	
+
 }
 
 /**
@@ -112,8 +127,23 @@ declare module '$env/static/public' {
  */
 declare module '$env/dynamic/private' {
 	export const env: {
-		TERM_PROGRAM: string;
-		NODE: string;
+		ALLUSERSPROFILE: string;
+		APPDATA: string;
+		COLOR: string;
+		CommonProgramFiles: string;
+		CommonProgramW6432: string;
+		COMPUTERNAME: string;
+		ComSpec: string;
+		DriverData: string;
+		EDITOR: string;
+		EFC_10200: string;
+		FPS_BROWSER_APP_PROFILE_STRING: string;
+		FPS_BROWSER_USER_PROFILE_STRING: string;
+		GOPATH: string;
+		HOME: string;
+		HOMEDRIVE: string;
+		HOMEPATH: string;
+		IGCCSVC_DB: string;
 		INIT_CWD: string;
 		TERM: string;
 		SHELL: string;
