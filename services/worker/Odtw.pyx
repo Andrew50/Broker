@@ -89,11 +89,10 @@ def calcDtw(np.ndarray[double, ndim=2] xSeq, np.ndarray[double, ndim=2] ySeq, np
                 for columnIndexer in range(4):
                     d = xSeq[i+zeroIndex, 2+columnIndexer] - ySeq[j, columnIndexer]
                     cost[k] += d * d
-                #cost[k] *= 1.0 / (1 + i)##new AJ
                 
                 k += 1
 
-
+            cost[k-1] *= 1.0 / (15 + i)##new AJ
             cost, cost_prev = cost_prev, cost
 
         k -= 1
