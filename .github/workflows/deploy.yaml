@@ -14,7 +14,7 @@ jobs:
 
         - name: Send rollout request
           run: |
-            response=$(curl --max-time 600 -s -o response.json -w "%{http_code}" -X POST \
+            response=$(curl --max-time 1200 -s -o response.json -w "%{http_code}" -X POST \
             -H "Content-Type: application/json" \
             -d '{"key": "value"}' \
             https://26b9-72-42-165-242.ngrok-free.app/rollout)
