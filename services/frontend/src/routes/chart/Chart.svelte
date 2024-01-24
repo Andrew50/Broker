@@ -5,7 +5,7 @@
 	import { chart2 } from "./chart2.js";
 	import { chart_data, private_request, backend_request } from "../store.js";
 	import Account from "./Account.svelte";
-
+// hi
 	let innerWidth;
 	let innerHeight;
 	let ticker = "AAPL";
