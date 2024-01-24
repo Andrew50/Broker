@@ -137,8 +137,11 @@ def create_app():
 	async def backend(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
 		data_ = request.app.state.data
 		func, args = request_model.function, request_model.arguments
-		print(f'received backend request for {func}: {args}',flush=True)
-		return await data_.queue_task(func,args,user_id)
+		task_id = await data_.queue_task(func,args,user_id)
+		print(f'received backend request for {func} {args} {task_id}',flush=True)
+		return task_id
+
+
 
 	@app.get('/poll/{job_id}')
 	async def get_result(job_id: str, request: FastAPIRequest):

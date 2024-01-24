@@ -18,7 +18,7 @@ def process_tasks():
 			task_data = json.loads(task_message)
 			task_id, func_ident, args, user_id = task_data['id'], task_data['func'], task_data['args'], task_data['user_id']
 			module_name, function_name = func_ident.split('-')
-			print(f"starting {func_ident} {args}", flush=True)
+			print(f"starting {func_ident} {args} {task_id}", flush=True)
 		try:
 			module = importlib.import_module(module_name)
 			func = getattr(module, function_name, None)
