@@ -101,6 +101,7 @@ export async function private_request(bind_variable, func, ...args) {
     } catch (error) {
         console.error('Error during backend request:', error);
         bind_variable.set(null);
+        return "Ticker Unavailable"
     }
 
 }
@@ -118,7 +119,7 @@ export async function backend_request(bind_variable, func, ...args) {
             headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
             body: JSON.stringify(payload)
         });
-        const task_id = await reponse.json();
+        const task_id = JSON.parse(await reponse.json());
         console.log('polling');
         let result;
         const checkStatus = async () => {
