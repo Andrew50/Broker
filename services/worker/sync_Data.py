@@ -36,7 +36,9 @@ class Data:
 				if dt:
 					index = Data.findex(data,dt)
 					data = data[:index+1]
-					return data
+				if bars:
+					data = data[-bars:]
+				return data
 		data = self.redis_conn.hget(tf+form,ticker)
 		if not form == 'chart': data = pickle.loads(data)
 		if dt:

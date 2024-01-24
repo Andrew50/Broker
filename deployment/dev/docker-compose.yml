@@ -37,7 +37,7 @@ services:
             context: C:/dev/broker/services/jobs
             dockerfile: Dockerfile
         volumes:
-            - C:/dev/broker/services/jobs:/app
+            - C:/dev/broker/services/jobs:/app/
         command: python Database.py
         restart: on-failure
         networks:
