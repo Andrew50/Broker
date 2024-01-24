@@ -7,24 +7,24 @@ services:
             - mysql
             - redis
         build:
-            context: /Users/taeyoon/VisualStudio/Broker/services/backend
+            context: /Users/taeyoon/Broker/services/backend
             dockerfile: Dockerfile
-        restart: on-failure
+        restart: always
         ports:
         - "5057:5057"
         volumes:
-            #- /Users/taeyoon/VisualStudio/Broker/services/backend/api.py:/app/api.py
-            - /Users/taeyoon/VisualStudio/Broker/services/backend/:/app/
+            #- /Users/taeyoon/Broker/services/backend/api.py:/app/api.py
+            - /Users/taeyoon/Broker/services/backend/:/app/
         networks:
             - compose_network
 
     worker: 
         build: #satish was here
-            context: /Users/taeyoon/VisualStudio/Broker/services/worker
+            context: /Users/taeyoon/Broker/services/worker
             dockerfile: Dockerfile
         restart: on-failure
         volumes: 
-            - /Users/taeyoon/VisualStudio/Broker/services/worker/:/app/
+            - /Users/taeyoon/Broker/services/worker/:/app/
              #- ./:/app
         depends_on:
             - mysql
@@ -34,10 +34,10 @@ services:
 
     jobs:
         build:
-            context: /Users/taeyoon/VisualStudio/Broker/services/jobs
+            context: /Users/taeyoon/Broker/services/jobs
             dockerfile: Dockerfile
         volumes:
-            - /Users/taeyoon/VisualStudio/Broker/services/jobs:/app
+            - /Users/taeyoon/Broker/services/jobs:/app
         command: python Database.py
         restart: on-failure
         networks:
@@ -53,7 +53,7 @@ services:
             - "3306:3306"
         volumes:
             - mysql-data:/var/lib/mysql
-           # - /Users/taeyoon/VisualStudio/Broker/services/mysql/my.cnf:/etc/mysql/my.cnf
+           # - /Users/taeyoon/Broker/services/mysql/my.cnf:/etc/mysql/my.cnf
         networks:
             - compose_network
             

@@ -22,6 +22,9 @@ class Data:
 	async def get_task_result(self,task_id):
 		return await self.redis_pool.get(f"result:{task_id}")
 	
+	async def delete_task_result(self,task_id):
+		await self.redis_pool.delete(f"result:{task_id}")
+	
 	async def get_trainer_queue(self,user_id,st):
 		return await self.redis_pool.rpop(str(user_id)+st)
 	

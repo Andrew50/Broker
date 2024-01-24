@@ -147,6 +147,7 @@ def create_app():
 	async def get_result(job_id: str, request: FastAPIRequest):
 		data_ = request.app.state.data
 		result = await data_.get_task_result(job_id)
+		
 		return result
 
 	return app
