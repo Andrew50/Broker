@@ -185,7 +185,7 @@ export class chart2 {
             this.ctx.lineTo(this.canvas.width - this.margin, pixelLoc);
             this.ctx.stroke();
         }
-        if (this.xAxisOffset > (this.pixelBounds.right) / this.candleWidth / 5) {
+        /*if (this.xAxisOffset > (this.pixelBounds.right) / this.candleWidth / 5) {
             this.xAxisOffset = 0;
             this.a = Math.ceil(this.a);
         }
@@ -195,16 +195,16 @@ export class chart2 {
         }
         for (let i = this.xAxisOffset; i < (this.canvas.width - this.margin) / this.candleWidth; i += ((this.canvas.width - this.margin) / this.candleWidth / 5)) {
             const pixelLoc = math.remap(this.dataBounds.left, this.dataBounds.right, this.pixelBounds.left, this.pixelBounds.right, Math.floor(i));
-            this.#drawText("works", [pixelLoc - xOffset, this.pixelBounds.right - this.margin/2], this.margin * 0.5);
+            this.#drawText("works", [pixelLoc - xOffset, this.pixelBounds.bottom + this.margin/2], this.margin * 0.5);
             this.ctx.beginPath();
             this.ctx.strokeStyle = 'white';
-            this.ctx.moveTo(pixelLoc - xOffset, this.pixelBounds.bottom - this.margin);
+            this.ctx.moveTo(pixelLoc - xOffset, this.pixelBounds.bottom);
             this.ctx.lineTo(pixelLoc - xOffset, this.pixelBounds.top);
             this.ctx.stroke();
         }
         console.log(this.xAxisOffset);
         console.log(this.a);
-        
+        */
 
 
     }
