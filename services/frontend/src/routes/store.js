@@ -39,8 +39,6 @@ function getAuthHeaders() {
 }
 
 
-
-
 export async function public_request(bind_variable, func, ...args) {
 
     const url = `${base_url}/public`;
@@ -82,102 +80,69 @@ export async function public_request(bind_variable, func, ...args) {
     }
 }
 
-export async function data_request(bind_variable, func, ...args) {
 
-    const url = `${base_url}/data`;
+export async function private_request(bind_variable, func, ...args) {
+    const url = `${base_url}/private`;
     const payload = {
         function: func,
         arguments: args
     };
     console.log('Request sent to:', url, 'func:', func, 'args:', args);
-
     try {
         const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...getAuthHeaders()
-            },
-            body: JSON.stringify(payload) // Send the payload as a stringified JSON in the body
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify(payload)
         });
-
-        if (!response.ok) {
-            throw new Error('POST response not ok');
-        }
         let result = await response.json();
-        try {
-            result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
-        } catch (error) { }
-        if (bind_variable == null) {
-            return result
-        }
-        else {
-            bind_variable.set(result);
-        }
-
-
-    }
-    catch (error) {
+        result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
+        console.log('result: ', result);
+        bind_variable.set(result);
+    } catch (error) {
         console.error('Error during backend request:', error);
         bind_variable.set(null);
+        return "Ticker Unavailable"
     }
+
 }
 
 export async function backend_request(bind_variable, func, ...args) {
-
-
     const url = `${base_url}/backend`;
     const payload = {
         function: func,
         arguments: args
     };
     console.log('Request sent to:', url, 'func:', func, 'args:', args);
-
     try {
-
-
-        const response = await fetch(url, {
+        const reponse = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...getAuthHeaders()
-            },
-            body: JSON.stringify(payload) // Send the payload as a stringified JSON in the body
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify(payload)
         });
-
-        if (!response.ok) {
-            throw new Error('POST response not ok');
-        }
-
-        const responseData = await response.json();
-        const task_id = responseData.task_id;
+        const task_id = JSON.parse(await reponse.json());
+        console.log('polling');
+        let result;
         const checkStatus = async () => {
-            const statusResponse = await fetch(`http://localhost:5057/poll/${task_id}`);
-            if (!statusResponse.ok) {
-                throw new Error('GET response not ok');
-            }
+            const response = await fetch(`${base_url}/poll/${task_id}`);
+            result = await response.json();
+            result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
+            console.log('poll result: ', result);
+            if (result == 'running' || !result) {
+            } else {
 
-            const statusData = await statusResponse.json();
-            if (statusData.status === 'done') {
-                clearInterval(intervalId);
-                let result = statusData.result;
-                try {
-                    result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
-                } catch {
-                    // Result might already be in a proper JSON format or another parsing error occurred
-                }
                 bind_variable.set(result);
-            } else if (statusData.status === 'failed') {
-                clearInterval(intervalId);
+                console.log('result: ', result);
 
-                bind_variable.set('failed');
+                console.log('result type : ', typeof result);
+
+                clearInterval(intervalId);
             }
         };
+        const intervalId = setInterval(checkStatus, 500); // Check every .2 seconds
 
-        const intervalId = setInterval(checkStatus, 200); // Check every .2 seconds
     } catch (error) {
         console.error('Error during backend request:', error);
         bind_variable.set(null);
     }
-}
 
+}

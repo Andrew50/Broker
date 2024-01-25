@@ -1,18 +1,12 @@
+import datetime, uvicorn, jwt, json, yfinance as yf
 from fastapi import FastAPI, HTTPException, status, Request as FastAPIRequest, Depends
-import datetime, uvicorn, importlib, sys, traceback, jwt, asyncio,  json, yfinance as yf
-from redis import Redis
-from rq import Queue
-from rq.job import Job
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 from pydantic import BaseModel
-
-from worker import run_task
-
-sys.path.append('./tasks')
-SECRET_KEY = "god"
 from async_Data import Data
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+SECRET_KEY = "god"
 
 class Request(BaseModel):
 	function: str
@@ -35,22 +29,9 @@ def create_jwt_token(user_id: str) -> str:
 	}
 	return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
-#run_task = 'worker.run_task'
-# def run_task(func,args,user_id):
-# 	try:
-# 		module_name, function_name = func.split('-')
-# 		module = importlib.import_module(module_name)
-# 		func = getattr(module, function_name, None)
-# 		return func(args,user_id)
-# 	except Exception as e:
-# 		raise Warning(str(traceback.format_exc() + str(e)))
-# 		return 'failed'
-
 def create_app():
 	app = FastAPI()
 	app.add_middleware(CORSMiddleware,allow_origins=["http://localhost:5173","http://localhost:5057",],allow_credentials=True,allow_methods=["*"],allow_headers=["*"],)
-	redis_conn = Redis(host='redis', port=6379)
-	q = Queue('my_queue', connection=redis_conn,default_timeout=6000)
 
 	@app.on_event("startup")
 	async def startup_event():
@@ -75,15 +56,14 @@ def create_app():
 			watchlists = await data.get_watchlists(user_id)
 			return {"access_token": token, "token_type": "bearer",
 		   "setups":setups,"settings":settings,"watchlists":watchlists}
-		
 		else:
 			raise Exception('to code' + func)
 		
-	@app.post('/data',status_code=201)
+	@app.post('/private',status_code=201)
 	async def data_request(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
 		data_ = request.app.state.data
 		func, args = request_model.function, request_model.arguments
-		print(f'received data request for {func}: {args}',flush=True)
+		print(f'received private request for {func}: {args}',flush=True)
 		if func == 'chart':
 			args += ['MSFT','1d',None][len(args):]
 			ticker,tf,dt = args
@@ -93,6 +73,8 @@ def create_app():
 				#current_price = await data_.get_current_price(ticker)
 				current_price = yf.download(ticker, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=False, keepna=False)['Close'][-1]
 				val = json.loads(val)
+				print(val,flush=True)
+				val = val[-500:]
 				if current_price == None:
 					current_bar = val[-1]
 				else:
@@ -103,9 +85,12 @@ def create_app():
 								'low':  current_price,
 								'close':  current_price
 							}
-				
 				val.append(current_bar)
-				#print(val,flush=True)
+				print(val,flush=True)
+				val = json.dumps(val)
+			else:
+				val = json.loads(val)
+				val = val[-100:]
 				val = json.dumps(val)
 			return val
 		elif func == 'create setup':
@@ -124,7 +109,8 @@ def create_app():
 			st, = args
 			queue_size = data_.get_trainer_queue_size(user_id,st)
 			if queue_size == 50:
-				q.enqueue(run_task, kwargs={'func': 'Trainer-start', 'args': args, 'user_id':user_id}, timeout=6000000)
+				await data_.queue_task(func,args,user_id)
+
 				# if queue_size == 0:
 				# 	while True:
 				# 		instance = await data_.get_trainer_queue(user_id,st)
@@ -143,35 +129,30 @@ def create_app():
 			ticker,watchlist_name,delete = args
 			await data_.set_watchlist(user_id,ticker,watchlist_name,delete)
 		else:
-			raise Exception('to code' + func)
-			
-	@app.post('/backend', status_code=201)
-	async def backend_request(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
+			return await data_.queue_task(func,args,user_id)
+
+			#raise Exception('to code' + func)
+		
+	@app.post('/backend',status_code=201)
+	async def backend(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
+		data_ = request.app.state.data
 		func, args = request_model.function, request_model.arguments
-		print(f'received backend request for {func}: {args}',flush=True)
-		job = q.enqueue(run_task, kwargs={'func': func, 'args': args, 'user_id':user_id}, timeout=600)
-		#job = q.enqueue_call('worker.run_task', kwargs={'func': func, 'args': args, 'user_id':user_id}, timeout=600)
-		return {'task_id': job.get_id()}
-	
-	async def fetch_job(job_id):
-		loop = asyncio.get_event_loop()
-		job = await loop.run_in_executor(None, Job.fetch, job_id, redis_conn)
-		return job
+		task_id = await data_.queue_task(func,args,user_id)
+		print(f'received backend request for {func} {args} {task_id}',flush=True)
+		return task_id
+
+
 
 	@app.get('/poll/{job_id}')
-	async def get_result(job_id: str):
-		job = await fetch_job(job_id)
-		if job.is_finished:
-			return {"status": "done", "result": job.result}
-		elif job.is_failed:
-			return {"status": "failed"}
-		else:
-			return {"status": "in progress"}
+	async def get_result(job_id: str, request: FastAPIRequest):
+		data_ = request.app.state.data
+		result = await data_.get_task_result(job_id)
+		
+		return result
+
 	return app
 
 app = create_app()
 
 if __name__ == '__main__':
-	#data.init_cache(force=True)
-	#data.init_cache(force=False)#default for quikc loading
 	uvicorn.run("api:app", host="0.0.0.0", port=5057, reload=True)

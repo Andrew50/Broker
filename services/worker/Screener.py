@@ -1,6 +1,5 @@
 import json
 import tensorflow as tf
-from sync_Data import data
 
 
 
@@ -8,16 +7,15 @@ class Screener:
 
 	
 
-	
+	#god
 	
 	def load_model(user_id,st):
 		return tf.keras.models.load_model(f'/app/models/{user_id}_{st}')
 
-	def screen(user_id,setup_types, _format, query = None,threshold = .65, model = None):
+	def screen(data,user_id,setup_types, _format, query = None,threshold = .65, model = None):
 		results = []
 		
 		if _format == 'screener':
-			
 			for st in setup_types:
 				model = Screener.load_model(user_id,st)
 				tf, setup_length = data.get_setup_info(user_id,st)
@@ -28,7 +26,7 @@ class Screener:
 				for score in scores:
 					if score > threshold:
 						ticker = ticker_list[i]
-						results.append([ticker,int(100*score)])
+						results.append([ticker,st,int(100*score)])
 					i += 1
 			
 			results.sort(key=lambda x: x[1],reverse=True)
@@ -72,11 +70,9 @@ class Screener:
 		
 	
 	
-def get(args,user_id):
-	setup_types = args
+def get(data, user_id, setup_types):
 
-	results = Screener.screen(user_id,setup_types,'screener')
-	return json.dumps(results)
+	return Screener.screen(data,user_id,setup_types,'screener')
 			
 if __name__ == '__main__':
 	print(Screener.screen(6,['EP'],'screener'))

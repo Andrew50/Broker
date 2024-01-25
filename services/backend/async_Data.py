@@ -1,4 +1,4 @@
-import aiomysql, aioredis, pickle, datetime, pytz, json
+import aiomysql, aioredis, pickle, datetime, pytz, json, uuid
 
 class Data:
 
@@ -10,6 +10,20 @@ class Data:
 		self.mysql_pool = await aiomysql.create_pool(
 			host='mysql', port=3306, user='root', password='7+WCy76_2$%g', 
 			db='broker', minsize=1, maxsize=20)
+		
+	async def queue_task(self,func_ident,args,user_id):
+		task_id = str(uuid.uuid4())
+		task_data = {'id':task_id,'func':func_ident,'args':args,'user_id':user_id}
+		await self.redis_pool.lpush('task_queue_1',json.dumps(task_data))
+		#return json.dumps({'task_id':task_id})
+		#return task_id
+		return json.dumps(task_id)
+	
+	async def get_task_result(self,task_id):
+		return await self.redis_pool.get(f"result:{task_id}")
+	
+	async def delete_task_result(self,task_id):
+		await self.redis_pool.delete(f"result:{task_id}")
 	
 	async def get_trainer_queue(self,user_id,st):
 		return await self.redis_pool.rpop(str(user_id)+st)
@@ -63,9 +77,7 @@ class Data:
 
 	async def get_df(self, form='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
 		#async with self.redis_pool.get() as conn:
-		print(form,ticker,tf,dt,bars,pm,flush=True)
 		data = await self.redis_pool.hget(tf+form,ticker)
-		print(data,flush=True)
 		
 		if form == 'chart': 
 			

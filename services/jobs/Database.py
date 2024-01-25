@@ -11,10 +11,14 @@ import datetime
 import mysql.connector
 
 
-TICKER_CAP = 10 #number of tickers to setup in the database. Set to None to use all tickers in ticker_list.csv
 FORCE_RECALC = False #set to True to force the recalculation of all cached data. This should be done if recalc methods are changed
 
+
+
+
 class Database:
+
+
 
 	def run():
 		redis_conn = redis.Redis(host='redis', port=6379)
@@ -27,6 +31,10 @@ class Database:
 				if err.errno == errorcode.ER_BAD_DB_ERROR:
 					print('creating database', flush=True)
 					Database.setup(mysql_conn)
+					print('updating limited', flush=True)
+					Database.update(mysql_conn,10)
+					print('caching limited', flush=True)
+					Database.cache(redis_conn)
 				else:
 					raise
 			finally:
@@ -74,7 +82,7 @@ class Database:
 	####to remove once method for pulling current ticker list exists
 	def get_ticker_list():
 		df = pd.read_csv('ticker_list.csv')['ticker'].tolist()
-		return df[:TICKER_CAP]
+		return df
 
 	def process_ticker_data(bars):
 		with redis.Redis(host='redis', port=6379) as redis_conn:
@@ -123,7 +131,6 @@ class Database:
 										'low': row[3],
 										'close': row[4]
 										}for row in list_of_lists]
-									print(list_of_lists[:10],flush=True)
 									processed_data = json.dumps(list_of_lists)
 								redis_conn.hset(tf+form, ticker, processed_data)
 						except Exception as e:
@@ -153,7 +160,7 @@ class Database:
 		pool.join()
 		redis_conn.set("last_update", pickle.dumps(datetime.datetime.now()))
 
-	def update(mysql_conn):
+	def update(mysql_conn,num_tickers = None):
 
 		with mysql_conn.cursor(buffered=True) as cursor:
 
@@ -174,7 +181,7 @@ class Database:
 					i -= 1
 				return i
 
-			full_ticker_list = Database.get_ticker_list()
+			full_ticker_list = Database.get_ticker_list()[:num_tickers]
 			for ticker in full_ticker_list:
 				for tf in ['1d']:
 					try:

@@ -67,7 +67,7 @@ export class chart2 {
                 this.a = Math.ceil(this.a)
                 this.candleWidth = ((this.pixelBounds.right) / (this.data.length + this.a));
             }
-            
+
             this.#draw();
 
         }
@@ -144,7 +144,7 @@ export class chart2 {
             this.#drawData(i, candleStick);
             i++;
         }
-        this.#drawAxes();
+        //this.#drawAxes();
     }
 
     #drawData(i, candleStick) {

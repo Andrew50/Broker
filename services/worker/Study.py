@@ -1,10 +1,9 @@
-from sync_Data import data
 from Screener import Screener
 
 class Study:
     
 
-    def update(user_id,st):
+    def update(data,user_id,st):
         total = data.get_study_length(user_id,st)
         ticker_list = data.get_ticker_list('full')
         current_tickers = data.get_finished_study_tickers(user_id,st)
@@ -20,9 +19,8 @@ class Study:
 
 
 
-def get(args,user_id):
-    st, = args
-    Study.update(user_id,st)
+def get(data,user_id,st):
+    Study.update(data,user_id,st)
 
 if __name__ == '__main__':
     

@@ -14,8 +14,16 @@ spec:
       labels:
         app: backend
     spec:
+      restartPolicy: OnFailure # Add this line
       containers:
         - name: backend
           image: billin19/backend:latest
           ports:
             - containerPort: 5057
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 2000Mi
+            limits:
+              cpu: 5000m
+              memory: 10000Mi
