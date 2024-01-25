@@ -84,7 +84,7 @@ class Data:
 			results = pool.map(self.fetch_stock_data,batches)
 		return {k: v for d in results for k, v in d.items()}
 
-	def get_ds(self,form = 'match',request='full',tf='1d', bars=0):
+	def get_ds(self,form = 'match',request='full',tf='1d', bars=0,dollar_volume=0,adr=0):
 		returns = []
 		
 		if request == 'full':
@@ -154,6 +154,7 @@ class Data:
 			elif form == 'screener':
 				tickers = []
 				for ticker, dt in request:
+					
 					try:
 						value = pickle.loads(self.redis_conn.hget(tf+form,ticker))
 						if dt != '' and dt != None:
@@ -164,6 +165,12 @@ class Data:
 								raise TypeError
 						else:
 							value = value[-bars:]
+						dollar_volume_value = value[-1,4]*value[-1,5]
+						if dollar_volume_value < dollar_volume:
+							continue
+						adr_value = (np.mean(value[:,2] / value[:,3])-1)*100
+						if adr_value < adr:
+							continue
 						padding = bars - value.shape[0]
 						if padding > 0:
 							raise TypeError
