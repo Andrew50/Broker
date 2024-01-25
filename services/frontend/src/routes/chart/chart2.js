@@ -13,9 +13,8 @@ export class chart2 {
         this.a = 0;
         this.wickWidth = 2;
         this.isDragging = false;
+        this.xAxisOffset = 0;
         this.#addEventListener();
-
-        // this.#draw();
     }
 
     updateData(chart_data) {
@@ -32,54 +31,45 @@ export class chart2 {
     }
 
     #addEventListener() {
-        /*this.canvas.addEventListener("mousedown", function (event) {
-            this.isDragging = true;
-            this.prev = event.clientX;
-        });
-
-        this.canvas.addEventListener("mousemove", function (event) {
-            if (this.isDragging) {
-                console.log(this.candleWidth);
-                //this.a = this.a + ((this.prev - event.clientX) / 900);
-                //this.#draw();
-                console.log("Mouse at: X=" + event.clientX + ", Y=" + event.clientY);
-            }
-        });
-
-        this.canvas.addEventListener("mouseup", function (event) {
-            this.isDragging = false;
-        });
-        */
         this.canvas.onmousedown = (evt) => {
             this.isDragging = true;
             this.prev = event.clientX;
         }
         this.canvas.onmousemove = (evt) => {
-            if (this.isDragging && (this.a + this.data.length + ((this.prev - event.clientX) / this.candleWidth)) <= this.data.length) {
-                //console.log(this.candleWidth);
-                this.a = this.a + ((this.prev - event.clientX) / this.candleWidth);
-                this.prev = event.clientX;
-                this.#draw();
-                //console.log("Mouse at: X=" + event.clientX + ", Y=" + event.clientY);
+            if (this.isDragging && event.clientX < this.canvas.width - this.margin) {
+                const neww = event.clientX;
+                if ((this.a + ((this.prev - event.clientX) / this.candleWidth)) < 0 && (this.data.length + (this.a) - Math.floor((this.pixelBounds.right) / this.candleWidth) + (this.prev - event.clientX) / this.candleWidth) >= -1) {
+                    this.xAxisOffset = this.xAxisOffset - ((this.prev - neww) / this.candleWidth);
+                    this.a = this.a + ((this.prev - neww) / this.candleWidth);
+                }
+                this.prev = neww;
+                this.#draw()
+            }
+            else {
+                this.isDragging = false;
             }
         }
         this.canvas.onmouseup = () => {
             this.isDragging = false;
         }
         this.canvas.onwheel = (evt) => {
-            this.candleWidth = this.candleWidth + evt.deltaY / 10;
-            if (this.candleWidth < 1) {
-                this.candleWidth = 1;
-                this.wickWidth = 1;
+            const newCandleWidth = (this.pixelBounds.right) / ((evt.deltaY / (this.candleWidth ^ .5)) + (this.pixelBounds.right) / (this.candleWidth));
+            console.log(newCandleWidth);
+            if ((this.data.length + (this.a) - Math.floor((this.pixelBounds.right) / newCandleWidth)) >= 0) {
+                if (newCandleWidth > 1 && newCandleWidth < 81) {
+                    this.candleWidth = newCandleWidth;//this.candleWidth = evt.deltaY / 50 + this.candleWidth
+                }
+                //this.candleWidth = newCandleWidth;//this.candleWidth = evt.deltaY / 50 + this.candleWidth
             }
-            else if (this.candleWidth > 40) {
-                this.candleWidth = 40;
-            }
-            else {
-                this.wickWidth = 2;
+            else{
+                //display max candles
+                //console.log()
+                this.a = Math.ceil(this.a)
+                this.candleWidth = ((this.pixelBounds.right) / (this.data.length + this.a));
             }
 
             this.#draw();
+
         }
     }
 
@@ -92,8 +82,10 @@ export class chart2 {
             //console.log(this.data);
             //this.pixelBounds = this.#getPixelBounds();
             //this.dataBounds = this.#getDataBounds();
-
+            this.a = 0;
+            this.candleWidth = 10;
             this.#draw();
+            console.log(this.data[this.data.length - 2])
 
         } else {
             console.error('data is not an array');
@@ -104,9 +96,9 @@ export class chart2 {
     #getPixelBounds() {
         const { canvas, margin } = this;
         const bounds = {
-            right: canvas.width - this.candleWidth,
+            right: canvas.width - margin + this.candleWidth,
             left: 0,
-            top: 0,
+            top: 20,
             bottom: canvas.height - margin,
 
         }
@@ -141,17 +133,11 @@ export class chart2 {
         const { ctx, canvas } = this;
         //clear area
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const dataSliced = this.data.slice(this.data.length + Math.ceil(this.a) - Math.ceil(canvas.width / this.candleWidth), this.data.length + Math.ceil(this.a));
-        //console.log(Math.ceil(this.a) - Math.ceil(canvas.width / this.candleWidth));
-        //console.log(Math.ceil(this.a));
-        //const dataSliced = this.data.slice(0,50);
-
-        // get bounds
+        //console.log(this.data.length + Math.ceil(this.a) - Math.floor((this.canvas.width - this.margin) / this.candleWidth));
+        //console.log(this.data.length + Math.ceil(this.a));
         this.pixelBounds = this.#getPixelBounds();
+        const dataSliced = this.data.slice(this.data.length + Math.ceil(this.a) - Math.floor((this.pixelBounds.right) / this.candleWidth), this.data.length + Math.ceil(this.a));
         this.dataBounds = this.#getDataBounds(dataSliced);
-        //
-        //console.log(this.pixelBounds);
-        //console.log(this.dataBounds);
         let i = 0;
         //console.log(dataSliced);
         for (const candleStick of dataSliced) {
@@ -181,26 +167,44 @@ export class chart2 {
         //const xOffset = 0;
 
         ctx.fillRect(pixelLoc[0] - xOffset, ((pixelLoc[1] + pixelLoc[4]) - Math.abs(pixelLoc[1] - pixelLoc[4])) / 2, this.candleWidth, Math.abs(pixelLoc[1] - pixelLoc[4]));
-        ctx.fillRect(pixelLoc[0] - xOffset + this.candleWidth / 2 - 1, ((pixelLoc[2] + pixelLoc[3]) - Math.abs(pixelLoc[2] - pixelLoc[3])) / 2, this.wickWidth, Math.abs(pixelLoc[2] - pixelLoc[3]));
+        ctx.fillRect(pixelLoc[0] - xOffset + this.candleWidth / 2 - this.wickWidth/2, ((pixelLoc[2] + pixelLoc[3]) - Math.abs(pixelLoc[2] - pixelLoc[3])) / 2, this.wickWidth, Math.abs(pixelLoc[2] - pixelLoc[3]));
 
 
     }
 
     #drawAxes() {
-        this.#drawText('X Axis', [this.canvas.width / 2, this.canvas.height - this.margin / 2], this.margin);
         this.ctx.clearRect(this.canvas.width - this.margin, 0, this.margin, this.canvas.height);
-        //console.log(Math.ceil(this.dataBounds.bottom));
-        //console.log(Math.floor(this.dataBounds.top));
-        //console.log(Math.floor((this.dataBounds.top - this.dataBounds.bottom) / 10));
-        for (let i = Math.ceil(this.dataBounds.bottom); i < Math.floor(this.dataBounds.top); i += Math.floor((this.dataBounds.top - this.dataBounds.bottom) / 10)) {
+        const xOffset = Math.abs(this.a - Math.floor(this.a)) * this.candleWidth
+        // if the top - the bottom / 10 
+        for (let i = (this.dataBounds.bottom); i < (this.dataBounds.top); i += ((this.dataBounds.top - this.dataBounds.bottom) / 10)) {
             const pixelLoc = math.remap(this.dataBounds.top, this.dataBounds.bottom, this.pixelBounds.top, this.pixelBounds.bottom, i);
-            this.#drawText(i, [this.canvas.width - 2, pixelLoc], this.margin * 0.5);
+            this.#drawText(this.#sigFigs(i, 3), [this.canvas.width - 2, pixelLoc], this.margin * 0.5);
             this.ctx.beginPath();
             this.ctx.strokeStyle = 'white';
             this.ctx.moveTo(this.pixelBounds.left, pixelLoc);
-            this.ctx.lineTo(this.pixelBounds.right - this.margin, pixelLoc);
+            this.ctx.lineTo(this.canvas.width - this.margin, pixelLoc);
             this.ctx.stroke();
         }
+        /*if (this.xAxisOffset > (this.pixelBounds.right) / this.candleWidth / 5) {
+            this.xAxisOffset = 0;
+            this.a = Math.ceil(this.a);
+        }
+        else if (this.xAxisOffset < 0) {
+            this.xAxisOffset = Math.floor((this.pixelBounds.right) / this.candleWidth / 5) ;
+            this.a = Math.ceil(this.a);
+        }
+        for (let i = this.xAxisOffset; i < (this.canvas.width - this.margin) / this.candleWidth; i += ((this.canvas.width - this.margin) / this.candleWidth / 5)) {
+            const pixelLoc = math.remap(this.dataBounds.left, this.dataBounds.right, this.pixelBounds.left, this.pixelBounds.right, Math.floor(i));
+            this.#drawText("works", [pixelLoc - xOffset, this.pixelBounds.bottom + this.margin/2], this.margin * 0.5);
+            this.ctx.beginPath();
+            this.ctx.strokeStyle = 'white';
+            this.ctx.moveTo(pixelLoc - xOffset, this.pixelBounds.bottom);
+            this.ctx.lineTo(pixelLoc - xOffset, this.pixelBounds.top);
+            this.ctx.stroke();
+        }
+        console.log(this.xAxisOffset);
+        console.log(this.a);
+        */
 
 
     }
@@ -214,6 +218,14 @@ export class chart2 {
         ctx.fillStyle = 'grey';
         ctx.fillText(text, ...loc);
 
+    }
+
+    #sigFigs(n, sig) {
+        if (n === 0)
+            return 0
+        var mult = Math.pow(10,
+            sig - Math.floor(Math.log(n < 0 ? -n : n) / Math.LN10) - 1);
+        return Math.round(n * mult) / mult;
     }
 
 
