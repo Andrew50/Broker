@@ -70,8 +70,8 @@ def create_app():
 			val = await data_.get_df('chart',ticker,tf,dt)
 			#if data_.is_extended_market_open:
 			if True: 
-				#current_price = await data_.get_current_price(ticker)
-				current_price = yf.download(ticker, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=False, keepna=False)['Close'][-1]
+				current_price = await data_.get_current_price(ticker)
+				#current_price = yf.download(ticker, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=False, keepna=False)['Close'][-1]
 				val = json.loads(val)
 				print(val,flush=True)
 				val = val[-500:]

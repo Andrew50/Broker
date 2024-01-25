@@ -50,14 +50,14 @@ class Data:
 			raise Exception('to code')
 		return data
 	
-	def init_prev_close_cache(self):
+	# def init_prev_close_cache(self):
 		
-		hash_data = self.redis_conn.hgetall('1d'+'chart')
-		#return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
-		for ticker, value in hash_data.items():
-			value = json.loads(value)
-			value = value[-1]['close']
-			self.redis_conn.hset('prev_close', ticker, pickle.dumps(value))
+	# 	hash_data = self.redis_conn.hgetall('1d'+'chart')
+	# 	#return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
+	# 	for ticker, value in hash_data.items():
+	# 		value = json.loads(value)
+	# 		value = value[-1]['close']
+	# 		self.redis_conn.hset('prev_close', ticker, pickle.dumps(value))
 			
 	@staticmethod
 	def fetch_stock_data(tickers):
@@ -72,28 +72,33 @@ class Data:
 			else:
 				last_non_na_close = close_data.iloc[-1]
 				last_close_values[ticker] = last_non_na_close
+		
 		return last_close_values
 	
 	
 	def get_current_prices(self):
+		print('fetching current prices',flush=True)
+
 		tickers = self.get_ticker_list()
 		batches = []
 		for i in range(0,len(tickers),1000):
 			batches.append(tickers[i:i+ 1000])
 		with multiprocessing.Pool(5) as pool:
 			results = pool.map(self.fetch_stock_data,batches)
-		return {k: v for d in results for k, v in d.items()}
+		results = {k: v for d in results for k, v in d.items()}
+		for ticker, value in results.items():
+			self.redis_conn.hset('current_price', ticker, pickle.dumps(value))
+		return results
 
 	def get_ds(self,form = 'match',request='full',tf='1d', bars=0,dollar_volume=0,adr=0):
 		returns = []
 		
 		if request == 'full':
-			market_open = True#self.is_market_open()
+			market_open = self.is_market_open(pm = True)
 			if market_open:
 				self.init_prev_close_cache()
 				current_prices = self.get_current_prices()
-				for ticker, value in current_prices.items():
-					self.redis_conn.hset('current_price', ticker, pickle.dumps(value))
+				
 			if form == 'screener':
 				hash_data = self.redis_conn.hgetall(tf+form)
 				#return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
@@ -102,6 +107,12 @@ class Data:
 					try:
 						ticker = ticker.decode()
 						value = pickle.loads(value)
+						dollar_volume_value = value[-1,4]*value[-1,5]
+						if dollar_volume_value < dollar_volume:
+							continue
+						adr_value = (np.mean(value[:,2] / value[:,3])-1)*100
+						if adr_value < adr:
+							continue
 						if bars:
 							padding = bars - value.shape[0]
 							if padding > 0:
@@ -111,10 +122,12 @@ class Data:
 							value = value[-(bars-1):,:]
 							try:
 								price = current_prices[ticker]
-								change = price/pickle.loads(self.redis_conn.hget('prev_close',ticker)) - 1
+								#change = price/pickle.loads(self.redis_conn.hget('prev_close',ticker)) - 1
 							except:
-								change = 0
-							value = np.vstack( [value,np.array([0] +[change for _ in range(4)])])
+								# change = 0
+								price = value[-1,4]
+							value = np.vstack([value, np.array([int(time.time())] + [price] * (value.shape[1] - 1))])
+								#value = np.vstack( [value,np.array([0] +[change for _ in range(4)])])
 						else:
 							value = value[-bars:,:]
 							for ii in (2,3,4):
@@ -165,12 +178,7 @@ class Data:
 								raise TypeError
 						else:
 							value = value[-bars:]
-						dollar_volume_value = value[-1,4]*value[-1,5]
-						if dollar_volume_value < dollar_volume:
-							continue
-						adr_value = (np.mean(value[:,2] / value[:,3])-1)*100
-						if adr_value < adr:
-							continue
+						
 						padding = bars - value.shape[0]
 						if padding > 0:
 							raise TypeError
