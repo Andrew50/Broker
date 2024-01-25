@@ -140,7 +140,7 @@ export class chart2 {
             this.#drawData(i, candleStick);
             i++;
         }
-        this.#drawAxes();
+        this.#drawAxes(dataSliced);
     }
 
     #drawData(i, candleStick) {
@@ -169,7 +169,7 @@ export class chart2 {
     }
     // abs(this.a + this.a*num lines passed)
 
-    #drawAxes() {
+    #drawAxes(dataSliced) {
         this.ctx.clearRect(this.canvas.width - this.margin, 0, this.margin, this.canvas.height);
         const xOffset = Math.abs(this.a - Math.floor(this.a)) * this.candleWidth
         // if the top - the bottom / 10 
@@ -188,7 +188,7 @@ export class chart2 {
             
         }
         const xAxisOffset = Math.abs(this.a) - Math.floor((this.pixelBounds.right) / (this.candleWidth * 5) * this.Lines);
-        if (xAxisOffset > Math.ceil((this.pixelBounds.right) / this.candleWidth / 5)) {
+        if (xAxisOffset > Math.floor((this.pixelBounds.right) / this.candleWidth / 5)) {
             this.Lines = this.Lines + 1;
         }
         if (xAxisOffset < 0) {
@@ -202,11 +202,11 @@ export class chart2 {
             this.ctx.moveTo(pixelLoc - xOffset, this.pixelBounds.bottom);
             this.ctx.lineTo(pixelLoc - xOffset, this.pixelBounds.top);
             this.ctx.stroke();
-            console.log("i",Math.floor(i));
+            const value = Math.floor(i/2);
+            console.log(value);
+            console.log("data", dataSliced[Math.floor(i / 2)][0]);
         }
-        console.log("lines",this.Lines)
-        console.log("xoffset",xAxisOffset);
-        console.log('a',this.a);
+        
         
 
 
