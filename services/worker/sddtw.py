@@ -17,6 +17,7 @@ def transform(seq):
     mean = np.mean(seq)
     std = np.std(seq)
     seq = (seq - mean) / std
+    print(seq)
     return seq
 
 def path(D,m=-1):
