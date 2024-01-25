@@ -61,7 +61,7 @@ export class chart2 {
                 }
                 //this.candleWidth = newCandleWidth;//this.candleWidth = evt.deltaY / 50 + this.candleWidth
             }
-            else{
+            else {
                 //display max candles
                 //console.log()
                 this.a = Math.ceil(this.a)
@@ -144,7 +144,7 @@ export class chart2 {
             this.#drawData(i, candleStick);
             i++;
         }
-        //this.#drawAxes();
+        this.#drawAxes();
     }
 
     #drawData(i, candleStick) {
@@ -167,7 +167,7 @@ export class chart2 {
         //const xOffset = 0;
 
         ctx.fillRect(pixelLoc[0] - xOffset, ((pixelLoc[1] + pixelLoc[4]) - Math.abs(pixelLoc[1] - pixelLoc[4])) / 2, this.candleWidth, Math.abs(pixelLoc[1] - pixelLoc[4]));
-        ctx.fillRect(pixelLoc[0] - xOffset + this.candleWidth / 2 - this.wickWidth/2, ((pixelLoc[2] + pixelLoc[3]) - Math.abs(pixelLoc[2] - pixelLoc[3])) / 2, this.wickWidth, Math.abs(pixelLoc[2] - pixelLoc[3]));
+        ctx.fillRect(pixelLoc[0] - xOffset + this.candleWidth / 2 - this.wickWidth / 2, ((pixelLoc[2] + pixelLoc[3]) - Math.abs(pixelLoc[2] - pixelLoc[3])) / 2, this.wickWidth, Math.abs(pixelLoc[2] - pixelLoc[3]));
 
 
     }
