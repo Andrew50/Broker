@@ -69,12 +69,15 @@ def create_app():
 			ticker,tf,dt = args
 			val = await data_.get_df('chart',ticker,tf,dt)
 			#if data_.is_extended_market_open:
-			if True: 
-				#current_price = await data_.get_current_price(ticker)
-				current_price = yf.download(ticker, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=False, keepna=False)['Close'][-1]
+			if data_.is_market_open(pm=True): 
+				try: current_price = await data_.get_current_price(ticker)
+				except: 
+					current_price = None
+					print('failed to get current price',flush=True)
+				#current_price = yf.download(ticker, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=False, keepna=False)['Close'][-1]
 				val = json.loads(val)
-				print(val,flush=True)
-				val = val[-500:]
+				#print(val,flush=True)
+				
 				if current_price == None:
 					current_bar = val[-1]
 				else:
@@ -86,12 +89,10 @@ def create_app():
 								'close':  current_price
 							}
 				val.append(current_bar)
-				print(val,flush=True)
-				val = json.dumps(val)
 			else:
 				val = json.loads(val)
-				val = val[-100:]
-				val = json.dumps(val)
+			val = val[-500:]
+			val = json.dumps(val)
 			return val
 		elif func == 'create setup':
 			st, tf, setup_length = args
