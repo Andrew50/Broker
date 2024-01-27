@@ -1,5 +1,5 @@
 import os, numpy as np, time,datetime, mysql.connector, pytz, redis, pickle,  multiprocessing, json, yfinance as yf
-
+import pandas as pd
 class Data:
 	
 	def __init__(self):
@@ -61,6 +61,7 @@ class Data:
 			
 	@staticmethod
 	def fetch_stock_data(tickers):
+		tickers = [str(ticker) for ticker in tickers]
 		args = " ".join(tickers)
 		ds = yf.download(args, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=True, keepna=False)
 		last_close_values = {}
@@ -81,9 +82,12 @@ class Data:
 
 		tickers = self.get_ticker_list()
 		batches = []
-		for i in range(0,len(tickers),1000):
-			batches.append(tickers[i:i+ 1000])
-		with multiprocessing.Pool(5) as pool:
+		print(len(tickers),flush=True)
+		pool_size = 5
+		batch_size = int(len(tickers)/pool_size) + 5
+		for i in range(0,len(tickers),batch_size):
+			batches.append(tickers[i:i + batch_size])
+		with multiprocessing.Pool(pool_size) as pool:
 			results = pool.map(self.fetch_stock_data,batches)
 		results = {k: v for d in results for k, v in d.items()}
 		for ticker, value in results.items():
@@ -96,7 +100,7 @@ class Data:
 		if request == 'full':
 			market_open = self.is_market_open(pm = True)
 			if market_open:
-				self.init_prev_close_cache()
+				#self.init_prev_close_cache()
 				current_prices = self.get_current_prices()
 				
 			if form == 'screener':
@@ -110,9 +114,10 @@ class Data:
 						dollar_volume_value = value[-1,4]*value[-1,5]
 						if dollar_volume_value < dollar_volume:
 							continue
-						adr_value = (np.mean(value[:,2] / value[:,3])-1)*100
+						adr_value = (np.mean(value[:,1] / value[:,2])-1)*100
 						if adr_value < adr:
 							continue
+						value = value[:,:5]
 						if bars:
 							padding = bars - value.shape[0]
 							if padding > 0:
@@ -211,6 +216,8 @@ class Data:
 		return i
 	
 	def get_ticker_list(self, type='full'):
+		df = pd.read_csv('ticker_list.csv')['ticker'].tolist()
+		return df
 		cursor = self.mysql_conn.cursor(buffered=True)
 		if type == 'full':
 			query = "SELECT ticker FROM full_ticker_list"
@@ -242,17 +249,23 @@ class Data:
 		return dt
 
 	@staticmethod
-	def is_market_open():
-		if (datetime.datetime.now().weekday() >= 5):
-			return False
+	def is_market_open(pm = False):
+		
 		dt = datetime.datetime.now(pytz.timezone('US/Eastern'))
+		if (dt.weekday() >= 5):
+			return False
 		hour = dt.hour
 		minute = dt.minute
-		if hour >= 10 and hour <= 16:
+		if pm:
+			if hour >= 16 or hour < 4:
+				return False
 			return True
-		elif hour == 9 and minute >= 30:
-			return True
-		return False
+		else:
+			if hour >= 10 and hour <= 16:
+				return True
+			elif hour == 9 and minute >= 30:
+				return True
+			return False
 
 	def set_setup_info(self,user_id,st,size=None,score=None):
 		for val, ident in [[size,'sample_size'],[score,'score']]:

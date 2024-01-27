@@ -2,22 +2,19 @@
 import numpy as np
 from scipy.spatial.distance import euclidean
 from scipy.signal import savgol_filter
+from sync_Data import Data
 
-
-
-
-BARS = 10
+BARS = 50
 POLY_ORDER = 3
-SMOOTHING_WINDOW = BARS // 2 #might need to be odd number
+SMOOTHING_WINDOW = BARS // 7 #might need to be odd number
 
 def transform(seq):
-    seq =  savgol_filter(seq, SMOOTHING_WINDOW,POLY_ORDER, deriv=1)
-    #seq =  savgol_filter(seq, SMOOTHING_WINDOW,POLY_ORDER)
-    #seq = Keogh EJ, Pazzani MJ (2001) Derivative dynamic time warping. Paper presented at the SIAM International Conference on Data Mining
     mean = np.mean(seq)
     std = np.std(seq)
     seq = (seq - mean) / std
-    print(seq)
+    seq =  savgol_filter(seq, SMOOTHING_WINDOW,POLY_ORDER, deriv=1)
+    #seq =  savgol_filter(seq, SMOOTHING_WINDOW,POLY_ORDER)
+    #seq = Keogh EJ, Pazzani MJ (2001) Derivative dynamic time warping. Paper presented at the SIAM International Conference on Data Mining
     return seq
 
 def path(D,m=-1):
@@ -26,7 +23,6 @@ def path(D,m=-1):
     if m < 0:
         m = D[N - 1, :].argmin()
     P = [(n, m)]
-
     while n > 0:
         if m == 0:
             cell = (n - 1, 0)
@@ -44,7 +40,7 @@ def path(D,m=-1):
     P = np.array(P)
     return P
         
-def compute_accumulated_cost_matrix_subsequence_dtw(C):
+def compute_matrix(C):
     N, M = C.shape
     D = np.zeros((N, M))
     D[:, 0] = np.cumsum(C[:, 0])
@@ -55,38 +51,39 @@ def compute_accumulated_cost_matrix_subsequence_dtw(C):
     return D
 
 
-def calc(x,y): #y is query, x is to check
+def calc(x,y,top_n): #y is query, x is to check
     y, x = transform(y), transform(x)
-    #C = np.abs(np.subtract.outer(y, x))
     M = np.zeros((len(x), len(y)))
-    
-    # Fill in the cost matrix
     for i in range(len(x)):
         for j in range(len(y)):
             M[i, j] = abs(x[i] - y[j])
-    D = compute_accumulated_cost_matrix_subsequence_dtw(M)
-    b_ast = D[-1, :].argmin()
-    #print('b* =', b_ast)
-    #print('Accumulated cost D[N, b*] = ', D[-1, b_ast])
-    P = path(D)
-    return P, D
+    D = compute_matrix(M)
+    sorted_indices = np.argsort(D[-1, :])
+    
+    top_matches = []
+    for idx in sorted_indices:
+        if all(abs(idx - match['index']) > BARS for match in top_matches):
+            P = path(D, m=idx)
+            a_ast = P[0, 1]
+            b_ast = P[-1, 1]
+            cost = D[-1, idx]
+            match = {
+                'index': b_ast,
+                'cost': cost,
+            }
+            top_matches.append(match)
+            if len(top_matches) == top_n:
+                break
 
+    return top_matches
 
+data = Data()
+tf = '1d'
+ticker, dt = 'MRK', '2022-11-17'
+ticker2, dt2 = 'EGY','2022-02-28'
+x = data.get_df('raw',ticker,tf,dt, bars=BARS)[:,4]
+y = data.get_df('raw',ticker2,tf,dt2)
 
-y = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,34,63,34,32,53,45,74,24,123,52,3,21,8,12]
-x = [1, 2, 3, 4,5,6,7,8,9,10]
-
-x = x[-BARS:]
-
-p, d = calc(x,y)
-
-
-print('Optimal warping path P =', p.tolist())
-a_ast = p[0, 1]
-b_ast = p[-1, 1]
-print('a* =', a_ast)
-print('b* =', b_ast)
-print('Sequence X =', x)
-print('Sequence Y =', y)
-print('Optimal subsequence Y(a*:b*) =', y[a_ast:b_ast+1])
-print('Accumulated cost D[N, b_ast]= ', d[-1, b_ast])
+top_matches = calc(x, y[:,4], top_n=50)
+for match in top_matches:
+    print(data.format_datetime(dt=y[:,0][match['index']], reverse=True) )

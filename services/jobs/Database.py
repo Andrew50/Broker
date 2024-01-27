@@ -11,41 +11,42 @@ import datetime
 import mysql.connector
 
 
-FORCE_RECALC = False #set to True to force the recalculation of all cached data. This should be done if recalc methods are changed
+FORCE_RECALC = False
+#set to True to force the recalculation of all cached data. 
+#This should be done if recalc methods are changed
+#allows the script to be run outside of container
 
 
 
 
 class Database:
-
-
-
 	def run():
-		redis_conn = redis.Redis(host='redis', port=6379)
-		mysql_conn = mysql.connector.connect(host='mysql', port='3306', user='root', password='7+WCy76_2$%g')
-
-		with mysql_conn.cursor() as cursor:
-			try:
-				cursor.execute("USE broker")
-			except mysql.connector.Error as err:
-				if err.errno == errorcode.ER_BAD_DB_ERROR:
-					print('creating database', flush=True)
-					Database.setup(mysql_conn)
-					print('updating limited', flush=True)
-					Database.update(mysql_conn,10)
-					print('caching limited', flush=True)
-					Database.cache(redis_conn)
-				else:
-					raise
-			finally:
-				if not os.getenv('DEV_ENV') == 'true' or not (last_update := pickle.loads(redis_conn.get("last_update"))) or datetime.datetime.now() - last_update > datetime.timedelta(days=1):
-					print('updating', flush=True)
-					Database.update(mysql_conn)
-					print('caching', flush=True)
-					Database.cache(redis_conn)
-
-		if FORCE_RECALC: #force recalc and recache
+		if FORCE_RECALC: #Only change if you neeed to recalc
+			redis_conn = redis.Redis(host='localhost', port=6379)
+			mysql_conn = mysql.connector.connect(host='localhost', port='3306', user='root', password='7+WCy76_2$%g',database='broker')
 			Database.cache(redis_conn)
+		else:
+			redis_conn = redis.Redis(host='redis', port=6379)
+			mysql_conn = mysql.connector.connect(host='mysql', port='3306', user='root', password='7+WCy76_2$%g')
+			with mysql_conn.cursor() as cursor:
+				try:
+					cursor.execute("USE broker")
+				except mysql.connector.Error as err:
+					if err.errno == errorcode.ER_BAD_DB_ERROR:
+						print('creating database', flush=True)
+						Database.setup(mysql_conn)
+						print('updating limited', flush=True)
+						Database.update(mysql_conn,10)
+						print('caching limited', flush=True)
+						Database.cache(redis_conn)
+					else:
+						raise
+				finally:
+					if not os.getenv('DEV_ENV') == 'true' or not (last_update := pickle.loads(redis_conn.get("last_update"))) or datetime.datetime.now() - last_update > datetime.timedelta(days=1):
+						print('updating', flush=True)
+						Database.update(mysql_conn)
+						print('caching', flush=True)
+						Database.cache(redis_conn)
 
 	def is_market_open():
 		if (datetime.datetime.now().weekday() >= 5):
@@ -62,7 +63,6 @@ class Database:
 	def format_datetime(dt,reverse=False):
 		if reverse:
 			return datetime.datetime.fromtimestamp(dt)
-			
 		if type(dt) == int or type(dt) == float:
 			return dt
 		if dt is None or dt == '': return None
@@ -85,8 +85,10 @@ class Database:
 		return df
 
 	def process_ticker_data(bars):
-		with redis.Redis(host='redis', port=6379) as redis_conn:
-			with mysql.connector.connect(host='mysql', port='3306', user='root', password='7+WCy76_2$%g',database='broker') as mysql_conn:
+		mysql_host, redis_host = ('localhost', 'localhost') if FORCE_RECALC else ('mysql', 'redis')
+
+		with redis.Redis(host=redis_host, port=6379) as redis_conn:
+			with mysql.connector.connect(host=mysql_host, port='3306', user='root', password='7+WCy76_2$%g',database='broker') as mysql_conn:
 				with mysql_conn.cursor() as cursor:
 					tickers,tf = bars
 					for ticker in tickers:
@@ -97,9 +99,10 @@ class Database:
 							for form in ('screener','chart','match'):
 								if form == 'screener':
 									dt = data[1:,0]
+									vol = data[1:,5]
 									dt = dt.reshape(-1,1)
 									normalized_data = (data[1:,1:5] / data[:-1,4][:, None]) - 1
-									normalized_data = np.column_stack((dt,normalized_data))
+									normalized_data = np.column_stack((dt,normalized_data,vol))
 									processed_data = pickle.dumps(normalized_data)
 								elif form == 'match':
 									#dt, open, high, low, close, volume 

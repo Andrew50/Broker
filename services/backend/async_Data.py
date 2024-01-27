@@ -95,6 +95,26 @@ class Data:
 		else:
 			raise Exception('to code')
 		return data
+	
+
+	@staticmethod
+	async def is_market_open(pm=False):
+		dt = datetime.datetime.now(pytz.timezone('US/Eastern'))
+		if dt.weekday() >= 5:
+			return False
+		hour = dt.hour
+		minute = dt.minute
+		if pm:
+			if hour >= 16 or hour < 4:
+				return False
+			return True
+		else:
+			if hour >= 10 and hour <= 16:
+				return True
+			elif hour == 9 and minute >= 30:
+				return True
+			return False
+
 	#eng_project
 	async def get_user(self, email, password):
 		async with self.mysql_pool.acquire() as conn:
