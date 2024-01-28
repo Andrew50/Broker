@@ -16,6 +16,7 @@ export class chart2 {
         this.xAxisOffset = 0;
         this.#addEventListener();
         this.Lines = 0;
+        this.pixInt = 0;
     }
 
     updateData(chart_data) {
@@ -55,7 +56,6 @@ export class chart2 {
         }
         this.canvas.onwheel = (evt) => {
             const newCandleWidth = (this.pixelBounds.right) / ((evt.deltaY / (this.candleWidth ^ .5)) + (this.pixelBounds.right) / (this.candleWidth));
-            console.log(newCandleWidth);
             if ((this.data.length + (this.a) - Math.floor((this.pixelBounds.right) / newCandleWidth)) >= 0) {
                 if (newCandleWidth > 1 && newCandleWidth < 81) {
                     this.candleWidth = newCandleWidth;//this.candleWidth = evt.deltaY / 50 + this.candleWidth
@@ -76,11 +76,10 @@ export class chart2 {
 
     #convertData(chart_data) {
         if (Array.isArray(chart_data)) {
-
             this.data = chart_data.map(obj => Object.values(obj));
             this.a = 0;
             this.candleWidth = 10; // calculate candle width if pixelbounds / data.length < 10
-            this.#draw();
+            this.#draw()
             console.log(this.data[this.data.length - 2])
 
         } else {
@@ -135,12 +134,15 @@ export class chart2 {
         const dataSliced = this.data.slice(this.data.length + Math.ceil(this.a) - Math.floor((this.pixelBounds.right) / this.candleWidth), this.data.length + Math.ceil(this.a));
         this.dataBounds = this.#getDataBounds(dataSliced);
         let i = 0;
-        //console.log(dataSliced);
+
         for (const candleStick of dataSliced) {
             this.#drawData(i, candleStick);
             i++;
         }
-        this.#drawAxes(dataSliced);
+        if (dataSliced.length > 0) {
+            this.#drawAxes(dataSliced);
+        }
+        
     }
 
     #drawData(i, candleStick) {
@@ -170,42 +172,47 @@ export class chart2 {
     // abs(this.a + this.a*num lines passed)
 
     #drawAxes(dataSliced) {
-        this.ctx.clearRect(this.canvas.width - this.margin, 0, this.margin, this.canvas.height);
+        this.ctx.globalCompositeOperation = 'destination-over';
         const xOffset = Math.abs(this.a - Math.floor(this.a)) * this.candleWidth
-        // if the top - the bottom / 10 
+        let xAxisOffset = Math.abs(this.a) - Math.floor(dataSliced.length / 5) * this.Lines;
+
+        if (Math.floor(xAxisOffset) > Math.floor(dataSliced.length / 5)) {
+            console.log('Called 1')
+            console.log(xAxisOffset);
+            this.Lines = this.Lines + 1;
+            xAxisOffset = Math.abs(this.a) - Math.floor(dataSliced.length / 5) * this.Lines;
+            console.log(xAxisOffset);
+        }
+        else if (Math.floor(xAxisOffset) < 0) {
+            this.Lines = this.Lines - 1;
+            xAxisOffset = Math.abs(this.a) - Math.floor(dataSliced.length / 5) * this.Lines;
+
+        }
+        for (let i = xAxisOffset; i < dataSliced.length + 1; i += Math.floor(dataSliced.length / 5)) {
+            const pixelLoc = math.remap(this.dataBounds.left, this.dataBounds.right, this.pixelBounds.left, this.pixelBounds.right, Math.floor(i) + 0.5);
+            if (i < dataSliced.length) {
+                this.#drawText(dataSliced[Math.floor(i)][0], [pixelLoc - xOffset - this.wickWidth / 2, this.pixelBounds.bottom + this.margin / 2], this.margin * 0.5);
+            }
+            this.ctx.beginPath();
+            this.ctx.strokeStyle = 'white';
+            this.ctx.moveTo(pixelLoc - xOffset - this.wickWidth / 2, this.pixelBounds.bottom);
+            this.ctx.lineTo(pixelLoc - xOffset - this.wickWidth / 2, this.pixelBounds.top);
+            this.ctx.stroke();
+        }
+        // xAxis
+        this.ctx.clearRect(this.canvas.width - this.margin, 0, this.margin, this.canvas.height);
         for (let i = (this.dataBounds.bottom); i < (this.dataBounds.top); i += ((this.dataBounds.top - this.dataBounds.bottom) / 10)) {
             const pixelLoc = math.remap(this.dataBounds.top, this.dataBounds.bottom, this.pixelBounds.top, this.pixelBounds.bottom, i);
             this.#drawText(this.#sigFigs(i, 3), [this.canvas.width - 2, pixelLoc], this.margin * 0.5);
             this.ctx.beginPath();
             this.ctx.strokeStyle = 'white';
+            this.ctx.lineWidth = 1;
             this.ctx.moveTo(this.pixelBounds.left, pixelLoc);
             this.ctx.lineTo(this.canvas.width - this.margin, pixelLoc);
             this.ctx.stroke();
         }
-        if (this.xAxisOffset > (this.canvas.width - this.margin) / this.candleWidth / 5) {
-            this.xAxisOffset = 0;
-            this.a = Math.ceil(this.a);
-            
-        }
-        const xAxisOffset = Math.abs(this.a) - Math.floor((this.pixelBounds.right) / (this.candleWidth * 5) * this.Lines);
-        if (xAxisOffset > Math.floor((this.pixelBounds.right) / this.candleWidth / 5)) {
-            this.Lines = this.Lines + 1;
-        }
-        if (xAxisOffset < 0) {
-            this.Lines = this.Lines - 1;
-        }
-        for (let i = xAxisOffset; i < (this.pixelBounds.right) / this.candleWidth; i += Math.floor((this.pixelBounds.right) / this.candleWidth / 5)) {
-            const pixelLoc = math.remap(this.dataBounds.left, this.dataBounds.right, this.pixelBounds.left, this.pixelBounds.right, Math.floor(i) + .5);
-            this.#drawText("works", [pixelLoc - xOffset, this.pixelBounds.bottom + this.margin/2], this.margin * 0.5);
-            this.ctx.beginPath();
-            this.ctx.strokeStyle = 'white';
-            this.ctx.moveTo(pixelLoc - xOffset, this.pixelBounds.bottom);
-            this.ctx.lineTo(pixelLoc - xOffset, this.pixelBounds.top);
-            this.ctx.stroke();
-            const value = Math.floor(i/2);
-            console.log(value);
-            console.log("data", dataSliced[Math.floor(i / 2)][0]);
-        }
+        
+        
         
         
 
