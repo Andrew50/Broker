@@ -66,13 +66,16 @@ class Data:
 		ds = yf.download(args, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=True, keepna=False)
 		last_close_values = {}
 		for ticker in tickers:
-			close_data = ds['Close', ticker]
-			close_data = close_data.dropna()
-			if close_data.empty:
+			try:
+				close_data = ds['Close', ticker]
+				close_data = close_data.dropna()
+				if close_data.empty:
+					pass
+				else:
+					last_non_na_close = close_data.iloc[-1]
+					last_close_values[ticker] = last_non_na_close
+			except:
 				pass
-			else:
-				last_non_na_close = close_data.iloc[-1]
-				last_close_values[ticker] = last_non_na_close
 		
 		return last_close_values
 	
