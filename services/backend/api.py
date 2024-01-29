@@ -1,5 +1,5 @@
 import datetime, uvicorn, jwt, json, yfinance as yf
-from fastapi import FastAPI, HTTPException, status, Request as FastAPIRequest, Depends
+from fastapi import FastAPI, HTTPException, status, Request as FastAPIRequest, Depends, traceback
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
@@ -72,8 +72,9 @@ def create_app():
 			if data_.is_market_open(pm=True): 
 				try: current_price = await data_.get_current_price(ticker)
 				except: 
+					exception = traceback.format_exc()
 					current_price = None
-					print('failed to get current price',flush=True)
+					print(f'failed to get current price: {exception}',flush=True)
 				#current_price = yf.download(ticker, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=False, keepna=False)['Close'][-1]
 				val = json.loads(val)
 				#print(val,flush=True)
