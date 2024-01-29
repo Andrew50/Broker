@@ -21,9 +21,9 @@ class SDDTW:
 		# mean = np.mean(seq)
 		# std = np.std(seq)
 		# seq = (seq - mean) / std
-
+##
 		
-		
+		##
 		# mean = np.mean(seq)
 		# std = np.std(seq)
 		# seq = (seq - mean) / std

@@ -70,29 +70,27 @@ def create_app():
 			val = await data_.get_df('chart',ticker,tf,dt)
 			#if data_.is_extended_market_open:
 			if data_.is_market_open(pm=True): 
-				try: current_price = await data_.get_current_price(ticker)
+				try: 
+					current_price = await data_.get_current_price(ticker)
+					current_price = round(current_price,2)
 				except: 
 					exception = traceback.format_exc()
 					current_price = None
-					print(f'failed to get current price: {exception}',flush=True)
-				#current_price = yf.download(ticker, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=False, keepna=False)['Close'][-1]
 				val = json.loads(val)
-				#print(val,flush=True)
-				
 				if current_price == None:
 					current_bar = val[-1]
 				else:
 					current_bar = {
 								'time': str(datetime.datetime.now())[:10],
 								'open': current_price,
-								'high':  current_price,
-								'low':  current_price,
-								'close':  current_price
+								'high':  current_price*1.005,
+								'low':  current_price*.995,
+								'close':  current_price*.999
 							}
 				val.append(current_bar)
 			else:
 				val = json.loads(val)
-			val = val[-500:]
+			val = val[-200:]
 			val = json.dumps(val)
 			return val
 		elif func == 'create setup':
@@ -143,15 +141,11 @@ def create_app():
 		print(f'received backend request for {func} {args} {task_id}',flush=True)
 		return task_id
 
-
-
 	@app.get('/poll/{job_id}')
 	async def get_result(job_id: str, request: FastAPIRequest):
 		data_ = request.app.state.data
 		result = await data_.get_task_result(job_id)
-		
 		return result
-
 	return app
 
 app = create_app()

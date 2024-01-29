@@ -85,7 +85,6 @@ class Data:
 
 		tickers = self.get_ticker_list()
 		batches = []
-		print(len(tickers),flush=True)
 		pool_size = 5
 		batch_size = int(len(tickers)/pool_size) + 5
 		for i in range(0,len(tickers),batch_size):
@@ -104,7 +103,8 @@ class Data:
 			market_open = self.is_market_open(pm = True)
 			if market_open:
 				#self.init_prev_close_cache()
-				current_prices = self.get_current_prices()
+				#current_prices = self.get_current_prices()
+				pass
 				
 			if form == 'screener':
 				hash_data = self.redis_conn.hgetall(tf+form)
@@ -115,11 +115,12 @@ class Data:
 						ticker = ticker.decode()
 						value = pickle.loads(value)
 						dollar_volume_value = value[-1,4]*value[-1,5]
-						if dollar_volume_value < dollar_volume:
-							continue
-						adr_value = (np.mean(value[:,1] / value[:,2])-1)*100
-						if adr_value < adr:
-							continue
+						# if dollar_volume_value < dollar_volume:
+						# 	continue
+						# adr_value = (np.mean(value[:,1] / value[:,2])-1)*100
+
+						# if adr_value < adr:
+						# 	continue
 						value = value[:,:5]
 						if bars:
 							padding = bars - value.shape[0]
@@ -129,13 +130,13 @@ class Data:
 						if market_open:
 							value = value[-(bars-1):,:]
 							try:
-								price = current_prices[ticker]
-								#change = price/pickle.loads(self.redis_conn.hget('prev_close',ticker)) - 1
-							except:
+								#price = current_prices[ticker]
+								price = pickle.loads(self.redis_conn.hget('current_price',ticker))
+							except :
 								# change = 0
 								price = value[-1,4]
 							value = np.vstack([value, np.array([int(time.time())] + [price] * (value.shape[1] - 1))])
-								#value = np.vstack( [value,np.array([0] +[change for _ in range(4)])])
+
 						else:
 							value = value[-bars:,:]
 							for ii in (2,3,4):
@@ -156,6 +157,7 @@ class Data:
 				for ticker, dt, classification in request:
 					try:
 						value = pickle.loads(self.redis_conn.hget(tf+'screener',ticker))#get rid of dt becuase dont need for training
+						value = value[:,:5]
 						if not dt == '' or dt == None:
 							index = Data.findex(value,dt)
 							value = value[index-bars+1:index+1,:]
@@ -168,7 +170,7 @@ class Data:
 						classifications.append(classification)
 					except:
 						failed += 1
-				print(f'{failed} df requests failed!')
+				print(f'{100*failed/len(request)}% of df requests failed!')
 				returns = np.array(returns)
 				classifications = np.array(classifications)
 				return returns, classifications
@@ -316,7 +318,6 @@ class Data:
 		with self.mysql_conn.cursor(buffered=True) as cursor:
 			cursor.execute('SELECT setup_id from setups WHERE user_id = %s AND name = %s',(user_id,st))
 			setup_id = cursor.fetchone()[0]
-			print(setup_id)
 			query = [[setup_id,ticker,dt,classification] for ticker,dt,classification in data]
 			cursor.executemany("INSERT INTO setup_data VALUES (%s, %s, %s,%s)", query)
 		self.mysql_conn.commit()

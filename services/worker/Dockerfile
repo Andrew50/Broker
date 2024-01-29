@@ -16,6 +16,7 @@ ENV C_INCLUDE_PATH=/usr/local/lib/python3.10/site-packages/numpy/core/include:$C
 
 RUN python Setup.py build_ext --inplace
 CMD ["python", "worker.py"]
+#CMD watchmedo auto-restart -d /app -p '*.py' --recursive -- python worker.py
 
 #CMD ["/bin/sh", "-c", "sleep 5 && rq worker --url redis://redis:6379 my_queue"]
 #CMD ["celery", "-A", "celery_app", "worker", "--loglevel=info"]

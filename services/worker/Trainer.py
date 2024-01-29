@@ -45,7 +45,6 @@ class Trainer:
 		
 		data.set_setup_info(user_id,st,size = len(yes_instances))
 		
-		#print(len(yes_instances))
 		# For validation set
 		num_yes_validation = len(yes_instances)
 		num_no_validation = int((num_yes_validation / validation_ratio) - num_yes_validation)
@@ -58,17 +57,20 @@ class Trainer:
 		
 		training_x, training_y = data.get_ds('trainer', training_instances, tf, setup_length)
 		# Reshape training set for SMOTE
+
+
 		_, shape_1, shape_2 = training_x.shape
 		training_x = training_x.reshape(-1, shape_1 * shape_2)
 
 		# Apply SMOTE
-		#print(f'pre ratio {np.mean(training_y)}')
 		smote_percent = training_ratio / (1 - training_ratio)
 		smote = SMOTE(sampling_strategy=smote_percent)
 		training_x, training_y = smote.fit_resample(training_x, training_y)
 
 		# Reshape training set back to original shape
 		training_x = training_x.reshape(-1, shape_1, shape_2)
+
+		
 
 		print(f"Training set size: {len(training_y)}, Class balance: {np.mean(training_y)}")
 		print(f"Validation set size: {len(validation_y)}, Class balance: {np.mean(validation_y)}")
@@ -90,11 +92,6 @@ class Trainer:
 		dense_list = []
 		dropout = .2
 
-		# for i in range(len(ds)):
-		# 	if y[i] == 1:
-		# 		print(ds[i,:,:])
-			
-		# 		input()
 		model.add(Conv1D(filters=conv_filter, kernel_size=kernal_size, activation='relu', input_shape=(num_time_steps, input_dim)))
 		for units in lstm_list[:-1]: 
 			model.add(Bidirectional(LSTM(units=units, return_sequences=True)))  # return_sequences=True for stacking LSTM layers
@@ -201,8 +198,8 @@ def start(data,user_id,st):
 
 
 if __name__ == '__main__':
-
-	print(train( ['EP'],6))
+	from sync_Data import Data
+	print(train(Data(),1, 'd_EP'))
 
 
 

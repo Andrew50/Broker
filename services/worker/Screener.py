@@ -1,16 +1,9 @@
-import json
 import tensorflow as tf
 
-
-
 class Screener:
-
-	
-
-	#god
 	
 	def load_model(user_id,st):
-		return tf.keras.models.load_model(f'/app/models/{user_id}_{st}')
+		return tf.keras.models.load_model(f'./models/{user_id}_{st}')
 
 	def screen(data,user_id,setup_types, _format, query = None,threshold = .65, model = None):
 		results = []
@@ -28,7 +21,6 @@ class Screener:
 						ticker = ticker_list[i]
 						results.append([ticker,st,int(100*score)])
 					i += 1
-			
 			results.sort(key=lambda x: x[1],reverse=True)
 			return results
 		
@@ -45,7 +37,6 @@ class Screener:
 					ticker = ticker_list[i]
 					results.append([ticker,tf,dt_list[i]])
 				i += 1
-			
 			return results
 		
 		elif _format == 'study':
@@ -54,7 +45,6 @@ class Screener:
 			#for st in setup_types:
 			tf, setup_length = data.get_setup_info(user_id,st)
 			ds, ticker_list = data.get_ds('screener',query,tf,None)
-				
 			model = Screener.load_model(user_id,st)
 			dt_list = ds[:,:,0]
 			ds = ds[:,:,1:]
@@ -67,13 +57,10 @@ class Screener:
 				i += 1
 			
 			return results
-		
-	
 	
 def get(data, user_id, setup_types):
-
 	return Screener.screen(data,user_id,setup_types,'screener')
 			
 if __name__ == '__main__':
-	
-	print(Screener.screen(6,['EP'],'screener'))
+	from sync_Data import Data
+	print(get(Data(),1,['d_EP']))
