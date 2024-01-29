@@ -1,5 +1,5 @@
-import datetime, uvicorn, jwt, json, yfinance as yf
-from fastapi import FastAPI, HTTPException, status, Request as FastAPIRequest, Depends, traceback
+import datetime, uvicorn, jwt, json, yfinance as yf, traceback
+from fastapi import FastAPI, HTTPException, status, Request as FastAPIRequest, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
