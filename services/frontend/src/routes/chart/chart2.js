@@ -17,6 +17,7 @@ export class chart2 {
         this.#addEventListener();
         this.Lines = 0;
         this.pixInt = 0;
+        this.yScale = 0;
     }
 
     updateData(chart_data) {
@@ -199,9 +200,12 @@ export class chart2 {
             this.ctx.lineTo(pixelLoc - xOffset - this.wickWidth / 2, this.pixelBounds.top);
             this.ctx.stroke();
         }
-        // xAxis
+        // yAxis
         this.ctx.clearRect(this.canvas.width - this.margin, 0, this.margin, this.canvas.height);
-        for (let i = (this.dataBounds.bottom); i < (this.dataBounds.top); i += ((this.dataBounds.top - this.dataBounds.bottom) / 10)) {
+        if (this.yScale * 6 < this.dataBounds.top - this.dataBounds.bottom || this.yScale * 14 > this.dataBounds.top - this.dataBounds.bottom ) {
+            this.yScale = this.#sigFigs(Math.floor((this.dataBounds.top - this.dataBounds.bottom) / 10), 1);
+        }
+        for (let i = this.#sigFigs(this.dataBounds.bottom,2); i < (this.dataBounds.top); i += this.yScale) {
             const pixelLoc = math.remap(this.dataBounds.top, this.dataBounds.bottom, this.pixelBounds.top, this.pixelBounds.bottom, i);
             this.#drawText(this.#sigFigs(i, 3), [this.canvas.width - 2, pixelLoc], this.margin * 0.5);
             this.ctx.beginPath();
