@@ -45,6 +45,7 @@ bld/
 [Ll]og/
 [Ll]ogs/
 old/
+archive/
 services/frontend/node_modules
 services/frontend/.svelte-kit
 services/worker/models
