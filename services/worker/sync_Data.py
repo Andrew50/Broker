@@ -149,6 +149,9 @@ class Data:
 				hash_data = self.redis_conn.hgetall(tf+form)
 				#return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
 				return [[field.decode(), pickle.loads(value)] for field, value in hash_data.items()]
+		
+			
+
 		else:
 			if form == 'trainer':
 				classifications = []
