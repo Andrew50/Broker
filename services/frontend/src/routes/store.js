@@ -96,10 +96,12 @@ export async function private_request(bind_variable, func, ...args) {
         });
         let result = await response.json();
         result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
+        console.log('result: ', result);
         bind_variable.set(result);
     } catch (error) {
         console.error('Error during backend request:', error);
         bind_variable.set(null);
+        return "Ticker Unavailable"
     }
 
 }
@@ -117,19 +119,22 @@ export async function backend_request(bind_variable, func, ...args) {
             headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
             body: JSON.stringify(payload)
         });
-        const task_id = await reponse.json();
+        const task_id = JSON.parse(await reponse.json());
         console.log('polling');
         let result;
         const checkStatus = async () => {
             const response = await fetch(`${base_url}/poll/${task_id}`);
             result = await response.json();
             result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
-            if (result == 'running') {
+            console.log('poll result: ', result);
+            if (result == 'running' || !result) {
             } else {
 
                 bind_variable.set(result);
                 console.log('result: ', result);
+
                 console.log('result type : ', typeof result);
+
                 clearInterval(intervalId);
             }
         };

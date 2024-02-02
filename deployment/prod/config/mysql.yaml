@@ -23,6 +23,13 @@ spec:
           env:
             - name: MYSQL_ROOT_PASSWORD
               value: 7+WCy76_2$%g
+          resources:
+            requests:
+              cpu: 5000m
+              memory: 3000Mi
+            limits:
+              cpu: 10000m
+              memory: 10000Mi
       volumes:
         - name: mysql-persistent-storage
           persistentVolumeClaim:
@@ -76,4 +83,4 @@ spec:
             - key: kubernetes.io/hostname
               operator: In
               values:
-                - example-node
+                - minikube

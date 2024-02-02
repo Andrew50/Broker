@@ -1,4 +1,3 @@
-
 # for new setup run:
 # minikube start
 # minikube addons enable ingress
@@ -11,7 +10,11 @@ cd /home/aj/dev/Broker
 #if [ "$(git rev-parse HEAD)" != "$(git rev-parse @{u})" ]; then
   #git pull
   #docker login -u billin19 -p dckr_pat_BCGv9sTYRZlM59JitSidnJ2aKK8
-
+  #git login -u Andrew50 -p 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
+  git remote set-url origin git@github.com:Andrew50/Broker.git
+  git pull origin prod-beta
+  #wait # Add a wait command here
+  #git pull https://<PAT>@github.com/username/repo.git
   docker build -t billin19/frontend:latest services/frontend
   docker build -t billin19/backend:latest services/backend
   docker build -t billin19/worker:latest services/worker
@@ -25,10 +28,10 @@ cd /home/aj/dev/Broker
 
 
   #this includes running of rollout.yaml => runs rollout.py
-  kubectl apply -f deployment/prod
+  kubectl apply -f deployment/prod/config
 
   kubectl rollout restart deployment/frontend
   kubectl rollout restart deployment/backend
   kubectl rollout restart deployment/worker
-  kubectl set image cronjob/jobs jobs=localhost:5000/jobs:latest
+  kubectl set image cronjob/jobs jobs=billin19/jobs:latest
 #fi

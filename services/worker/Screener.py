@@ -7,7 +7,7 @@ class Screener:
 
 	
 
-	
+	#god
 	
 	def load_model(user_id,st):
 		return tf.keras.models.load_model(f'/app/models/{user_id}_{st}')
@@ -16,18 +16,17 @@ class Screener:
 		results = []
 		
 		if _format == 'screener':
-			
 			for st in setup_types:
 				model = Screener.load_model(user_id,st)
 				tf, setup_length = data.get_setup_info(user_id,st)
-				ds, ticker_list = data.get_ds('screener','full',tf,setup_length)
-				ds = ds[:,:,1:]
+				ds, ticker_list = data.get_ds('screener','full',tf,setup_length,dollar_volume = 5*1000000,adr=2)
+				ds = ds[:,:,1:5]
 				scores = model.predict(ds)[:,0]
 				i = 0
 				for score in scores:
 					if score > threshold:
 						ticker = ticker_list[i]
-						results.append([ticker,int(100*score)])
+						results.append([ticker,st,int(100*score)])
 					i += 1
 			
 			results.sort(key=lambda x: x[1],reverse=True)
@@ -73,9 +72,8 @@ class Screener:
 	
 def get(data, user_id, setup_types):
 
-
-	results = Screener.screen(data,user_id,setup_types,'screener')
-	return results
+	return Screener.screen(data,user_id,setup_types,'screener')
 			
 if __name__ == '__main__':
+	
 	print(Screener.screen(6,['EP'],'screener'))

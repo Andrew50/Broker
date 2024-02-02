@@ -69,10 +69,15 @@ def create_app():
 			ticker,tf,dt = args
 			val = await data_.get_df('chart',ticker,tf,dt)
 			#if data_.is_extended_market_open:
-			if True: 
-				#current_price = await data_.get_current_price(ticker)
-				current_price = yf.download(ticker, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=False, keepna=False)['Close'][-1]
+			if data_.is_market_open(pm=True): 
+				try: current_price = await data_.get_current_price(ticker)
+				except: 
+					current_price = None
+					print('failed to get current price',flush=True)
+				#current_price = yf.download(ticker, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=False, keepna=False)['Close'][-1]
 				val = json.loads(val)
+				#print(val,flush=True)
+				
 				if current_price == None:
 					current_bar = val[-1]
 				else:
@@ -84,7 +89,10 @@ def create_app():
 								'close':  current_price
 							}
 				val.append(current_bar)
-				val = json.dumps(val)
+			else:
+				val = json.loads(val)
+			val = val[-500:]
+			val = json.dumps(val)
 			return val
 		elif func == 'create setup':
 			st, tf, setup_length = args
@@ -122,19 +130,25 @@ def create_app():
 			ticker,watchlist_name,delete = args
 			await data_.set_watchlist(user_id,ticker,watchlist_name,delete)
 		else:
-			raise Exception('to code' + func)
+			return await data_.queue_task(func,args,user_id)
+
+			#raise Exception('to code' + func)
 		
 	@app.post('/backend',status_code=201)
 	async def backend(request_model: Request, request: FastAPIRequest, user_id: str = Depends(validate_auth)):
 		data_ = request.app.state.data
 		func, args = request_model.function, request_model.arguments
-		print(f'received backend request for {func}: {args}',flush=True)
-		return await data_.queue_task(func,args,user_id)
+		task_id = await data_.queue_task(func,args,user_id)
+		print(f'received backend request for {func} {args} {task_id}',flush=True)
+		return task_id
+
+
 
 	@app.get('/poll/{job_id}')
 	async def get_result(job_id: str, request: FastAPIRequest):
 		data_ = request.app.state.data
 		result = await data_.get_task_result(job_id)
+		
 		return result
 
 	return app

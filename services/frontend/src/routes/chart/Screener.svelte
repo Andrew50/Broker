@@ -63,11 +63,9 @@
 
         <form
             on:submit|preventDefault={() =>
-                backend_request(
-                    screener_data,
-                    "Screener-get",
-                    Array.from(selectedSetups),
-                )}
+                backend_request(screener_data, "Screener-get", [
+                    ...selectedSetups,
+                ])}
             class="input-form"
         >
             <div class="form-group">
@@ -92,7 +90,7 @@
         </form>
 
         <Table
-            headers={["Ticker", "Value"]}
+            headers={["Ticker", "Setup", "Value"]}
             rows={$screener_data}
             onRowClick={private_request}
             clickHandlerArgs={[chart_data, "chart", "Ticker", "1d"]}

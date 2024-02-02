@@ -16,10 +16,14 @@ class Data:
 		task_data = {'id':task_id,'func':func_ident,'args':args,'user_id':user_id}
 		await self.redis_pool.lpush('task_queue_1',json.dumps(task_data))
 		#return json.dumps({'task_id':task_id})
-		return task_id
+		#return task_id
+		return json.dumps(task_id)
 	
 	async def get_task_result(self,task_id):
 		return await self.redis_pool.get(f"result:{task_id}")
+	
+	async def delete_task_result(self,task_id):
+		await self.redis_pool.delete(f"result:{task_id}")
 	
 	async def get_trainer_queue(self,user_id,st):
 		return await self.redis_pool.rpop(str(user_id)+st)
@@ -91,6 +95,26 @@ class Data:
 		else:
 			raise Exception('to code')
 		return data
+	
+
+	@staticmethod
+	async def is_market_open(pm=False):
+		dt = datetime.datetime.now(pytz.timezone('US/Eastern'))
+		if dt.weekday() >= 5:
+			return False
+		hour = dt.hour
+		minute = dt.minute
+		if pm:
+			if hour >= 16 or hour < 4:
+				return False
+			return True
+		else:
+			if hour >= 10 and hour <= 16:
+				return True
+			elif hour == 9 and minute >= 30:
+				return True
+			return False
+
 	#eng_project
 	async def get_user(self, email, password):
 		async with self.mysql_pool.acquire() as conn:
