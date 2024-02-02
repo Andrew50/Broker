@@ -18,6 +18,7 @@ backend/1d
 # backend/tasks/Setup.py
 # backend/tasks/Test.py
 # Mono auto generated files
+deployment/prod/env
 mono_crash.*
 /backend/scripts/local
 # Build results
