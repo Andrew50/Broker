@@ -1,3 +1,3 @@
 cd C:/dev/Broker/deployment/dev
-docker-compose up --build --scale worker=3
+docker-compose up --build --scale worker=1
 pause
