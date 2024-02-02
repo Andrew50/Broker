@@ -140,6 +140,9 @@ class Database:
 						except Exception as e:
 							print(f'{ticker} failed: {e}', flush=True)
 
+
+
+
 	# Main Function
 	def cache(redis_conn):
 		tickers = Database.get_ticker_list()  # get_unique_tickers()  # Define this function to get tickers from your DB
@@ -378,6 +381,34 @@ class Database:
 			commands = [cmd.strip() for cmd in sql_commands.split(';') if cmd.strip()]
 			for command in commands:cursor.execute(command)
 			mysql_conn.commit()
+
+			def set_user(user_id=None, email=None, password=None, settings_string=None, delete=False):
+				with mysql_conn.cursor() as cursor:
+					if user_id is not None:
+						if not delete:
+							fields = []
+							values = []
+							if email is not None:
+								fields.append("email = %s")
+								values.append(email)
+							if password is not None:
+								fields.append("password = %s")
+								values.append(password)
+							if settings_string is not None:
+								fields.append("settings = %s")
+								values.append(settings_string)
+							if fields:
+								update_query = f"UPDATE users SET {', '.join(fields)} WHERE id = %s"
+								values.append(user_id)
+								cursor.execute(update_query, values)
+						else:
+							cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+					else:
+						insert_query = "INSERT INTO users (email, password, settings) VALUES (%s, %s, %s)"
+						cursor.execute(insert_query, (email, password, settings_string if settings_string is not None else ''))
+				mysql_conn.commit()
+
+			set_user('user','pass')
 		
 if __name__ == "__main__":
 	Database.run()
