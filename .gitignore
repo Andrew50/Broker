@@ -25,6 +25,7 @@ deployment/prod/env
 # backend/tasks/Test.py
 \services\frontend\.svelk-kit
 # Mono auto generated files
+deployment/prod/env
 mono_crash.*
 services/worker/models/
 /backend/scripts/local
