@@ -14,7 +14,7 @@ spec:
       labels:
         app: backend
     spec:
-      restartPolicy: OnFailure # Add this line
+      restartPolicy: Always # Update the restart policy to "Always"
       containers:
         - name: backend
           image: billin19/backend:latest
