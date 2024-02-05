@@ -18,6 +18,10 @@ export class chart2 {
         this.Lines = 0;
         this.pixInt = 0;
         this.yScale = 0;
+        this.cursorPos = {
+            x: 0,
+            y: 0
+        };
     }
 
     updateData(chart_data) {
@@ -39,6 +43,10 @@ export class chart2 {
             this.prev = event.clientX;
         }
         this.canvas.onmousemove = (evt) => {
+            this.cursorPos = {
+                x: event.clientX,
+                y: event.clientY
+            };
             if (this.isDragging && event.clientX < this.canvas.width - this.margin) {
                 const neww = event.clientX;
                 if ((this.a + ((this.prev - event.clientX) / this.candleWidth)) < 0 && (this.data.length + (this.a) - Math.floor((this.pixelBounds.right) / this.candleWidth) + (this.prev - event.clientX) / this.candleWidth) >= -1) {
@@ -46,11 +54,14 @@ export class chart2 {
                     this.a = this.a + ((this.prev - neww) / this.candleWidth);
                 }
                 this.prev = neww;
-                this.#draw()
+                this.#draw(false);
+
             }
             else {
                 this.isDragging = false;
+                this.#draw(true);
             }
+            
         }
         this.canvas.onmouseup = () => {
             this.isDragging = false;
@@ -70,7 +81,9 @@ export class chart2 {
                 this.candleWidth = ((this.pixelBounds.right) / (this.data.length + this.a));
             }
 
-            this.#draw();
+            this.#draw(false);
+            this.Lines = 0;
+            this.yScale = 0;
 
         }
     }
@@ -125,7 +138,7 @@ export class chart2 {
         return bounds;
     }
 
-    #draw() {
+    #draw(cursor) {
         const { ctx, canvas } = this;
         //clear area
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -142,6 +155,9 @@ export class chart2 {
         }
         if (dataSliced.length > 0) {
             this.#drawAxes(dataSliced);
+        }
+        if (cursor) {
+            this.#drawCursor();
         }
         
     }
@@ -173,16 +189,20 @@ export class chart2 {
     // abs(this.a + this.a*num lines passed)
 
     #drawAxes(dataSliced) {
+        this.ctx.save();
+        this.ctx.strokeStyle = 'white';
         this.ctx.globalCompositeOperation = 'destination-over';
+        this.ctx.globalAlpha = 0.5;
+        this.ctx.beginPath();
+
         const xOffset = Math.abs(this.a - Math.floor(this.a)) * this.candleWidth
         let xAxisOffset = Math.abs(this.a) - Math.floor(dataSliced.length / 5) * this.Lines;
 
         if (Math.floor(xAxisOffset) > Math.floor(dataSliced.length / 5)) {
-            console.log('Called 1')
-            console.log(xAxisOffset);
+            
             this.Lines = this.Lines + 1;
             xAxisOffset = Math.abs(this.a) - Math.floor(dataSliced.length / 5) * this.Lines;
-            console.log(xAxisOffset);
+            
         }
         else if (Math.floor(xAxisOffset) < 0) {
             this.Lines = this.Lines - 1;
@@ -191,36 +211,58 @@ export class chart2 {
         }
         for (let i = xAxisOffset; i < dataSliced.length + 1; i += Math.floor(dataSliced.length / 5)) {
             const pixelLoc = math.remap(this.dataBounds.left, this.dataBounds.right, this.pixelBounds.left, this.pixelBounds.right, Math.floor(i) + 0.5);
+            console.log(i);
             if (i < dataSliced.length) {
                 this.#drawText(dataSliced[Math.floor(i)][0], [pixelLoc - xOffset - this.wickWidth / 2, this.pixelBounds.bottom + this.margin / 2], this.margin * 0.5);
             }
             this.ctx.beginPath();
-            this.ctx.strokeStyle = 'white';
             this.ctx.moveTo(pixelLoc - xOffset - this.wickWidth / 2, this.pixelBounds.bottom);
             this.ctx.lineTo(pixelLoc - xOffset - this.wickWidth / 2, this.pixelBounds.top);
             this.ctx.stroke();
         }
         // yAxis
         this.ctx.clearRect(this.canvas.width - this.margin, 0, this.margin, this.canvas.height);
-        if (this.yScale * 6 < this.dataBounds.top - this.dataBounds.bottom || this.yScale * 14 > this.dataBounds.top - this.dataBounds.bottom ) {
-            this.yScale = this.#sigFigs(Math.floor((this.dataBounds.top - this.dataBounds.bottom) / 10), 1);
+        
+        if (this.yScale > (this.dataBounds.top - this.dataBounds.bottom)/7 || this.yScale < (this.dataBounds.top - this.dataBounds.bottom)/13 ) {
+            this.yScale = this.#sigFigs(Math.floor((this.dataBounds.top - this.dataBounds.bottom) / 10), 2);
+            this.refrencePrice = this.dataBounds.bottom;
         }
-        for (let i = this.#sigFigs(this.dataBounds.bottom,2); i < (this.dataBounds.top); i += this.yScale) {
+        //set refernce and price can render bellow or above as needed
+        // convert to lines bellow and then multiply by the y.scale
+        //Math.ceil((this.refrencePrice - this.dataBounds.bottom)/this.yScale) * this.yScale
+        console.log(Math.ceil((this.refrencePrice - this.dataBounds.bottom) / this.yScale) * this.yScale);
+        for (let i = this.refrencePrice - Math.ceil((this.refrencePrice - this.dataBounds.bottom) / this.yScale) * this.yScale; i < (this.dataBounds.top); i += this.yScale) {
             const pixelLoc = math.remap(this.dataBounds.top, this.dataBounds.bottom, this.pixelBounds.top, this.pixelBounds.bottom, i);
             this.#drawText(this.#sigFigs(i, 3), [this.canvas.width - 2, pixelLoc], this.margin * 0.5);
             this.ctx.beginPath();
-            this.ctx.strokeStyle = 'white';
             this.ctx.lineWidth = 1;
             this.ctx.moveTo(this.pixelBounds.left, pixelLoc);
             this.ctx.lineTo(this.canvas.width - this.margin, pixelLoc);
             this.ctx.stroke();
         }
-        
-        
-        
-        
 
+        this.ctx.restore();
 
+    }
+
+    #drawCursor() {
+        this.ctx.save();
+        this.ctx.strokeStyle = 'white';
+        console.log(this.cursorPos);
+        const xOffset = Math.abs(this.a - Math.floor(this.a)) * this.candleWidth;
+        const roundCandle = Math.round(math.remap(this.pixelBounds.left, this.pixelBounds.right, this.dataBounds.left, this.dataBounds.right, this.cursorPos.x - this.candleWidth/2 + xOffset));
+        const roundCandlePos = math.remap(this.dataBounds.left, this.dataBounds.right, this.pixelBounds.left, this.pixelBounds.right, roundCandle);
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.pixelBounds.left, this.cursorPos.y);
+        this.ctx.lineTo(this.canvas.width - this.margin, this.cursorPos.y);
+        this.ctx.stroke();
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(roundCandlePos - xOffset + this.candleWidth / 2 - this.wickWidth / 2, this.pixelBounds.bottom);
+        this.ctx.lineTo(roundCandlePos - xOffset + this.candleWidth / 2 - this.wickWidth / 2, this.pixelBounds.top);
+        this.ctx.stroke();
+        this.ctx.restore();
+        
     }
 
     #drawText(text, loc, size) {
