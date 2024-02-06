@@ -252,17 +252,20 @@ export class chart2 {
         const xOffset = Math.abs(this.a - Math.floor(this.a)) * this.candleWidth;
         const roundCandle = Math.round(math.remap(this.pixelBounds.left, this.pixelBounds.right, this.dataBounds.left, this.dataBounds.right, this.cursorPos.x - this.candleWidth/2 + xOffset));
         const roundCandlePos = math.remap(this.dataBounds.left, this.dataBounds.right, this.pixelBounds.left, this.pixelBounds.right, roundCandle);
+        const price = math.remap(this.pixelBounds.top, this.pixelBounds.bottom, this.dataBounds.top, this.dataBounds.bottom, this.cursorPos.y);
         this.ctx.beginPath();
         this.ctx.moveTo(this.pixelBounds.left, this.cursorPos.y);
         this.ctx.lineTo(this.canvas.width - this.margin, this.cursorPos.y);
         this.ctx.stroke();
 
         this.ctx.beginPath();
-        this.ctx.moveTo(roundCandlePos - xOffset + this.candleWidth / 2 - this.wickWidth / 2, this.pixelBounds.bottom);
-        this.ctx.lineTo(roundCandlePos - xOffset + this.candleWidth / 2 - this.wickWidth / 2, this.pixelBounds.top);
+        this.ctx.moveTo(roundCandlePos - xOffset + this.candleWidth / 2 , this.pixelBounds.bottom);
+        this.ctx.lineTo(roundCandlePos - xOffset + this.candleWidth / 2 , this.pixelBounds.top);
         this.ctx.stroke();
         this.ctx.restore();
-        
+
+        this.ctx.clearRect(this.canvas.width - this.margin, this.cursorPos.y - 6, this.margin, 12);
+        this.#drawText(this.#sigFigs(price, 3), [this.canvas.width - 2, this.cursorPos.y], this.margin * 0.5);
     }
 
     #drawText(text, loc, size) {
