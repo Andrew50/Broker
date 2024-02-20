@@ -103,12 +103,12 @@ def train(mt,tx,ty,vx,vy,parameters):
     tuner = kt.BayesianOptimization(
             create_model,
             objective=kt.Objective('val_auc_pr',direction='max'),
-            max_trials=500,
-            num_initial_points = 10,
+            max_trials=300,
+            num_initial_points = 20,
             directory='.',
-            project_name='bayesian_olympics-'+('-').join([str(x) for x in parameters])
+            project_name='tuner/bayesian_olympics2-'+('-').join([str(x) for x in parameters])
             )
-    tuner.search(tx,ty,epochs=20,validation_data=(vx,vy))
+    tuner.search(tx,ty,epochs=50,validation_data=(vx,vy))
     backend.clear_session()
     return tuner
 

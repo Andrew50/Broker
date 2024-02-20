@@ -8,7 +8,7 @@ import datetime
 import mysql.connector
 from tensorflow.keras.callbacks import EarlyStopping
 import mysql.connector
-import numpy as np
+import pandas as pd
 import tensorflow as tf
 import vmdpy
 import scipy
@@ -28,9 +28,11 @@ lengths = 3, 10, 25, 50, 80, 120
 model_types = 'lstm', 'bilstm', 'gru' #,'gcn', 'dkf', 'transformer'
 
 def process(bar):
+    parameters = None
     try:
         raw_data, parameters = bar
         st, sr, fm, pm, l, mt = parameters
+        print(f"Processing {' '.join([str(x) for x in parameters])}------------------------------------------------------------------")
         raw_x, y = raw_data[st]
         tx, ty, vx, vy = sample(sr,raw_x,y)
         tx, vx = features(fm,tx), features(fm,vx)
@@ -41,8 +43,14 @@ def process(bar):
         #save(tuner)
     except Exception as e:
 
-        exception = traceback.format_exc()
-        print(f'Error processing {parameters} {e} {exception}')
+        #exception = traceback.format_exc()
+        #print(f'Error processing {parameters} {e} {exception}')
+        error_message = f"Error processing {parameters}: {str(e)}"
+        # Optionally, include traceback information
+        error_message += "\n" + traceback.format_exc()
+        log_file_name = f"error_log_{os.getpid()}.txt"
+        with open(log_file_name, "a") as file:
+            file.write(error_message + "\n\n")
 
 def get_user(email, password):
     if os.environ.get('INSIDE_CONTAINER', False): #inside container
@@ -116,8 +124,8 @@ def preprocess(pm,features):
         elif pm == 'savitzky-golay':
             return savgol_filter(features,window_length = 10, polyorder = 2, axis = 0)
         elif pm == 'min_max':
-            min = features.min(axis=1)
-            max = features.max(axis=1)
+            min = features.min(axis=1).reshape(-1,1)
+            max = features.max(axis=1).reshape(-1,1)
             return (features - min) / (max - min)
         elif pm == 'CEEMDAN':
             ceemdan = CEEMDAN()
@@ -161,8 +169,75 @@ def length(l,preprocess):
     return np.array(returns)
 
 
-def log(info,training_data):
-    pass
+def log(parameters_values,tuner):
+    parameter_columns = ['setup type','training ratio','features','preprocessing','length','model type']
+#     best_hps = tuner.get_best_hyperparameters(num_trials=20)
+#     records = []
+#     for hps in best_hps:
+#         trial = tuner.oracle.get_trial(hps.trial_id)
+#         auc_val_pr = trial.score
+    top_trials = tuner.oracle.get_best_trials(num_trials=20)
+    
+    records = []
+    for trial in top_trials:
+        # Access the trial's hyperparameters and score
+        hps = trial.hyperparameters
+        auc_val_pr = trial.score
+        record = {'val_auc_pr': auc_val_pr}
+        record.update(dict(zip(parameter_columns, parameters_values)))
+        for k in hps.values:
+            record[k] = hps.get(k)
+        records.append(record)
+    df = pd.DataFrame(records)
+    all_columns_ordered = ['val_auc_pr'] + parameter_columns + [col for col in df.columns if col not in parameter_columns]
+    csv_file_path = f'tuner_results/{os.getpid()}.csv'
+    
+    # Check if the CSV file exists and read it if it does
+    if os.path.exists(csv_file_path) and os.path.getsize(csv_file_path) > 0:
+        existing_df = pd.read_csv(csv_file_path)
+        # Get a union of all columns from both existing and new data, maintaining the order of parameter columns
+        combined_columns_ordered = parameter_columns + list(set(existing_df.columns.union(df.columns)) - set(parameter_columns))
+        combined_df = pd.concat([existing_df, df], ignore_index=True)
+        combined_df = combined_df.reindex(columns=combined_columns_ordered)
+    else:
+        combined_df = df.reindex(columns=all_columns_ordered)
+    
+    # Write the combined DataFrame to the CSV, ensuring the fixed parameter columns are always on the left
+    combined_df.to_csv(csv_file_path, index=False)
+
+
+
+#     if os.path.exists(csv_file_path) and os.path.getsize(csv_file_path) > 0:
+#         existing_df = pd.read_csv(csv_file_path)
+#         combined_df = pd.concat([existing_df, df], ignore_index=True).reindex(columns=(existing_df.columns.union(df.columns)))
+#     else:
+#         combined_df = df
+#     combined_df.to_csv(csv_file_path, index=False)
+
+#     if os.path.exists(csv_file_path):
+#         existing_df = pd.read_csv(csv_file_path)
+#         combined_columns = sorted(set(existing_df.columns) | set(df.columns))
+#         existing_df = existing_df.reindex(columns=combined_columns)
+#         df = df.reindex(columns=combined_columns)
+#         df.to_csv(csv_file_path, mode='a', header=False, index=False)
+#     else:
+#         df.to_csv(csv_file_path, mode='w', header=True, index=False)
+# 
+# 
+# 
+# 
+# 
+#     best_hps = tuner.get_best_hyperparameters(num_trials=20)
+#     records = []
+#     for hps in best_hps:
+#         record = {}
+#         for p in parameters:
+#             record[p] = p
+#         for k in hps.values:
+#             record[k] = hps.get(k)
+#         records.append(record)
+#     df = pd.DataFrame(records, columns=['setup type','training ratio','features','preprocessing','length','model type'] + records[0].keys())
+#     df.to_csv(f'tuning_results{os.getpid()}.csv', mode='a', header=False, index=False)
 
 def save(tuner,parameters):
     best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
@@ -196,7 +271,10 @@ if __name__ == '__main__':
     import multiprocessing
     data = Data()
     start = datetime.datetime.now()
-
+    if not os.path.exists('tuner_results'):
+        os.makedirs('tuner_results')
+    if not os.path.exists('tuner'):
+        os.makedirs('tuner')
     raw_data = {}
     for st in setup_types:
         print(f'Loading raw data for {st}')
@@ -215,7 +293,8 @@ if __name__ == '__main__':
     print(f'raw data loaded in {datetime.datetime.now() - start}')
     #args = get_args(raw_data)
     #total = len(list(args))
-    cores = 1
+    cores = multiprocessing.cpu_count()
+    print(f'Using {cores} cores')
     with  multiprocessing.Pool(cores) as pool:
         #    list(tqdm.tqdm(pool.imap_unordered(process, args), total=total))
         pool.imap_unordered(process, get_args(raw_data))
