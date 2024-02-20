@@ -29,24 +29,33 @@ class Database:
             redis_conn = redis.Redis(host='redis', port=6379)
             mysql_conn = mysql.connector.connect(host='mysql', port='3306', user='root', password='7+WCy76_2$%g')
             with mysql_conn.cursor() as cursor:
-                try:
+                cursor.execute("SHOW DATABASES")
+                print("List of databases:")
+                for (database,) in cursor:
+                    print(database)
+                cursor.execute(f"SHOW DATABASES LIKE 'broker'")
+                database = cursor.fetchone()
+                if not database:
+                #try:
+                #except mysql.connector.Error as err:
+                    #if err.errno == errorcode.ER_BAD_DB_ERROR:
+                    print('creating database', flush=True)
+                    Database.setup(mysql_conn)
+                    print('updating limited', flush=True)
+                    Database.update(mysql_conn,10)
+                    print('caching limited', flush=True)
+                    Database.cache(redis_conn)
+                    #$else:
+                    #    raise
+                else:
+                    print('worked---')
                     cursor.execute("USE broker")
-                except mysql.connector.Error as err:
-                    if err.errno == errorcode.ER_BAD_DB_ERROR:
-                        print('creating database', flush=True)
-                        Database.setup(mysql_conn)
-                        print('updating limited', flush=True)
-                        Database.update(mysql_conn,10)
-                        print('caching limited', flush=True)
-                        Database.cache(redis_conn)
-                    else:
-                        raise
-                finally:
-                    if not os.getenv('DEV_ENV') == 'true' or not (last_update := pickle.loads(redis_conn.get("last_update"))) or datetime.datetime.now() - last_update > datetime.timedelta(days=1):
-                        print('updating', flush=True)
-                        Database.update(mysql_conn)
-                        print('caching', flush=True)
-                        Database.cache(redis_conn)
+                #finally:
+                if not os.getenv('DEV_ENV') == 'true' or not (last_update := pickle.loads(redis_conn.get("last_update"))) or datetime.datetime.now() - last_update > datetime.timedelta(days=1):
+                    print('updating', flush=True)
+                    Database.update(mysql_conn)
+                    print('caching', flush=True)
+                    Database.cache(redis_conn)
 
     def is_market_open():
         if (datetime.datetime.now().weekday() >= 5):
@@ -117,8 +126,8 @@ class Database:
                                 # 	#close_prices = data[:, 4]
                                 # 	#return pickle.dumps(np.column_stack((data[1:, 0], close_prices[1:], (data[1:, 1] / close_prices[:-1] - 1), (data[1:, 2]/close_prices[:-1] -1), (data[1:,3]/close_prices[:-1] - 1), (close_prices[1:] / close_prices[:-1]) - 1, data[1:, 5])))
 
-                            elif form == 'chart':
-                                list_of_lists = data.tolist()[:]
+                                elif form == 'chart':
+                                    list_of_lists = data.tolist()[:]
                                     if 'd' in tf or 'w' in tf:
                                         list_of_lists = [{
                                             'time': pd.to_datetime(row[0], unit='s').strftime('%Y-%m-%d'),
@@ -398,7 +407,7 @@ class Database:
                     cursor.executemany("INSERT INTO setup_data VALUES (%s, %s, %s,%s)", query)
                 mysql_conn.commit()
 
-            set_user('user','pass')
+            set_user(email='user',password='pass')
             user_id = get_user('user','pass')
             path = 'instances/'
             dirs = os.listdir(path)
@@ -410,6 +419,7 @@ class Database:
                 df = df.values.tolist()
                 set_setup(user_id,st,tf='1d',setup_length = 50)
                 set_setup_sample(user_id,st,df)
+            print('setting isntances')
 
 if __name__ == "__main__":
     Database.run()

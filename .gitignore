@@ -17,6 +17,7 @@ services/frontend/.svelte-kit
 services/worker/models
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
+venv
 backend/1d
 deployment/prod/env
 .gitattributes
