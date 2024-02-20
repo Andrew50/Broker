@@ -19,6 +19,7 @@ services/worker/tuner
 services/worker/tuner_results
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
+venv
 backend/1d
 deployment/prod/env
 .gitattributes
