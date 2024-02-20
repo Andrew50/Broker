@@ -35,7 +35,6 @@ from Screener import Screener
 class Trainer:
 
 
-
 	def get_sample(data,st, user_id):
 		training_ratio, validation_ratio, oversample = .25, .05, 1.5
 		
@@ -92,7 +91,7 @@ class Trainer:
 
 		# for i in range(len(ds)):
 		# 	if y[i] == 1:
-		# 		print(ds[i,:,:])
+	# 		print(ds[i,:,:])
 			
 		# 		input()
 		model.add(Conv1D(filters=conv_filter, kernel_size=kernal_size, activation='relu', input_shape=(num_time_steps, input_dim)))
