@@ -1,4 +1,5 @@
 <script>
+    import Header from '../header.svelte';
   import { goto } from '$app/navigation';
   import { writable } from 'svelte/store';
   import {auth_data,setups_list,settings,public_request,watchlist_data} from '../store.js'
@@ -52,6 +53,7 @@
 }
 </script>
 
+<Header />
 <!-- <main>
   <div class="container">
     <h1>Sign In</h1>
@@ -64,11 +66,10 @@
 </main> -->
 <main>
   <div class="container">
-    <h1>Sign In</h1>
     <input type="text" placeholder="Username" bind:value={username} on:keydown={handleKeydown} />
     <input type="password" placeholder="Password" bind:value={password} on:keydown={handleKeydown} />
     <button on:click={() => signIn(username, password)}>Sign In</button>
-    <button on:click={() => signUp(username, password)} class="create-account-btn">Create Account</button>
+<!--    <button on:click={() => signUp(username, password)} class="create-account-btn">Create Account</button>-->
     <p class="error-message">{$errorMessage}</p>
   </div>
 </main>
