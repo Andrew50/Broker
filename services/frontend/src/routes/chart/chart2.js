@@ -270,7 +270,6 @@ export class chart2 {
 
     #drawText(text, loc, size) {
         const ctx = this.ctx
-
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
         ctx.font = "bold " + size + "px Courier";
