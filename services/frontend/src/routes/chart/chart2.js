@@ -4,8 +4,9 @@ export class chart2 {
         this.candleWidth = options.candleWidth;
         this.canvas = document.createElement('canvas')
         this.canvas.width = window.innerWidth - options.widthOffset;
-        this.canvas.height = window.innerHeight - options.heightOffset;
+        this.canvas.height = window.innerHeight;
         this.canvas.style = 'background-color:black;';
+        this.canvas.requestFullscreen();
         container.appendChild(this.canvas);
         this.ctx = this.canvas.getContext("2d");
         this.margin = options.margin;

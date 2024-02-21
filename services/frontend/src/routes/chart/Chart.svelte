@@ -120,6 +120,8 @@
 		TickerBox.focus();
 	}
 </script>
+<div>test</div>
+<div bind:this={chartContainer} id="chartContainer"></div>
 
 {#if errorMessage}
     <div class="error-message">
@@ -130,7 +132,6 @@
 
 <svelte:window on:keydown={onKeydown} bind:innerWidth bind:innerHeight />
 
-<div bind:this={chartContainer} id="chartContainer"></div>
 
 <input
 	class="input-overlay"

@@ -60,7 +60,7 @@
     </button>
     
 </div>
-
+<Chart/>
 <Watchlist visible = {active_menu == 'watchlist'}/>
 <Match visible = {active_menu == 'match'}/>
 <Screener visible = {active_menu == 'screener'}/>
@@ -68,6 +68,6 @@
 <Study visible = {active_menu == 'study'}/>
 <Account visible = {active_menu == 'account'}/>
 <Settings visible = {active_menu == 'settings'}/>
-<Chart/>
+
 
 
