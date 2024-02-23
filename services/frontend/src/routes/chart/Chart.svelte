@@ -8,7 +8,7 @@
 // hi
 	let innerWidth;
 	let innerHeight;
-	let ticker = "AAPL";
+let ticker = "AAPL";
 	let tf = "1d";
 	let dt;
 
@@ -20,8 +20,9 @@
 	let errorMessage = "";
 	let chartContainer;
 	const options = {
-		widthOffset: 500,
-		heightOffset: 20,
+		//widthOffset: 400,
+        widthOffset: typeof window != 'undefined' ? window.innerWidth * 0.25 : 0,
+		heightOffset: 0,
 		margin: 30,
 		candleWidth: 10,
 	};
