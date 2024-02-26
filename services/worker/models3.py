@@ -20,12 +20,13 @@ import random
 
 #setup_types = 'd_EP', 'd_NEP', 'd_P', 'd_NP', 'd_F', 'd_NF', 'd_MR'
 setup_types = 'd_P',
-sampling_ratios = 0.05, .1, .2, .3, .4
-feature_methods = 'close', 'ohlc', 'ohlcv', 'rsi_c', 'rsi_ohlc'
+sampling_ratios = .1,#0.05, .1, .2, .3, .4
+feature_methods = 'ohlc',#'close', 'ohlc', 'ohlcv', 'rsi_c', 'rsi_ohlc'
+
 preprocessing_methods = 'rolling_change', 'none', 'savitzky-golay', 'min_max','st_rolling_change', 'log_dif' #,'CEEMDAN', 'VMD', 
 
 lengths = 3, 10, 25, 50, 80, 120
-model_types = 'lstm', 'bilstm', 'gru' #,'gcn', 'dkf', 'transformer'
+model_types = 'bilstm',#'lstm', 'bilstm', 'gru' #,'gcn', 'dkf', 'transformer'
 
 def process(bar):
     parameters = None
@@ -47,6 +48,7 @@ def process(bar):
         #print(f'Error processing {parameters} {e} {exception}')
         error_message = f"Error processing {parameters}: {str(e)}"
         # Optionally, include traceback information
+        print(error_message)
         error_message += "\n" + traceback.format_exc()
         log_file_name = f"error_log_{os.getpid()}.txt"
         with open(log_file_name, "a") as file:
@@ -205,40 +207,6 @@ def log(parameters_values,tuner):
     # Write the combined DataFrame to the CSV, ensuring the fixed parameter columns are always on the left
     combined_df.to_csv(csv_file_path, index=False)
 
-
-
-#     if os.path.exists(csv_file_path) and os.path.getsize(csv_file_path) > 0:
-#         existing_df = pd.read_csv(csv_file_path)
-#         combined_df = pd.concat([existing_df, df], ignore_index=True).reindex(columns=(existing_df.columns.union(df.columns)))
-#     else:
-#         combined_df = df
-#     combined_df.to_csv(csv_file_path, index=False)
-
-#     if os.path.exists(csv_file_path):
-#         existing_df = pd.read_csv(csv_file_path)
-#         combined_columns = sorted(set(existing_df.columns) | set(df.columns))
-#         existing_df = existing_df.reindex(columns=combined_columns)
-#         df = df.reindex(columns=combined_columns)
-#         df.to_csv(csv_file_path, mode='a', header=False, index=False)
-#     else:
-#         df.to_csv(csv_file_path, mode='w', header=True, index=False)
-# 
-# 
-# 
-# 
-# 
-#     best_hps = tuner.get_best_hyperparameters(num_trials=20)
-#     records = []
-#     for hps in best_hps:
-#         record = {}
-#         for p in parameters:
-#             record[p] = p
-#         for k in hps.values:
-#             record[k] = hps.get(k)
-#         records.append(record)
-#     df = pd.DataFrame(records, columns=['setup type','training ratio','features','preprocessing','length','model type'] + records[0].keys())
-#     df.to_csv(f'tuning_results{os.getpid()}.csv', mode='a', header=False, index=False)
-
 def save(tuner,parameters):
     best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
     model = tuner.hypermodel.build(best_hps)
@@ -258,12 +226,15 @@ def save(tuner,parameters):
     mode.save(parameters.join('-'), save_format = 'tf')
 
 def get_args(raw_data): 
+    i = 0
     for st in setup_types:
         for sm in sampling_ratios:
             for fm in feature_methods:
                 for pm in preprocessing_methods:
                     for l in lengths:
                         for mt in model_types:
+                            i += 1
+                            print(f'{datetime.datetime.now()} - {i} out of {total_length} = {i/total_length * 100}')
                             yield [raw_data,[st,sm,fm,pm,l,mt]]
 
 if __name__ == '__main__':
@@ -280,8 +251,8 @@ if __name__ == '__main__':
         print(f'Loading raw data for {st}')
         raw_data[st] = [[],[]]
         values,tf,setup_length  = data.get_setup_sample(1,st)
-        yes = [x for x in values if x[2] == 1][:20]
-        values = yes + [x for x in values if x[2] == 0][:int((len(yes) / min(sampling_ratios))*1.02)]
+        yes = [x for x in values if x[2] == 1]
+        values = yes + [x for x in values if x[2] == 0][:int(len(yes)) * 50]#[:int((len(yes) / min(sampling_ratios))*1.02)]
         for ticker, dt, classification in tqdm.tqdm(values):
             try:
                 raw_data[st][0].append(data.get_df('raw',ticker,tf,dt,bars=max(lengths)) )
@@ -291,12 +262,14 @@ if __name__ == '__main__':
 #         raw_data[st] = [[data.get_df('raw',ticker,tf,dt), classification] for ticker, dt, classification in values]
 #                         #dt, open, high, low, close, volume
     print(f'raw data loaded in {datetime.datetime.now() - start}')
-    #args = get_args(raw_data)
-    #total = len(list(args))
-    cores = multiprocessing.cpu_count()
+    total_length = 1
+    for lis in [setup_types,sampling_ratios,feature_methods,preprocessing_methods,lengths,model_types]:
+        total_length *= len(lis)
+    cores = int(multiprocessing.cpu_count()*.7)
     print(f'Using {cores} cores')
     with  multiprocessing.Pool(cores) as pool:
+       # args = tqdm.tqdm(get_args(raw_data),total = total_length)
         #    list(tqdm.tqdm(pool.imap_unordered(process, args), total=total))
         pool.imap_unordered(process, get_args(raw_data))
         pool.close()
-        pool.join()
+
