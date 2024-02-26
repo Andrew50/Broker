@@ -5,6 +5,7 @@ export class chart2 {
         this.canvas = document.createElement('canvas')
         this.canvas.width = window.innerWidth - options.widthOffset;
         this.canvas.height = window.innerHeight - options.heightOffset;
+        this.canvas.left = 100 + 'px';
         this.canvas.style = 'background-color:black;';
         container.appendChild(this.canvas);
         this.ctx = this.canvas.getContext("2d");
