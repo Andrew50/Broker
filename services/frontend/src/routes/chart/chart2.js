@@ -30,7 +30,6 @@ export class chart2 {
     }
     updateInnerWidth(innerWidth) {
         this.canvas.width = innerWidth - options.widthOffset;
-        console.log(innerWidth);
         this.#draw();
     }
     updateInnerHeight(innerHeight) {
@@ -83,8 +82,8 @@ export class chart2 {
             }
 
             this.#draw(false);
-            this.Lines = 0;
-            this.yScale = 0;
+            //this.Lines = 0;
+            //this.yScale = 0;
 
         }
     }
@@ -108,7 +107,9 @@ export class chart2 {
         const bounds = {
             right: canvas.width - margin + this.candleWidth,
             left: 0,
-            top: 20,
+            top:0,
+            topC: canvas.height * .05,
+            bottomC: canvas.height * .7,
             bottom: canvas.height - margin,
 
         }
@@ -167,10 +168,10 @@ export class chart2 {
         const { ctx, data, dataBounds, pixelBounds } = this;
         const pixelLoc = [
             math.remap(dataBounds.left, dataBounds.right, pixelBounds.left, pixelBounds.right, i),
-            math.remap(dataBounds.top, dataBounds.bottom, pixelBounds.top, pixelBounds.bottom, candleStick[1]),
-            math.remap(dataBounds.top, dataBounds.bottom, pixelBounds.top, pixelBounds.bottom, candleStick[2]),
-            math.remap(dataBounds.top, dataBounds.bottom, pixelBounds.top, pixelBounds.bottom, candleStick[3]),
-            math.remap(dataBounds.top, dataBounds.bottom, pixelBounds.top, pixelBounds.bottom, candleStick[4])
+            math.remap(dataBounds.top, dataBounds.bottom, pixelBounds.topC, pixelBounds.bottomC, candleStick[1]),
+            math.remap(dataBounds.top, dataBounds.bottom, pixelBounds.topC, pixelBounds.bottomC, candleStick[2]),
+            math.remap(dataBounds.top, dataBounds.bottom, pixelBounds.topC, pixelBounds.bottomC, candleStick[3]),
+            math.remap(dataBounds.top, dataBounds.bottom, pixelBounds.topC, pixelBounds.bottomC, candleStick[4])
         ];
         if (pixelLoc[1] < pixelLoc[4]) {
             ctx.fillStyle = 'red';
@@ -212,7 +213,6 @@ export class chart2 {
         }
         for (let i = xAxisOffset; i < dataSliced.length + 1; i += Math.floor(dataSliced.length / 5)) {
             const pixelLoc = math.remap(this.dataBounds.left, this.dataBounds.right, this.pixelBounds.left, this.pixelBounds.right, Math.floor(i) + 0.5);
-            console.log(i);
             if (i < dataSliced.length) {
                 this.#drawText(dataSliced[Math.floor(i)][0], [pixelLoc - xOffset - this.wickWidth / 2, this.pixelBounds.bottom + this.margin / 2], this.margin * 0.5);
             }
@@ -220,20 +220,19 @@ export class chart2 {
             this.ctx.moveTo(pixelLoc - xOffset - this.wickWidth / 2, this.pixelBounds.bottom);
             this.ctx.lineTo(pixelLoc - xOffset - this.wickWidth / 2, this.pixelBounds.top);
             this.ctx.stroke();
+
         }
         // yAxis
         this.ctx.clearRect(this.canvas.width - this.margin, 0, this.margin, this.canvas.height);
-        
         if (this.yScale > (this.dataBounds.top - this.dataBounds.bottom)/7 || this.yScale < (this.dataBounds.top - this.dataBounds.bottom)/13 ) {
-            this.yScale = this.#sigFigs(Math.floor((this.dataBounds.top - this.dataBounds.bottom) / 10), 2);
+            this.yScale = this.#sigFigs(Math.ceil((this.dataBounds.top - this.dataBounds.bottom) / 10), 2);
             this.refrencePrice = this.dataBounds.bottom;
         }
         //set refernce and price can render bellow or above as needed
         // convert to lines bellow and then multiply by the y.scale
         //Math.ceil((this.refrencePrice - this.dataBounds.bottom)/this.yScale) * this.yScale
-        console.log(Math.ceil((this.refrencePrice - this.dataBounds.bottom) / this.yScale) * this.yScale);
-        for (let i = this.refrencePrice - Math.ceil((this.refrencePrice - this.dataBounds.bottom) / this.yScale) * this.yScale; i < (this.dataBounds.top); i += this.yScale) {
-            const pixelLoc = math.remap(this.dataBounds.top, this.dataBounds.bottom, this.pixelBounds.top, this.pixelBounds.bottom, i);
+        for (let i = this.refrencePrice - Math.floor((this.refrencePrice - this.dataBounds.bottom) / this.yScale) * this.yScale; i < (this.dataBounds.top * (this.pixelBounds.top - this.pixelBounds.bottomC) / (this.pixelBounds.topC - this.pixelBounds.bottomC)); i += this.yScale) {
+            const pixelLoc = math.remap(this.dataBounds.top, this.dataBounds.bottom, this.pixelBounds.topC, this.pixelBounds.bottomC, i);
             this.#drawText(this.#sigFigs(i, 3), [this.canvas.width - 2, pixelLoc], this.margin * 0.5);
             this.ctx.beginPath();
             this.ctx.lineWidth = 1;
@@ -249,11 +248,10 @@ export class chart2 {
     #drawCursor() {
         this.ctx.save();
         this.ctx.strokeStyle = 'white';
-        console.log(this.cursorPos);
         const xOffset = Math.abs(this.a - Math.floor(this.a)) * this.candleWidth;
         const roundCandle = Math.round(math.remap(this.pixelBounds.left, this.pixelBounds.right, this.dataBounds.left, this.dataBounds.right, this.cursorPos.x - this.candleWidth/2 + xOffset));
         const roundCandlePos = math.remap(this.dataBounds.left, this.dataBounds.right, this.pixelBounds.left, this.pixelBounds.right, roundCandle);
-        const price = math.remap(this.pixelBounds.top, this.pixelBounds.bottom, this.dataBounds.top, this.dataBounds.bottom, this.cursorPos.y);
+        const price = math.remap(this.pixelBounds.topC, this.pixelBounds.bottomC, this.dataBounds.top, this.dataBounds.bottom, this.cursorPos.y);
         this.ctx.beginPath();
         this.ctx.moveTo(this.pixelBounds.left, this.cursorPos.y);
         this.ctx.lineTo(this.canvas.width - this.margin, this.cursorPos.y);
