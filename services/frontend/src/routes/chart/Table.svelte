@@ -96,20 +96,54 @@
 <style>
     .scrollable-table {
         overflow-y: auto;
-        max-height: 400px; /* Adjust this value based on your needs */
+        max-height: 80vh; /* Adjust this value based on your needs */
+        border-collape: collapse;
+        width: 100%;
+        background-color: #f4f4f8;
+
     }
+    table {
+        border-spacing: 0;
+        width: 100%;
+    }
+    th, td {
+        text-align: left;
+        padding: 8px;
+        border-bottom: 1px solid #e0e0e0; /* Soft separator for rows */
+        border-right: 1px solid #e0e0e0; /* Soft separator for columns */
+    }
+    th {
+        background-color: #3a3b3c; /* Dark grey background for headers */
+        color: white;
+    }
+    tbody tr:hover {
+        background-color: #d0d3d4; /* Lighter shade for hover effect */
+    }
+
+    /* Context menu styles */
     .context-menu {
         position: absolute;
-        background-color: white;
+        background-color: #4a4b4c; /* Dark grey background */
         border: 1px solid #ccc;
         padding: 10px;
         z-index: 10;
         display: flex;
         flex-direction: column;
+        border-radius: 5px; /* Rounded corners for the context menu */
     }
-
     .context-menu button {
         margin-top: 5px; /* Spacing between buttons */
-        /* Additional button styles */
+        background-color: #5a5b5c; /* Slightly lighter grey for buttons */
+        color: white;
+        border: none;
+        padding: 8px;
+        border-radius: 3px; /* Rounded corners for buttons */
+        cursor: pointer;
+    }
+    .context-menu button:hover {
+        background-color: #6a6b6c; /* Hover effect for buttons */
+    }
+    .context-menu button:first-child {
+        margin-top: 0;
     }
 </style>

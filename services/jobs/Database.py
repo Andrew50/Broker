@@ -128,22 +128,24 @@ class Database:
 
                                 elif form == 'chart':
                                     list_of_lists = data.tolist()[:]
-                                    if 'd' in tf or 'w' in tf:
-                                        list_of_lists = [{
-                                            'time': pd.to_datetime(row[0], unit='s').strftime('%Y-%m-%d'),
-                                            'open': row[1],
-                                            'high': row[2],
-                                            'low': row[3],
-                                            'close': row[4]
-                                            } for row in list_of_lists]
-                                    else:
-                                        list_of_lists = [{
-                                            'time': pd.to_datetime(row[0], unit='s').strftime('%Y-%m-%d %H:%M:%S'),
-                                            'open': row[1],
-                                            'high': row[2],    
-                                            'low': row[3],
-                                            'close': row[4]
-                                            }for row in list_of_lists]
+                                  #  if 'd' in tf or 'w' in tf:
+                                    list_of_lists = [[pd.to_datetime(row[0], unit ='s').strftime('%Y-%m-%d'), row[1], row[2], row[3], row[4], row[5]] for row in list_of_lists]
+#                                         list_of_lists = [{
+#                                             'time': pd.to_datetime(row[0], unit='s').strftime('%Y-%m-%d'),
+#                                             'open': row[1],
+#                                             'high': row[2],
+#                                             'low': row[3],
+#                                             'close': row[4]
+#                                             } for row in list_of_lists]
+#else:
+                                        #      list_of_lists = [pd.to_datetime(row[0], unit ='s').strftime('%Y-%m-%d %H:%M:%S'), row[1], row[2], row[3], row[4] for row in list_of_lists]
+ #                                        list_of_lists = [{
+ #                                            'time': pd.to_datetime(row[0], unit='s').strftime('%Y-%m-%d %H:%M:%S'),
+ #                                            'open': row[1],
+ #                                            'high': row[2],    
+ #                                            'low': row[3],
+ #                                            'close': row[4]
+ #                                            }for row in list_of_lists]
                                     processed_data = json.dumps(list_of_lists)
                                 redis_conn.hset(tf+form, ticker, processed_data)
                         except Exception as e:

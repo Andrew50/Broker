@@ -205,40 +205,6 @@ def log(parameters_values,tuner):
     # Write the combined DataFrame to the CSV, ensuring the fixed parameter columns are always on the left
     combined_df.to_csv(csv_file_path, index=False)
 
-
-
-#     if os.path.exists(csv_file_path) and os.path.getsize(csv_file_path) > 0:
-#         existing_df = pd.read_csv(csv_file_path)
-#         combined_df = pd.concat([existing_df, df], ignore_index=True).reindex(columns=(existing_df.columns.union(df.columns)))
-#     else:
-#         combined_df = df
-#     combined_df.to_csv(csv_file_path, index=False)
-
-#     if os.path.exists(csv_file_path):
-#         existing_df = pd.read_csv(csv_file_path)
-#         combined_columns = sorted(set(existing_df.columns) | set(df.columns))
-#         existing_df = existing_df.reindex(columns=combined_columns)
-#         df = df.reindex(columns=combined_columns)
-#         df.to_csv(csv_file_path, mode='a', header=False, index=False)
-#     else:
-#         df.to_csv(csv_file_path, mode='w', header=True, index=False)
-# 
-# 
-# 
-# 
-# 
-#     best_hps = tuner.get_best_hyperparameters(num_trials=20)
-#     records = []
-#     for hps in best_hps:
-#         record = {}
-#         for p in parameters:
-#             record[p] = p
-#         for k in hps.values:
-#             record[k] = hps.get(k)
-#         records.append(record)
-#     df = pd.DataFrame(records, columns=['setup type','training ratio','features','preprocessing','length','model type'] + records[0].keys())
-#     df.to_csv(f'tuning_results{os.getpid()}.csv', mode='a', header=False, index=False)
-
 def save(tuner,parameters):
     best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
     model = tuner.hypermodel.build(best_hps)
