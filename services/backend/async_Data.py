@@ -3,8 +3,6 @@ import aiomysql, aioredis, pickle, datetime, pytz, json, uuid
 class Data:
 
 	async def init_async_conn(self):
-		# self.redis_pool = await aioredis.create_redis_pool(
-		# 	f'redis://redis', minsize=1, maxsize=20)
 	
 		self.redis_pool = aioredis.Redis(host='redis', port=6379)
 		self.mysql_pool = await aiomysql.create_pool(

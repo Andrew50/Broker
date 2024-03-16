@@ -27,9 +27,31 @@ class Data:
         # Add the item to the Redis list
         self.redis_conn.lpush(str(user_id)+st, json.dumps(instance))
 
-    def get_df(self, form='chart', ticker='QQQ', tf='1d', dt=None, bars=0, pm=True):
-        #async with self.redis_connedis_pool.get() as conn:
-        if form == 'raw':
+    def get_df(self, form, ticker, tf, dt=None, bars=0, pm=False):
+        def default():
+            return pickle.loads(self.redis_conn.hget(f'{tf}_{form}',ticker))
+
+        def raw():
+            return postgres_shit
+
+        if form == 'screener':
+            assert dt == None and bars == 0 and pm == False
+            current_price = self.redis_conn.hget('current_price',ticker)
+            df, prev_close = default()
+            change = current_price / prev_close - 1
+            return np.vstack([df,[change for _ in range(4)]])
+        elif form == 'trainer':
+            pass
+        elif form == 'study':
+            pass
+        elif form == 'chart':
+            if tf == '1d' and dt == None:
+                return default()
+            else:
+                pass
+
+                
+        elif form == 'raw':
             with self.mysql_conn.cursor(buffered=True) as cursor:
                 cursor.execute("SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s and tf = %s", (ticker,tf))
                 data = np.array(cursor.fetchall())
@@ -40,64 +62,47 @@ class Data:
                     data = data[:index+1]
                 if bars:
                     data = data[-bars:]
-                return data
-        data = self.redis_conn.hget(tf+form,ticker)
-        if not form == 'chart': data = pickle.loads(data)
-        if dt:
-            index = Data.findex(data,dt)
-            data = data[:index+1]
-        if bars:
-            data = data[-bars:]
-        if not pm:
-            raise Exception('to code')
-        return data
+            return data
+        raise KeyError(form + tf + ticker)
+
 
     # def init_prev_close_cache(self):
 
-    # 	hash_data = self.redis_conn.hgetall('1d'+'chart')
-    # 	#return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
-    # 	for ticker, value in hash_data.items():
-    # 		value = json.loads(value)
-    # 		value = value[-1]['close']
-    # 		self.redis_conn.hset('prev_close', ticker, pickle.dumps(value))
+    #   hash_data = self.redis_conn.hgetall('1d'+'chart')
+    #   #return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
+    #   for ticker, value in hash_data.items():
+    #       value = json.loads(value)
+    #       value = value[-1]['close']
+    #       self.redis_conn.hset('prev_close', ticker, pickle.dumps(value))
 
     @staticmethod
     def fetch_stock_data(tickers):
-        tickers = [str(ticker) for ticker in tickers]
-        args = " ".join(tickers)
-        ds = yf.download(args, interval='1m', period='1d', prepost=True, auto_adjust=True, threads=True, keepna=False)
-        last_close_values = {}
+        ds = yf.download(" ".join(tickers), interval='1m', period='1d', prepost=True, auto_adjust=True, threads=True, keepna=False)
+        last_close_values = []
         for ticker in tickers:
             try:
                 close_data = ds['Close', ticker]
                 close_data = close_data.dropna()
                 if close_data.empty:
-                    pass
+                    raise Exception('empty')
                 else:
                     last_non_na_close = close_data.iloc[-1]
-                    last_close_values[ticker] = last_non_na_close
-            except:
-                pass
-
+                    last_close_values.append([ticker,last_non_na_close])
+                    #last_close_values[ticker] = last_non_na_close
+            except Exception as e:
+                print(e,flush=True)
         return last_close_values
 
-
-    def get_current_prices(self):
-        print('fetching current prices',flush=True)
-
-        tickers = self.get_ticker_list()
+    def set_current_prices(self,tickers):
         batches = []
-        print(len(tickers),flush=True)
         pool_size = 5
         batch_size = int(len(tickers)/pool_size) + 5
         for i in range(0,len(tickers),batch_size):
             batches.append(tickers[i:i + batch_size])
         with multiprocessing.Pool(pool_size) as pool:
             results = pool.map(self.fetch_stock_data,batches)
-        results = {k: v for d in results for k, v in d.items()}
-        for ticker, value in results.items():
-            self.redis_conn.hset('current_price', ticker, pickle.dumps(value))
-        return results
+        for ticker, price in results for result in results:
+            self.redis_conn.hset('current_price', ticker, pickle.dumps(price))
 
     def get_ds(self,form = 'match',request='full',tf='1d', bars=0,dollar_volume=0,adr=0):
         returns = []
@@ -116,12 +121,6 @@ class Data:
                     try:
                         ticker = ticker.decode()
                         value = pickle.loads(value)
-                        dollar_volume_value = value[-1,4]*value[-1,5]
-                        if dollar_volume_value < dollar_volume:
-                            continue
-                        adr_value = (np.mean(value[:,1] / value[:,2])-1)*100
-                        if adr_value < adr:
-                            continue
                         value = value[:,:5]
                         if bars:
                             padding = bars - value.shape[0]
@@ -132,12 +131,15 @@ class Data:
                             value = value[-(bars-1):,:]
                             try:
                                 price = current_prices[ticker]
-                                #change = price/pickle.loads(self.redis_conn.hget('prev_close',ticker)) - 1
-                            except:
-                                # change = 0
-                                price = value[-1,4]
-                            value = np.vstack([value, np.array([int(time.time())] + [price] * (value.shape[1] - 1))])
-                                #value = np.vstack( [value,np.array([0] +[change for _ in range(4)])])
+                                prev_close = pickle.loads(self.redis_conn.hget('prev_close',ticker))
+
+                                change = (price/prev_close) - 1
+                            except Exception as e:
+                                change = 0
+                        #           price = value[-1,4]
+                            #value = np.vstack([value, np.array([int(time.time())] + [price] * (value.shape[1] - 1))])
+                            value = np.vstack( [value,np.array([0] +[change for _ in range(4)])])
+
                         else:
                             value = value[-bars:,:]
                             for ii in (2,3,4):
@@ -147,10 +149,10 @@ class Data:
                     except TimeoutError: 
                         pass
                 return np.array(returns), tickers
-            elif form == 'match':
-                hash_data = self.redis_conn.hgetall(tf+form)
-                #return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
-                return [[field.decode(), pickle.loads(value)] for field, value in hash_data.items()]
+#            elif form == 'match':
+#                hash_data = self.redis_conn.hgetall(tf+form)
+#                #return {field.decode(): pickle.loads(value) for field, value in hash_data.items()}
+#                return [[field.decode(), pickle.loads(value)] for field, value in hash_data.items()]
 
 
 
@@ -208,7 +210,7 @@ class Data:
 
     def findex(df, dt):
         dt = Data.format_datetime(dt)
-        i = int(len(df)/2)		
+        i = int(len(df)/2)      
         k = int(i/2)
         while k != 0:
             date = df[i,0]
@@ -223,8 +225,12 @@ class Data:
             i -= 1
         return i
 
-    def get_ticker_list(self, type='full'):
-        df = pd.read_csv('ticker_list.csv')['ticker'].tolist()
+    def get_ticker_list(self, dolvol, adr):
+        df = pd.read_csv('ticker_listype='full'.csv')['ticker'].tolist()
+        if dolvol:
+            df = df[df['dollar_volume'] > dolvol]
+        if adr:
+            df = df[df['adr'] > adr]
         return df
         cursor = self.mysql_conn.cursor(buffered=True)
         if type == 'full':
@@ -286,6 +292,7 @@ class Data:
     def get_setup_info(self,user_id,st):
         with self.mysql_conn.cursor(buffered=True) as cursor:
             cursor.execute('SELECT tf,setup_length from setups WHERE user_id = %s AND name = %s',(user_id,st))
+            #TODO add adr_req and dolvol_req
             return cursor.fetchall()[0]
 
     def get_finished_study_tickers(self,user_id,st):

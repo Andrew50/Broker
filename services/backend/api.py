@@ -76,6 +76,7 @@ def create_app():
 				except: 
 					exception = traceback.format_exc()
 					current_price = None
+					print(exception)
 				val = json.loads(val)
 				if current_price == None:
 					current_bar = val[-1]
@@ -90,7 +91,7 @@ def create_app():
 				val.append(current_bar)
 			else:
 				val = json.loads(val)
-			val = val[-200:]
+			val = val[-500:]
 			val = json.dumps(val)
 			return val
 		elif func == 'create setup':

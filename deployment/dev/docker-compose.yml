@@ -57,21 +57,34 @@ services:
         networks:
             - compose_network
             
+#    redis:
+#        image: redis:latest
+#        ports:
+#          - 6379:6379
+#        networks:
+#          - compose_network
+#        hostname: redis
+#        volumes:
+#          - redis-data:/data
+#        command: redis-server
+#        mem_limit: 12G
+
     redis:
-        image: redis:latest
+        image: redislabs/redistimeseries:latest
         ports:
           - 6379:6379
         networks:
           - compose_network
         hostname: redis
         volumes:
-          - redis-data:/data
+          - redis-ts-data:/data
         command: redis-server
+    #command: redis-server --loadmodule /usr/lib/redis/modules/redistimeseries.so
         mem_limit: 12G
 
 volumes:
     mysql-data:
-    redis-data:
+    redis-ts-data:
 
 networks:
     compose_network:    

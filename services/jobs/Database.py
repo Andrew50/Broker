@@ -11,7 +11,12 @@ import datetime
 import mysql.connector
 
 
-FORCE_RECALC = False
+CACHED_TIMEFRAMES = ['1d']
+MAX_BARS = 100
+
+
+FORCE_RECALC = False#also changes the redis and mysql host to localhost.
+
 #set to True to force the recalculation of all cached data. 
 #This should be done if recalc methods are changed
 #allows the script to be run outside of container
@@ -86,92 +91,65 @@ class Database:
             dt = datetime.datetime.combine(dt.date(), time)
         #return dt
         dt = dt.timestamp()
-        return dt	
+        return dt   
 
     ####to remove once method for pulling current ticker list exists
     def get_ticker_list():
         df = pd.read_csv('ticker_list.csv')['ticker'].tolist()
         return df
 
-    def process_ticker_data(bars):
-        mysql_host, redis_host = ('localhost', 'localhost') if FORCE_RECALC else ('mysql', 'redis')
 
-        with redis.Redis(host=redis_host, port=6379) as redis_conn:
-            with mysql.connector.connect(host=mysql_host, port='3306', user='root', password='7+WCy76_2$%g',database='broker') as mysql_conn:
-                with mysql_conn.cursor() as cursor:
+    @staticmethod
+    def process_ticker_data(bars):
+#        mysql_host, redis_host = ('localhost', 'localhost') if FORCE_RECALC else ('mysql', 'redis')
+#
+#        with redis.Redis(host=redis_host, port=6379) as redis_conn:
+#            with mysql.connector.connect(host=mysql_host, port='3306', user='root', password='7+WCy76_2$%g',database='broker') as mysql_conn:
+#                with mysql_conn.cursor() as cursor:
+                    data = 
                     tickers,tf = bars
                     for ticker in tickers:
-                        try:
-                            cursor.execute("SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s and tf = %s", (ticker,tf))
-                            data = np.array(cursor.fetchall())
-                            #print(data,flush=True)
-                            #for form in ('screener','chart','match'):
-                            for form in ('screener','chart'):
-                                if form == 'screener':
-                                    dt = data[1:,0]
-                                    vol = data[1:,5]
-                                    dt = dt.reshape(-1,1)
-                                    normalized_data = (data[1:,1:5] / data[:-1,4][:, None]) - 1
-                                    normalized_data = np.column_stack((dt,normalized_data,vol))
-                                    processed_data = pickle.dumps(normalized_data)
-                                # elif form == 'match':
-                                # 	#dt, open, high, low, close, volume 
-                                # 	# 0    1     2     3     4      5
-                                # 	ohlcData = data[1:,1:5]/data[:-1, 4].reshape(-1, 1) - 1
-                                # 	mean = np.mean(ohlcData, axis=0)
-                                # 	std = np.std(ohlcData, axis=0)
-                                # 	ohlcData = (ohlcData - mean) / std
+                        for tf in CACHED_TIMEFRAMES:
+                            try:
+                                df = data.get_df('raw',ticker,tf)
+#                                cursor.execute("SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s and tf = %s", (ticker,tf))
+#                                data = np.array(cursor.fetchall())
+                                #set dol vol, adr
+                                dollar_volume_value = value[-1,4]*value[-1,5]
+                                adr_value = (np.mean(value[:,1] / value[:,2])-1)*100
+                                cursor.execute("UPDATE tickers SET dollar_volume = %s, adr = %s WHERE ticker = %s", (dollar_volume_value,adr_value,ticker))
+                                mysql_conn.commit()
 
-                                # 	processed_data = pickle.dumps(np.column_stack((data[1:, 0], data[1:, 4], ohlcData[:, 0], ohlcData[:, 1], ohlcData[:, 2], ohlcData[:, 3], data[1:, 5])))
-                                # 	#close_prices = data[:, 4]
-                                # 	#return pickle.dumps(np.column_stack((data[1:, 0], close_prices[1:], (data[1:, 1] / close_prices[:-1] - 1), (data[1:, 2]/close_prices[:-1] -1), (data[1:,3]/close_prices[:-1] - 1), (close_prices[1:] / close_prices[:-1]) - 1, data[1:, 5])))
-
-                                elif form == 'chart':
-                                    list_of_lists = data.tolist()[:]
-                                  #  if 'd' in tf or 'w' in tf:
-                                    list_of_lists = [[pd.to_datetime(row[0], unit ='s').strftime('%Y-%m-%d'), row[1], row[2], row[3], row[4], row[5]] for row in list_of_lists]
-#                                         list_of_lists = [{
-#                                             'time': pd.to_datetime(row[0], unit='s').strftime('%Y-%m-%d'),
-#                                             'open': row[1],
-#                                             'high': row[2],
-#                                             'low': row[3],
-#                                             'close': row[4]
-#                                             } for row in list_of_lists]
-#else:
-                                        #      list_of_lists = [pd.to_datetime(row[0], unit ='s').strftime('%Y-%m-%d %H:%M:%S'), row[1], row[2], row[3], row[4] for row in list_of_lists]
- #                                        list_of_lists = [{
- #                                            'time': pd.to_datetime(row[0], unit='s').strftime('%Y-%m-%d %H:%M:%S'),
- #                                            'open': row[1],
- #                                            'high': row[2],    
- #                                            'low': row[3],
- #                                            'close': row[4]
- #                                            }for row in list_of_lists]
-                                    processed_data = json.dumps(list_of_lists)
-                                redis_conn.hset(tf+form, ticker, processed_data)
-                        except Exception as e:
-                            print(f'{ticker} failed: {e}', flush=True)
+                                #cache screener
 
 
 
 
-    # Main Function
+                                list_of_lists = df.tolist()[:]
+                                list_of_lists = [[pd.to_datetime(row[0], unit ='s').strftime('%Y-%m-%d'), row[1], row[2], row[3], row[4], row[5]] for row in list_of_lists]
+                                redis_conn.hset(tf+'_chart', ticker, json.dumps(list_of_lists))
+                                
+                                df = df[-MAX_BARS-1:,:]
+                                prev_close = df[-1,4]
+                                normalized_data = (df[1:,1:5] / df[:-1,4][:, None]) - 1
+                                redis_conn.hset(tf+'screener', ticker, pickle.dumps([normalized_data,prev_close]))
+
+                            except Exception as e:
+                                print(f'{ticker} failed: {e}', flush=True)
+
     def cache(redis_conn):
         tickers = Database.get_ticker_list()  # get_unique_tickers()  # Define this function to get tickers from your DB
         pool = multiprocessing.Pool(processes=8)  # Adjust number of processes as needed
-
         batch_size = 200
         num_batches = len(tickers) // batch_size + 1
         for tf in ('1d',):
             arglist = []
-
             for i in range(num_batches):
                 start_index = i * batch_size
                 end_index = (i + 1) * batch_size
                 batch_tickers = tickers[start_index:end_index]
                 arglist.append([batch_tickers, tf])
-
             pool.map(Database.process_ticker_data, arglist)
-
         pool.close()
         pool.join()
         redis_conn.set("last_update", pickle.dumps(datetime.datetime.now()))
@@ -205,7 +183,7 @@ class Database:
 
             def findex(df, dt):
                 dt = Database.format_datetime(dt)
-                i = int(len(df)/2)		
+                i = int(len(df)/2)      
                 k = int(i/2)
                 while k != 0:
                     date = df.index[i]
@@ -237,7 +215,8 @@ class Database:
                         #print(ydf)
                         #ydf.drop(axis=1, labels="Adj Close",inplace = True)
                         ydf.dropna(inplace = True)
-                        if Database.is_market_open() == 1: ydf.drop(ydf.tail(1).index,inplace=True)
+                        if Database.is_market_open() == 1:
+                            ydf.drop(ydf.tail(1).index, inplace=True)
                         ydf.index = ydf.index.normalize() + pd.Timedelta(minutes = 570)
                         ydf.index = (ydf.index.astype(np.int64) // 10**9)
                         cursor.execute("SELECT MAX(dt) FROM dfs WHERE ticker = %s AND tf = %s", (ticker, tf))
