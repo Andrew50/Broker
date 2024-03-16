@@ -35,7 +35,7 @@ class Match:
         for i in range(len(match_data)): match_data[i][1] = match_data[i][1][:10]
         return match_data
     
-    def normalize(x):
+    def normalize(x):#changed
         mean = np.mean(x)
         std = np.std(x)
         normalized_x = (x - mean) / std
