@@ -1,25 +1,25 @@
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: jobs
-spec:
-  schedule: "0 22 * * *"
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-            - name: jobs
-              image: billin19/jobs:latest
-              command: ["python", "Database.py"]
-              resources:
-                requests:
-                  cpu: 2000m
-                  memory: 5000Mi
-                limits:
-                  cpu: 4000m
-                  memory: 10000Mi
-          restartPolicy: OnFailure
+#apiVersion: batch/v1
+#kind: CronJob
+#metadata:
+#  name: jobs
+#spec:
+#  schedule: "0 22 * * *"
+#  jobTemplate:
+#    spec:
+#      template:
+#        spec:
+#          containers:
+#            - name: jobs
+#              image: billin19/jobs:latest
+#              command: ["python", "Database.py"]
+#              resources:
+#                requests:
+#                  cpu: 2000m
+#                  memory: 5000Mi
+#                limits:
+#                  cpu: 4000m
+#                  memory: 10000Mi
+#          restartPolicy: OnFailure
 # ---
 # apiVersion: batch/v1
 # kind: Job
