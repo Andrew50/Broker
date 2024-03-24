@@ -4,8 +4,8 @@ services:
 
     backend:
         depends_on:
-            - mysql
-            - redis
+            - db
+            - cache
         build:
             context: C:/dev/broker/services/backend
             dockerfile: Dockerfile
@@ -27,64 +27,76 @@ services:
             - C:/dev/broker/services/worker/:/app/
              #- ./:/app
         depends_on:
-            - mysql
-            - redis
+            - db
+            - cache
         networks:
             - compose_network
-
-    jobs:
+    db:
         build:
-            context: C:/dev/broker/services/jobs
-            dockerfile: Dockerfile
+           context: C:/dev/broker/services/db
+           dockerfile: Dockerfile
         volumes:
-            - C:/dev/broker/services/jobs:/app/
-        command: python Database.py
-        restart: on-failure
-        networks:
-            - compose_network
-        environment:
-            - DEV_ENV=True
-
-    mysql:
-        image: mysql:latest
-        environment:
-            MYSQL_ROOT_PASSWORD: 7+WCy76_2$%g
+           - db:/var/lib/mysql
         ports:
             - "3306:3306"
-        volumes:
-            - mysql-data:/var/lib/mysql
-           # - C:/dev/broker/services/mysql/my.cnf:/etc/mysql/my.cnf
         networks:
             - compose_network
-            
-#    redis:
-#        image: redis:latest
-#        ports:
-#          - 6379:6379
-#        networks:
-#          - compose_network
-#        hostname: redis
-#        volumes:
-#          - redis-data:/data
-#        command: redis-server
-#        mem_limit: 12G
 
-    redis:
-        image: redislabs/redistimeseries:latest
+
+#    jobs:
+#        build:
+#            context: C:/dev/broker/services/jobs
+#            dockerfile: Dockerfile
+#        volumes:
+#            - C:/dev/broker/services/jobs:/app/
+#        command: python Database.py
+#        restart: on-failure
+#        networks:
+#            - compose_network
+#        environment:
+#            - DEV_ENV=True
+#
+         
+#    mysql:
+#        image: mysql:latest
+#        environment:
+#            MYSQL_ROOT_PASSWORD: 7+WCy76_2$%g
+#        ports:
+#            - "3306:3306"
+#        volumes:
+#            - mysql-data:/var/lib/mysql
+#           # - C:/dev/broker/services/mysql/my.cnf:/etc/mysql/my.cnf
+#        networks:
+#            - compose_network
+            
+    cache:
+        image: redis:latest
         ports:
           - 6379:6379
         networks:
           - compose_network
         hostname: redis
         volumes:
-          - redis-ts-data:/data
+          - cache:/data
         command: redis-server
-    #command: redis-server --loadmodule /usr/lib/redis/modules/redistimeseries.so
         mem_limit: 12G
 
+#    redis:
+#        image: redislabs/redistimeseries:latest
+#        ports:
+#          - 6379:6379
+#        networks:
+#          - compose_network
+#        hostname: redis
+#        volumes:
+#          - redis-ts-data:/data
+#        command: redis-server
+#    #command: redis-server --loadmodule /usr/lib/redis/modules/redistimeseries.so
+#        mem_limit: 12G
+
 volumes:
-    mysql-data:
-    redis-ts-data:
+    db:
+    cache:
 
 networks:
     compose_network:    

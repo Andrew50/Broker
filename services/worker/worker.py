@@ -3,12 +3,12 @@ import importlib
 import traceback
 import redis
 import json, time
-from sync_Data import Data
+from data import Data
 import datetime
 
 def process_tasks():
 	r = redis.Redis(host='redis', port=6379)
-	data = Data()
+	data = Data(True)
 	while True:
 		task = r.brpop('task_queue_1', timeout=1000)
 		if not task:

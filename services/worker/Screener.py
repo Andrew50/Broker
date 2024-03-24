@@ -38,8 +38,8 @@ def get(data, user_id, setup_types):
     return Screener.screen(data,user_id,setup_types,'screener')
             
 if __name__ == '__main__':
-    from sync_Data import Data
-    print(get(Data(),1,['d_EP'],'screener'))
+    from data import Data
+    print(get(Data(False),1,['d_EP'],'screener'))
                                                                      
 #        if _format == 'screener':
 #            for st in setup_types:

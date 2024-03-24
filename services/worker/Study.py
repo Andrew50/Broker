@@ -23,5 +23,6 @@ def get(data,user_id,st):
     Study.update(data,user_id,st)
 
 if __name__ == '__main__':
+    from data import Data
     
-    Study.update(6,'EP')
+    Study.update(Data(False),6,'EP')

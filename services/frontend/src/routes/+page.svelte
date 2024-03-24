@@ -5,7 +5,6 @@
 <main class="main-container">
   <div class="content">
     <h1 class="title" style="font-size: 32px;">Welcome to EdgeFinder</h1>
-    <p>Here's a general overview of our services...</p>
     <!-- Add more content about services here -->
   </div>
 </main>

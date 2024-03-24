@@ -35,10 +35,10 @@ from Screener import Screener
 class Trainer:
 
 
-	def get_sample(data,st, user_id):
+	def sample(data,st, user_id):
 		training_ratio, validation_ratio, oversample = .25, .05, 1.5
 		
-		all_instances, tf, setup_length = data.get_setup_sample(user_id, st)
+		all_instances, tf, setup_length = data.get_sample(user_id, st)
 		yes_instances = [x for x in all_instances if x[2] == 1]
 		no_instances = [x for x in all_instances if x[2] == 0]
 		
@@ -80,7 +80,7 @@ class Trainer:
 	
 	def train_model(data,st, user_id):
 
-		ds, y, ds_val, y_val = Trainer.get_sample(data,st, user_id)
+		ds, y, ds_val, y_val = Trainer.sample(data,st, user_id)
 		_, num_time_steps, input_dim = ds.shape
 		model = Sequential()
 
@@ -168,7 +168,7 @@ class Trainer:
 			if length < 20:
 				print('running trainer screener',flush=True)
 				if i == 0:
-					sample,_,_ = data.get_setup_sample(user_id,st)
+					sample,_,_ = data.get_sample(user_id,st)
 					sample = [[ticker,dt] for ticker,dt,val in sample]
 					query = sample
 					i = 1
@@ -202,8 +202,8 @@ def start(data,user_id,st):
 
 
 if __name__ == '__main__':
-	from sync_Data import Data
-	print(train(Data(),1, 'd_EP'))
+	from data import Data
+	print(train(Data(False),1, 'd_EP'))
 
 
 
