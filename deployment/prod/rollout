@@ -7,7 +7,11 @@
 #minikube ip
 #check if etc/nginx/sites-available/minikube has correct ip
 #if not then change and run: sudo service nginx restart
+#cd to aj/home/dev/Broker
 #kubectl apply -f deployment/prod/config
+#start rollout server with cd to deployment/prod
+#source venv/bin/activate
+#python rollout_server.py
 
 
 #minikube start --memory 61440 --cpus 16
@@ -24,13 +28,13 @@ cd /home/aj/dev/Broker
   docker build -t billin19/frontend:latest services/frontend
   docker build -t billin19/backend:latest services/backend
   docker build -t billin19/worker:latest services/worker
-  docker build -t billin19/jobs:latest services/jobs
+  #docker build -t billin19/jobs:latest services/jobs
 
 
   docker push billin19/frontend:latest
   docker push billin19/backend:latest
   docker push billin19/worker:latest
-  docker push billin19/jobs:latest
+  #docker push billin19/jobs:latest
 
 
   #this includes running of rollout.yaml => runs rollout.py
@@ -39,5 +43,5 @@ cd /home/aj/dev/Broker
   kubectl rollout restart deployment/frontend
   kubectl rollout restart deployment/backend
   kubectl rollout restart deployment/worker
-  kubectl set image cronjob/jobs jobs=billin19/jobs:latest
+  #kubectl set image cronjob/jobs jobs=billin19/jobs:latest
 #fi
