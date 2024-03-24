@@ -15,8 +15,13 @@ deployment/venv
 deployment/prod/env
 services/frontend/.svelte-kit
 services/worker/models
+services/worker/tuner
+services/worker/tuner_results
+tuner
+tuner_results
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
+venv
 backend/1d
 deployment/prod/env
 .gitattributes
@@ -25,6 +30,7 @@ deployment/prod/env
 # backend/tasks/Test.py
 \services\frontend\.svelk-kit
 # Mono auto generated files
+deployment/prod/env
 mono_crash.*
 services/worker/models/
 /backend/scripts/local
@@ -45,6 +51,7 @@ bld/
 [Ll]og/
 [Ll]ogs/
 old/
+archive/
 services/frontend/node_modules
 services/frontend/.svelte-kit
 services/worker/models

@@ -1,7 +1,13 @@
 # for new setup run:
-# minikube start
+#minikube start --memory 61440 --cpus 16
 # minikube addons enable ingress
+# minikube addons enable metrics-server
 # minikube tunnel
+#ngrok http 80
+#minikube ip
+#check if etc/nginx/sites-available/minikube has correct ip
+#if not then change and run: sudo service nginx restart
+#kubectl apply -f deployment/prod/config
 
 
 #minikube start --memory 61440 --cpus 16

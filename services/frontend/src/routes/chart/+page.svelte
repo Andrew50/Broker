@@ -29,7 +29,7 @@
 
     $: isAuthenticated = $auth_data !== null;
     $: if (!isAuthenticated && browser) {
-        goto('/auth');
+        goto('/login');
     }
 
 
@@ -37,25 +37,25 @@
 
 <div class="button-container">
     
-    <button class="button" on:click={() =>toggle_menu('watchlist')}>
+    <button class="button {active_menu == 'watchlist' ? 'active' : ''}" on:click={() =>toggle_menu('watchlist')}>
         <im class="icon" src="/watchlist.png" alt="" />
     </button>
-    <button class="button" on:click={() =>toggle_menu('match')}>
+    <button class="button {active_menu == 'match' ? 'active' : ''}" on:click={() =>toggle_menu('match')}>
         <img class="icon" src="/match.png" alt="" />
     </button>
-    <button class="button" on:click={() =>toggle_menu('screener')}>
+    <button class="button {active_menu == 'screener' ? 'active' : ''}" on:click={() =>toggle_menu('screener')}>
         <img class="icon" src="/screener.png" alt="" />
     </button>
-    <button class="button" on:click={() =>toggle_menu('trainer')}>
+    <button class="button {active_menu == 'trainer' ? 'active' : ''}" on:click={() =>toggle_menu('trainer')}>
         <img class="icon" src="/trainer.png" alt="" />
     </button>
-    <button class="button" on:click={() =>toggle_menu('study')}>
+    <button class="button {active_menu == 'study' ? 'active' : ''}" on:click={() =>toggle_menu('study')}>
         <img class="icon" src="/study.png" alt="" />
     </button>
-    <button class="button" on:click={() =>toggle_menu('account')}>
+    <button class="button {active_menu == 'account' ? 'active' : ''}" on:click={() =>toggle_menu('account')}>
         <img class="icon" src="/account.png" alt="" />
     </button>
-    <button class="button" on:click={() =>toggle_menu('settings')}>
+    <button class="button {active_menu == 'settings' ? 'active' : ''}" on:click={() =>toggle_menu('settings')}>
         <im class="icon" src="/settings.png" alt="" />
     </button>
     
