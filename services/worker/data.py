@@ -40,7 +40,7 @@ class Data:
         #assuming ohlcv columns
         if single: 
             dolvol = float(np.mean(df[:,3] * df[:,4]))
-            adr = float(np.mean(df[-l:,1] / df[-l:,2] - 1))
+            adr = float(np.mean(df[-l:,1] / df[-l:,2] - 1)) * 100
             mcap = 10^15 #TODO
             return dolvol, adr, mcap
         else:
@@ -50,23 +50,40 @@ class Data:
             dolvol = np.roll(dolvol,1)
 
 
-    def get_df(self, form, ticker=None, tf=None, dt=None, bars=0, pm=False, df = np.array([])):
+    def get_df(self, form, ticker=None, tf=None, dt=None, bars=0, pm=False, df = None):
         assert (ticker and tf) or df is not None
         assert not pm 
-        #if df or not rdf := self.cache.hget(f'{tf}_{form}',ticker): fuck python
+        if bars and form in ('trainer', 'study'):
+            bars += 1
         if df is None:
-            if df := self.cache.hget(f'{tf}_{form}',ticker) is None:
+            if (df := self.cache.hget(f'{tf}_{form}',ticker)) is not None:
                 assert not bars and not dt and not pm
+                if form != 'chart':
+                    df = pickle.loads(df)
+                    if form == 'screener':
+                        df, prev_close = df
+                        try:
+                            current_price = pickle.loads(self.cache.hget('current_price',ticker))
+                            change = current_price / prev_close - 1
+                        except TypeError:
+                            print(f'{ticker} cp failed')
+                            change = 0
+                        df = np.vstack([df,[change for _ in range(4)]])
                 return df
             else:
-                with self.db.cursor(buffered=True) as cursor:
-                    cursor.execute("SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s and tf = %s", (ticker,tf))
-                    df = np.array(cursor.fetchall())
-                    if dt:
-                        index = self.findex(df,dt)
-                        df = df[:index+1]
-                    if bars:
-                        df = df[-bars:]
+                if (df := self.cache.hget(f'{tf}_raw',ticker)) is None: #possible cache raw in future
+                    ########################rewrite to use sql to do all this shit
+                    with self.db.cursor(buffered=True) as cursor: 
+                        cursor.execute("SELECT dt, open, high, low, close, volume FROM dfs WHERE ticker = %s and tf = %s", (ticker,tf))
+                        df = np.array(cursor.fetchall())
+                        if not df.shape[0]:
+                            raise TimeoutError
+                        if dt:
+                            index = self.findex(df,dt)
+                            df = df[:index+1,:]
+                        if bars:
+                            df = df[-bars:,:]
+                    #####################################
         elif bars:
             df = df[-bars:,:]
         if form == 'chart':
@@ -75,13 +92,21 @@ class Data:
             if ticker and form == 'screener': #jank as hell
                 current_price = self.cache.hget('current_price',ticker)
                 change = current_price / df[-1,4] - 1
-                df = np.vstack([df,[change for _ in range(4)]])
+            if not ticker and form =='screener':
+                prev_close = df[-1,4]
             df[1:,1:5] = df[1:,1:5] / df[:-1,4][:, None] - 1
-            if form == 'screener' or format == 'trainer':
+            df[-1,2:5] = df[-1,1]
+            if ticker and form == 'screener':
+                df = np.vstack([df,[change for _ in range(4)]])
+            if df.shape[0] < bars:
+                df = np.vstack([df,[[0,0,0,0,0,0] for _ in range(bars - df.shape[0])]])
+            if form == 'screener' or form == 'trainer':
                 df = df[:,1:5]
             else:
-                df = self.calc_adr(df,True)
+                df = self.get_reqs(df,True)#TODO
             if not ticker: #jank
+                if form == 'screener':
+                    df = df, prev_close
                 df = pickle.dumps(df)
         return df
 
@@ -104,9 +129,7 @@ class Data:
                 ydf.index = (ydf.index.astype(np.int64) // 10**9)
                 ydf = ydf.reset_index().to_numpy()
                 if df.shape[0]:
-                    print(df) 
                     last_day = df[-1,0]
-                    print(last_day)
                     index = self.findex(ydf, last_day) 
                     ydf = ydf[index + 1:,:]
                     df = np.concatenate([df, ydf], axis=0)
@@ -201,15 +224,19 @@ class Data:
             batches.append(tickers[i:i + batch_size])
         with multiprocessing.Pool(pool_size) as pool:
             results = pool.map(self.current_price_worker,batches)
-        [self.cache.hset('current_price', ticker, pickle.dumps(price)) for ticker, price in result for result in results]
+        for result in results:
+            for ticker, price in result:
+                self.cache.hset('current_price', ticker, pickle.dumps(price))
 
-    def get_tickers(self, min_dolvol = -1, min_adr = -1,min_mcap = -1,type = 'full'):
+    def get_tickers(self,type = 'full', min_dolvol = -1, min_adr = -1,min_mcap = -1):
 #        df = pd.read_csv('ticker_listype='full'.csv')['ticker'].tolist()
 #        if dolvol:
 #            df = df[df['dollar_volume'] > dolvol]
 #        if adr:
 #            df = df[df['adr'] > adr]
         cursor = self.db.cursor(buffered=True)
+        if type == 'current': 
+            type = 'full'
         if type == 'full':
             query = "SELECT ticker FROM tickers"
             cursor.execute(query)
@@ -224,22 +251,22 @@ class Data:
             cursor.close()
             #data = [item[0] for item in data]
             return data
-        elif type == 'current':
-            raise Exception('need current func. has to pull from tv or something god')#TODO
+        elif type == 'current': #TODO
+            pass
         else:
             raise Exception('invalid type')
 
-    def set_ticker(self, ticker, adr, dolvol, mcap):
+    def set_ticker(self, ticker, dolvol, adr, mcap):
         with self.db.cursor() as cursor:
             insert_query = """
-            INSERT INTO tickers (ticker, adr, dolvol, mcap) 
+            INSERT INTO tickers (ticker, dolvol, adr, mcap) 
             VALUES (%s, %s, %s, %s)
             ON DUPLICATE KEY UPDATE 
             adr = VALUES(adr), 
             dolvol = VALUES(dolvol), 
             mcap = VALUES(mcap)
             """
-            cursor.execute(insert_query, (ticker, adr, dolvol, mcap))
+            cursor.execute(insert_query, (ticker,dolvol,adr , mcap))
         self.db.commit()
 
     @staticmethod
@@ -288,10 +315,9 @@ class Data:
                     cursor.execute(query, (val, user_id, st))
         self.db.commit()
 
-    def get_setup_info(self,user_id,st):
+    def get_setup(self,user_id,st):
         with self.db.cursor(buffered=True) as cursor:
-            cursor.execute('SELECT tf,setup_length from setups WHERE user_id = %s AND name = %s',(user_id,st))
-            #TODO add adr_req and dolvol_req
+            cursor.execute('SELECT setup_id,tf,setup_length,dolvol,adr,mcap from setups WHERE user_id = %s AND name = %s',(user_id,st))
             return cursor.fetchall()[0]
 
     def get_finished_study_tickers(self,user_id,st):
@@ -316,8 +342,7 @@ class Data:
 
     def get_sample(self,user_id,st): #rename to get sample
         with self.db.cursor(buffered=True) as cursor:
-            cursor.execute('SELECT setup_id, tf,setup_length from setups WHERE user_id = %s AND name = %s',(user_id,st))
-            setup_id, tf,setup_length = cursor.fetchall()[0]
+            setup_id, tf,setup_length,_,_,_ = self.get_setup(user_id,st)
             cursor.execute('SELECT ticker,dt,value from samples WHERE setup_id = %s',(setup_id,))
             #values = [[ticker,dt,val] for setup_id,ticker,dt,val in cursor.fetchall()]
             values = cursor.fetchall()
@@ -332,16 +357,67 @@ class Data:
             cursor.executemany("INSERT INTO samples VALUES (%s, %s, %s,%s)", query)
         self.db.commit()
 
-    def get_model(self,setup_id):
-        import tensorflow as tf
-        model = self.cache.hget('models',setup_id)
-        return tf.keras.models.load_model(io.BytesIO(model))
+#    def get_model(self,user_id,st):
+#        setup_id,_,_ = self.get_setup_info(user_id,st)
+#        import tensorflow as tf
+#        model = self.cache.hget('models',setup_id)
+#        return tf.keras.models.load_model(io.BytesIO(model))
     
-    def set_model(self,setup_id,model):
+#    def set_model(self,user_id,st,model):
+#        setup_id,_,_ = self.get_setup_info(user_id,st)
+#        #import tensorflow as tf
+#        buffer = io.BytesIO()
+#        model.save(buffer, save_format='h5')
+#        #tf.keras.models.save_model(model, buffer, save_format='tf')
+#        self.cache.hset('models',setup_id,buffer.getvalue())
+
+    def get_model(self, user_id, st):
         import tensorflow as tf
-        buffer = io.BytesIO()
-        tf.keras.models.save_model(model, buffer, save_format='tf')
-        self.cache.hset('models',setup_id,buffer.getvalue())
+        import io
+        import tempfile
+
+        # Get the setup ID and the model bytes from the cache
+        setup_id, _, _, _, _, _ = self.get_setup(user_id, st)
+        model_bytes = self.cache.hget('models', setup_id)
+
+        # Step 1: Write the bytes to a temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.h5') as tmp_file:
+            temp_file_path = tmp_file.name
+            tmp_file.write(model_bytes)
+            tmp_file.flush()  # Ensure all data is written to disk
+
+        # Step 2: Load the model from the temporary file
+        model = tf.keras.models.load_model(temp_file_path)
+
+        # Optionally, delete the temporary file if you want to clean up
+        import os
+        os.remove(temp_file_path)
+
+        return model
+
+
+    def set_model(self, user_id, st, model):
+        import tensorflow as tf
+        import io
+        import tempfile
+        setup_id, _, _,_,_,_ = self.get_setup(user_id, st)
+        
+        # Step 1: Save the model to a temporary HDF5 file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.h5') as tmp_file:
+            temp_file_path = tmp_file.name
+        model.save(temp_file_path, save_format='h5')
+        
+        # Step 2: Read the saved model file into a bytes-like object
+        with open(temp_file_path, 'rb') as model_file:
+            model_bytes = model_file.read()
+        
+        # Step 3: Store the model in the Redis database
+        self.cache.hset('models', setup_id, model_bytes)
+        
+        # Optionally, delete the temporary file if you want to clean up
+        import os
+        os.remove(temp_file_path)
+
 
     @staticmethod
     def findex(df, dt):
@@ -356,10 +432,12 @@ class Data:
             elif date < dt:
                 i += k
             k = int(k/2)
-        while df.index[i] < dt:
+        while df[i,0] < dt:
             i += 1
-        while df.index[i] > dt:
+        while df[i,0] > dt:
             i -= 1
+            if i < 0:
+                raise TimeoutError
         return i
 
 

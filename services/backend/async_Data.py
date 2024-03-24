@@ -206,7 +206,7 @@ class Data:
     async def get_user_setups(self,user_id):
         async with self.db.acquire() as conn:
             async with conn.cursor() as cursor:
-                await cursor.execute("SELECT name, tf, setup_length, sample_size, score from setups WHERE user_id = %s",(user_id,))
+                await cursor.execute("SELECT name, tf, setup_length, sample_size, score from setups WHERE user_id = %s",(user_id,)) #todo add reqs
                 return await cursor.fetchall()
 
     async def set_setup(self,user_id,st,tf=None,setup_length = None,delete=False):

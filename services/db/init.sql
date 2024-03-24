@@ -50,6 +50,9 @@ CREATE TABLE setups(
         setup_length INT NOT NULL,
         sample_size INT,
         score INT,
+        dolvol FLOAT,
+        adr FLOAT,
+        mcap FLOAT,
         UNIQUE(user_id, name),
         FOREIGN KEY (user_id) REFERENCES users(id)
         ON DELETE CASCADE
@@ -73,13 +76,13 @@ CREATE TABLE tickers(
         mcap FLOAT
         );
 INSERT INTO users (id, username, password, settings) VALUES (1, 'user', 'pass', '');
-INSERT INTO setups (user_id, name, setup_id, tf, setup_length, sample_size, score) VALUES 
-    (1, 'EP', 1, '1d', 30, 0, 0),
-    (1, 'F', 2, '1d', 30, 0, 0),
-    (1, 'MR', 3, '1d', 30, 0, 0),
-    (1, 'NEP', 4, '1d', 30, 0, 0),
-    (1, 'NF', 5, '1d', 60, 0, 0),
-    (1, 'NP', 6, '1d', 60, 0, 0),
-    (1, 'P', 7, '1d', 30, 0, 0);
+INSERT INTO setups (user_id, name, setup_id, tf, setup_length, sample_size, score, dolvol, adr, mcap) VALUES 
+    (1, 'EP', 1, '1d', 30, 0, 0,5000000,2.5,0),
+    (1, 'F', 2, '1d', 30, 0, 0,5000000,2.5,0),
+    (1, 'MR', 3, '1d', 30, 0, 0,5000000,2.5,0),
+    (1, 'NEP', 4, '1d', 30, 0, 0,5000000,2.5,0),
+    (1, 'NF', 5, '1d', 60, 0, 0,5000000,2.5,0),
+    (1, 'NP', 6, '1d', 60, 0, 0,5000000,2.5,0),
+    (1, 'P', 7, '1d', 30, 0, 0,5000000,2.5,0);
 LOAD DATA INFILE '/var/lib/mysql-files/tickers.csv' INTO TABLE tickers FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' IGNORE 1 ROWS (ticker);
 LOAD DATA INFILE '/var/lib/mysql-files/samples.csv' INTO TABLE samples FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' IGNORE 1 ROWS;

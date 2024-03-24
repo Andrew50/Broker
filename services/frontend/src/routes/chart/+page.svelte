@@ -29,8 +29,7 @@
 
     $: isAuthenticated = $auth_data !== null;
     $: if (!isAuthenticated && browser) {
-        //goto('/login');
-        //for dev
+        goto('/login');
     }
 
 
