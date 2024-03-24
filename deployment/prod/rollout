@@ -7,7 +7,11 @@
 #minikube ip
 #check if etc/nginx/sites-available/minikube has correct ip
 #if not then change and run: sudo service nginx restart
+#cd to aj/home/dev/Broker
 #kubectl apply -f deployment/prod/config
+#start rollout server with cd to deployment/prod
+#source venv/bin/activate
+#python rollout_server.py
 
 
 #minikube start --memory 61440 --cpus 16
