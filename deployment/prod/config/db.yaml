@@ -1,27 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mysql-deployment
+  name: db-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mysql
+      app: db
   template:
     metadata:
       labels:
-        app: mysql
+        app: db
     spec:
       containers:
-        - name: mysql
-          image: mysql:latest
+        - name: db
+          #image: db:latest
+          image: billin19/db:latest
           ports:
             - containerPort: 3306
           volumeMounts:
-            - name: mysql-persistent-storage
-              mountPath: /var/lib/mysql
+            - name: db-persistent-storage
+              mountPath: /var/lib/db
           env:
-            - name: MYSQL_ROOT_PASSWORD
+            - name: db_ROOT_PASSWORD
               value: 7+WCy76_2$%g
           resources:
             requests:
@@ -31,18 +32,18 @@ spec:
               cpu: 10000m
               memory: 10000Mi
       volumes:
-        - name: mysql-persistent-storage
+        - name: db-persistent-storage
           persistentVolumeClaim:
-            claimName: mysql-pvc
+            claimName: db-pvc
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: mysql
+  name: db
 spec:
   selector:
-    app: mysql
+    app: db
   ports:
     - protocol: TCP
       port: 3306
@@ -53,7 +54,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: mysql-pvc
+  name: db-pvc
 spec:
   accessModes:
     - ReadWriteOnce
@@ -65,7 +66,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: mysql-pv
+  name: db-pv
 spec:
   capacity:
     storage: 100Gi
