@@ -154,7 +154,35 @@ class Data:
     async def get_watchlists(self,user_id):
         async with self.db.acquire() as conn:
             async with conn.cursor() as cursor:
-                await cursor.execute("SELECT name, ticker FROM watchlists WHERE user_id = %s", (user_id,))
+ 
+         del = Sequential()
+
+        conv_filter = 32
+        kernal_size = 3
+        lstm_list = [64,32]
+        dense_list = []
+        dropout = .2
+
+        # for i in range(len(ds)):
+        #   if y[i] == 1:
+    #       print(ds[i,:,:])
+            
+        #       input()
+        model.add(Conv1D(filters=conv_filter, kernel_size=kernal_size, activation='relu', input_shape=(num_time_steps, input_dim)))
+        for units in lstm_list[:-1]: 
+            model.add(Bidirectional(LSTM(units=units, return_sequences=True)))  # return_sequences=True for stacking LSTM layers
+            model.add(Dropout(.2))
+        model.add(Bidirectional(LSTM(units=lstm_list[-1], return_sequences=False)))  # Last LSTM layer with return_sequences=False
+        model.add(Flatten())
+        for units in dense_list:  # Using Lucas numbers for Dense layers
+            model.add(Dense(units=units, activation='sigmoid'))
+            model.add(Dropout(dropout))  # Dropout for regularization
+        model.add(Dense(1, activation='sigmoid'))
+        #opt = SGD(learning_rate=0.0001)
+        #model.compile(loss = "categorical_crossentropy", optimizer = opt)
+        #model.compile(optimizer='adam', loss='binary_crossentropy', metrics=[tensorflow.keras.metrics.AUC(curve='PR', name='auc_pr')])
+        model.compile(optimizer=Adam(learning_rate=1e-3), loss='binary_crossentropy', metrics=[tensorflow.keras.metrics.AUC(curve='PR', name='auc_pr')])
+              await cursor.execute("SELECT name, ticker FROM watchlists WHERE user_id = %s", (user_id,))
                 list_of_lists = await cursor.fetchall()
                 if list_of_lists == None:
                     return {}
