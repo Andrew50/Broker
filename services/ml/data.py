@@ -1,5 +1,6 @@
 import os, numpy as np, time,datetime, mysql.connector, pytz, redis, pickle,  multiprocessing, json, yfinance as yf, io, warnings, pandas as pd
 warnings.filterwarnings("ignore", category=FutureWarning, message="The 'unit' keyword in TimedeltaIndex construction is deprecated")
+import psycopg2
 
 class Data:
 
@@ -13,7 +14,7 @@ class Data:
             cache_host = 'localhost'
             db_host = 'localhost'
         self.cache = redis.Redis(host=cache_host, port=6379)
-        self.db = mysql.connector.connect(host=db_host,port='3306',user='root',password='7+WCy76_2$%g',database='broker')
+        self.db = psycopg2.connect(host=db_host,port='5432',user='root',password='pass')
 
     def check_connection(self):
         try:
@@ -22,6 +23,23 @@ class Data:
         except:
             print('Connection error')
             self.__init__()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class old_Datab:
 
     def get_trainer_queue_size(self,user_id,st):
         return self.cache.llen(str(user_id)+st)

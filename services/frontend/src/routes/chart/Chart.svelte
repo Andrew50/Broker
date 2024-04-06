@@ -1,51 +1,36 @@
 <script>
 	import "./style.css";
 	import { onMount } from "svelte";
-	import { chart } from "./chart.js";
 	import { chart2 } from "./chart2.js";
-	import { chart_data, private_request, backend_request } from "../store.js";
-	import Account from "./Account.svelte";
-// hi
+	import { chart_data, request} from "../store.js";
 	let innerWidth;
 	let innerHeight;
-let ticker = "AAPL";
+    let ticker = "MSFT";
 	let tf = "1d";
-	let dt;
-
-	let TickerBox;
-	let popup = false;
-	let TickerBoxValue = "";
-	let TickerBoxVisible = "none";
-
-	let errorMessage = "";
+	let dt = null;
+    let bars = 100;
+    let pm = false;
+	let Chart;
+	let queryValue = "";
+    let queryError = "";
+    let queryLabel;
 	let chartContainer;
 	const options = {
-		//widthOffset: 400,
         widthOffset: typeof window != 'undefined' ? window.innerWidth * 0.25 : 0,
 		heightOffset: 0,
 		margin: 30,
 		candleWidth: 10,
 	};
-	let Chart;
 	onMount(() => {
 		Chart = new chart2(chartContainer, chart_data, options);
 		chart_data.subscribe((value) => {
-			// console.log("chart_data", value);
-			// if (!Array.isArray(value)) {
-			// 	value = [];
-			// }
 			Chart.updateData(value);
 		});
-		//innerWidth.subscribe((value) => {Chart.updateInnerWidth(value)});
-		//innerHeight.subscribe((value) => {Chart.updateInnerHeight(value)});
 	});
 
 	function resizeInputOnDynamicContent(node) {
 		const measuringElement = document.createElement("div");
 		document.body.appendChild(measuringElement);
-
-		/** duplicate the styles of the existing node, but
-		remove the measuring element from the viewport. */
 		function duplicateAndSet() {
 			const styles = window.getComputedStyle(node);
 			measuringElement.innerHTML = node.value;
@@ -66,14 +51,12 @@ let ticker = "AAPL";
 			node.style.width = `${measuringElement.offsetWidth * 1.5}px`;
 		}
 		duplicateAndSet();
-		/** listen to any style changes */
 		const observer = new MutationObserver(duplicateAndSet);
 		observer.observe(node, {
 			attributes: true,
 			childList: true,
 			subtree: true,
 		});
-
 		node.addEventListener("input", duplicateAndSet);
 		return {
 			destroy() {
@@ -83,48 +66,52 @@ let ticker = "AAPL";
 		};
 	}
 
+    function classifyInput(input){
+        if (queryValue) {
+        return /^[0-9]$/.test(input[0]) ? "Interval" : "Ticker";
+        }else{
+            return null;
+        }
+    }
 	function onKeydown(event) {
-		if (
-			/^[a-zA-Z]$/.test(event.key.toLowerCase()) &&
-			!popup &&
-			!(
-				document.activeElement.tagName === "INPUT" &&
-				document.activeElement.type === "text"
-			) &&
-			!(
-				document.activeElement.tagName === "TEXTAREA" &&
-				document.activeElement.type === "textarea"
-			)
-		) {
-			TickerBoxVisible = "block";
-			popup = true;
-			TickerBoxValue += event.key;
-			event.preventDefault();
-			TickerBox.focus();
-		} else if (event.key == "Enter") {
-			TickerBoxVisible = "none";
-			ticker = TickerBoxValue.toUpperCase();
-			private_request(chart_data, "chart", ticker)
-			.then(result => {
-				errorMessage = result;
-				console.log(errorMessage)
-			})
-			.catch(error => {
-				errorMessage = error.message;
-			});
-
-			// if (! $chart_data) {
-			// 	errorMessage = "Ticker Unavailable"}
-			TickerBoxValue = "";
-			popup = false;
+		if (/^[a-zA-Z0-9]$/.test(event.key.toLowerCase())) {
+            queryError = ""
+			queryValue += event.key;
+            queryLabel = classifyInput(queryValue);
+		}else if (event.key == "Backspace") {
+            queryValue = queryValue.slice(0, -1);
+            queryLabel = classifyInput(queryValue);
+        }else if (event.key == "Escape") {
+            queryValue = "";
+            queryLabel = null;
+            queryError = "";
+        }
+        else if (event.key == "Enter") {
+            switch (queryLabel) {
+                case "Ticker":
+                    ticker = queryValue.toUpperCase();
+                    request(chart_data,true, "getChart", ticker,tf,dt,bars,pm).then((value) => {
+                        queryError = value;
+                    });
+                    break;
+                case "Interval":
+                    tf = queryValue;
+                    request(chart_data,true, "getChart", ticker,tf,dt,bars,pm).then((value) => {
+                        queryError = value;
+                    });
+                    break;
+                case null:
+                    queryError = "Invalid Input";
+                    break;
+            }
+			queryValue = "";
 		}
-		TickerBox.focus();
 	}
 </script>
 
-{#if errorMessage}
-    <div class="error-message">
-        {errorMessage}
+{#if queryError}
+    <div class="queryError">
+        {queryError}
     </div>
 {/if}
 
@@ -133,13 +120,14 @@ let ticker = "AAPL";
 
 <div bind:this={chartContainer} id="chartContainer"></div>
 
-<input
-	class="input-overlay"
-	bind:this={TickerBox}
-	bind:value={TickerBoxValue}
-	style="display: {TickerBoxVisible};"
-	use:resizeInputOnDynamicContent
-/>
+{#if queryValue}
+    <div class="input-overlay">
+        <div class="value">{queryValue}</div>
+        {#if queryLabel}
+            <div class="label">{queryLabel}</div>
+        {/if}
+    </div>
+{/if}
 
 <style>
 	.input-overlay {
@@ -152,8 +140,8 @@ let ticker = "AAPL";
 			255,
 			255,
 			0.5
-		); /* 50% opacity white background */
-		padding: 20px;
+		); 
+        padding: 20px;
 		border-radius: 10px;
 		text-align: center;
 		box-sizing: border-box;
@@ -161,24 +149,31 @@ let ticker = "AAPL";
 		font-size: 40pt;
 		text-transform: uppercase;
 	}
-    .error-message {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 10000; /* High z-index to ensure it's on top */
-    color: #D8000C; /* Modified error color for better visibility */
-    background-color: #FFD2D2; /* Light red background for contrast */
-    padding: 20px 40px; /* Increased padding for a larger appearance */
-    border-radius: 10px; /* Larger border radius for a softer look */
-    border: 2px solid #D8000C; /* Thicker border */
-    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.7); /* More pronounced shadow for depth */
-    font-size: 20px; /* Larger font size for better readability */
-    font-weight: bold; /* Bold font for emphasis */
-    text-align: center;
-    max-width: 600px; /* Fixed max-width for consistent sizing */
-    word-wrap: break-word;
-    box-sizing: border-box; /* Ensures padding doesn't affect the overall width */
-}
-
+    .value {
+        font-size: 24pt; /* Smaller font size for the label */
+    }
+    .label {
+        margin-top: 10px; /* Adjust spacing between value and label */
+        font-size: 14pt; /* Smaller font size for the label */
+        /*color: #000; /* Optional: different color for the label */
+    }
+    .queryError {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10000;
+        color: #D8000C;
+        background-color: #FFD2D2;
+        padding: 20px 40px;
+        border-radius: 10px;
+        border: 2px solid #D8000C;
+        box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.7);
+        font-size: 20px;
+        font-weight: bold;
+        text-align: center;
+        max-width: 600px;
+        word-wrap: break-word;
+        box-sizing: border-box;
+    }
 </style>

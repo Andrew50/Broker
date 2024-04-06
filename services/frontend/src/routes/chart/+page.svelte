@@ -1,12 +1,13 @@
 <script>
-    import Match from './Match.svelte'
+/*    import Match from './Match.svelte'
     import Screener from './Screener.svelte'
-    import Chart from './Chart.svelte'
     import Trainer from './Trainer.svelte'
     import Study from './Study.svelte'
     import Account from './Account.svelte'
     import Settings from './Settings.svelte'
     import Watchlist from './Watchlist.svelte'
+    */
+    import Chart from './Chart.svelte'
     import {auth_data} from '../store.js'
     import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
@@ -60,7 +61,7 @@
     </button>
     
 </div>
-
+<!--
 <Watchlist visible = {active_menu == 'watchlist'}/>
 <Match visible = {active_menu == 'match'}/>
 <Screener visible = {active_menu == 'screener'}/>
@@ -68,6 +69,7 @@
 <Study visible = {active_menu == 'study'}/>
 <Account visible = {active_menu == 'account'}/>
 <Settings visible = {active_menu == 'settings'}/>
+-->
 <Chart/>
 
 

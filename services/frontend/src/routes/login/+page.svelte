@@ -2,12 +2,12 @@
     import Header from '../header.svelte';
   import { goto } from '$app/navigation';
   import { writable } from 'svelte/store';
-  import {auth_data,setups_list,settings,public_request,watchlist_data} from '../store.js'
+  import {auth_data,setups_list,settings,request} from '../store.js'
   
 
   let username = '';
   let password = '';
-  const errorMessage = writable('');
+  let errorMessage = '';
 
   function handleKeydown(event) {
     if (event.key === 'Enter') {
@@ -16,40 +16,26 @@
   }
 
   async function signIn(username, password) {
-    try {
+    let [response, errorMessage] = await request(null,false,'login', username, password);
 
-        const response = await public_request(null,'signin', username, password);
-
-        if (response && response.access_token) {
-            auth_data.set(response.access_token);
-            settings.set(response.settings);
-            setups_list.set(response.setups);
-            watchlist_data.set(response.watchlists);
-            // watchlist_data.update(data => {
-            // response.watchlists.forEach(key => {
-            //     data[key] = []; // Set each key with an empty list
-             //});
-        //return data;
-        
-            await goto('/chart');
-        } else {
-            throw new Error('Invalid Credentials');
-        }
-    } catch (error) {
-        //errorMessage.set('Failed to sign in');
-        errorMessage.set(error);
-
-        password = '';
+    if (response) {
+        auth_data.set(response.token);
+        settings.set(response.settings);
+        setups_list.set(response.setups);
+        //watchlist_data.set(response.watchlists);
+        // watchlist_data.update(data => {
+        // response.watchlists.forEach(key => {
+        //     data[key] = []; // Set each key with an empty list
+         //});
+    //return data;
+        await goto('/chart');
     }
+    console.log(response)
 }
 
   async function signUp(username, password) {
-    try {
-        await public_request(null,'signup', username, password);
-        await signIn(username, password); // Automatically sign in after account creation
-    } catch (error) {
-        errorMessage.set(error.message || 'Failed to create account');
-    }
+    _, errorMessage = request(null,false,'signup', username, password);
+    await signIn(username, password); // Automatically sign in after account creation
 }
 </script>
 
@@ -70,7 +56,7 @@
     <input type="password" placeholder="Password" bind:value={password} on:keydown={handleKeydown} />
     <button on:click={() => signIn(username, password)}>Sign In</button>
 <!--    <button on:click={() => signUp(username, password)} class="create-account-btn">Create Account</button>-->
-    <p class="error-message">{$errorMessage}</p>
+    <p class="error-message">{errorMessage}</p>
   </div>
 </main>
 

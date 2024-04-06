@@ -18,19 +18,32 @@ services:
         networks:
             - compose_network
 
-    worker: 
+    ml: 
         build: #satish was here
-            context: C:/dev/broker/services/worker
+            context: C:/dev/broker/services/ml
             dockerfile: Dockerfile
         restart: on-failure
-        volumes: 
-            - C:/dev/broker/services/worker/:/app/
+          #volumes: 
+          #  - C:/dev/broker/services/worker/:/app/
              #- ./:/app
         depends_on:
             - db
             - cache
         networks:
             - compose_network
+#    algo: 
+#        build: #satish was here
+#            context: C:/dev/broker/services/algo
+#            dockerfile: Dockerfile
+#        restart: on-failure
+#          #        volumes: 
+#          #  - C:/dev/broker/services/worke/:/app/
+#             #- ./:/app
+#        depends_on:
+#            - db
+#            - cache
+#        networks:
+#            - compose_network
     db:
         build:
            context: C:/dev/broker/services/db
@@ -38,9 +51,29 @@ services:
         volumes:
            - db:/var/lib/mysql
         ports:
-            - "3306:3306"
+          - "5432:5432"
         networks:
             - compose_network
+    cache:
+        build:
+            context: C:/dev/broker/services/cache
+            dockerfile: Dockerfile
+        ports:
+          - 6379:6379
+        networks:
+          - compose_network
+        hostname: redis
+        volumes:
+          - cache:/data
+        command: redis-server
+        mem_limit: 12G
+volumes:
+    db:
+    cache:
+
+networks:
+    compose_network:    
+        driver: bridge
 
 
 #    jobs:
@@ -69,17 +102,6 @@ services:
 #        networks:
 #            - compose_network
             
-    cache:
-        image: redis:latest
-        ports:
-          - 6379:6379
-        networks:
-          - compose_network
-        hostname: redis
-        volumes:
-          - cache:/data
-        command: redis-server
-        mem_limit: 12G
 
 #    redis:
 #        image: redislabs/redistimeseries:latest
@@ -94,10 +116,3 @@ services:
 #    #command: redis-server --loadmodule /usr/lib/redis/modules/redistimeseries.so
 #        mem_limit: 12G
 
-volumes:
-    db:
-    cache:
-
-networks:
-    compose_network:    
-        driver: bridge

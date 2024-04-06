@@ -1,5 +1,10 @@
-FROM mysql:latest
-ENV MYSQL_ROOT_PASSWORD=7+WCy76_2$%g
+FROM timescale/timescaledb:latest-pg14
+ENV POSTGRES_PASSWORD=pass
 COPY init.sql /docker-entrypoint-initdb.d/
-COPY samples.csv /var/lib/mysql-files/
-COPY tickers.csv /var/lib/mysql-files/
+COPY samples.csv /postgres-data/
+COPY tickers.csv /postgres-data/
+ARG CONF_FILE=dev
+COPY ${CONF_FILE}.conf /etc/postgresql/postgresql.conf
+EXPOSE 5432
+
+

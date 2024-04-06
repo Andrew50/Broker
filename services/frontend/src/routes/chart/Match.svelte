@@ -1,9 +1,11 @@
 <script>
     import {
-        chart_data,
-        private_request,
-        backend_request,
+        request,
         match_data,
+        chart_data
+        /*chart_data,
+        private_request,
+        match_data,*/
     } from "../store.js";
     let ticker = "JBL";
     let tf = "1d";
@@ -17,7 +19,7 @@
     {#if visible}
         <form
             on:submit|preventDefault={() =>
-                backend_request(match_data, "Match-get", ticker, tf, dt)}
+                request(match_data,true, "Match-get", ticker, tf, dt)}
         >
             <div class="form-group">
                 <input
@@ -65,7 +67,7 @@
                     {#each $match_data as item}
                         <tr
                             on:click={() =>
-                                private_request(
+                                request(
                                     chart_data,
                                     "chart",
                                     item[0],
