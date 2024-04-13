@@ -1,3 +1,4 @@
+ALTER DATABASE postgres SET timezone TO 'America/New_York';
 CREATE TABLE tickers (
     ticker_id SMALLSERIAL PRIMARY KEY,
     ticker VARCHAR(10) NOT NULL UNIQUE
@@ -7,7 +8,7 @@ CREATE INDEX idx_ticker ON tickers (ticker);
 CREATE TABLE quotes_1_extended (
     ticker_id INTEGER NOT NULL,
     extended_hours BOOLEAN NOT NULL,
-    t TIMESTAMP NOT NULL,
+    t TIMESTAMPTZ NOT NULL,
     open FLOAT NOT NULL,
     high FLOAT NOT NULL,
     low FLOAT NOT NULL,
@@ -124,11 +125,11 @@ CREATE INDEX idx_setups ON setups (user_id, setup_name);
 CREATE TABLE annotations ( --use join with setups to get the setup name
     annotation_id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
-    completed BOOLEAN NOT NULL,
-    setup_id INTEGER NOT NULL,
+    completed BOOLEAN NOT NULL DEFAULT FALSE,
+    setup_id INTEGER DEFAULT NULL,
     ticker_id INTEGER NOT NULL,
     t TIMESTAMP NOT NULL,
-    entry TEXT,
+    entry TEXT DEFAULT NULL,
     FOREIGN KEY (ticker_id) REFERENCES tickers(ticker_id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     UNIQUE (setup_id,ticker_id,t)
@@ -138,11 +139,11 @@ CREATE TABLE studies ( --might need to change evntually if you want to get multi
     -- sorting by user will be way better
     study_id SERIAL PRIMARY KEY,
     setup_id INTEGER NOT NULL,
-    completed BOOLEAN NOT NULL,
+    completed BOOLEAN NOT NULL DEFAULT FALSE,
     ticker_id INTEGER NOT NULL,
     t TIMESTAMP NOT NULL,
-    pre_entry TEXT,
-    post_entry TEXT,
+    pre_entry TEXT DEFAULT NULL,
+    post_entry TEXT DEFAULT NULL,
     FOREIGN KEY (setup_id) REFERENCES setups(setup_id) ON DELETE CASCADE,
     FOREIGN KEY (ticker_id) REFERENCES tickers(ticker_id) ON DELETE CASCADE,
     UNIQUE (setup_id, ticker_id, t)
@@ -151,9 +152,9 @@ CREATE INDEX idx_studies ON studies (setup_id, completed);
 CREATE TABLE journals (
     journal_id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
-    completed BOOLEAN NOT NULL,
+    completed BOOLEAN NOT NULL DEFAULT FALSE,
     t TIMESTAMP NOT NULL,
-    entry TEXT,
+    entry TEXT DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     UNIQUE (user_id, t)
 );
@@ -161,7 +162,7 @@ CREATE INDEX idx_journals ON journals (user_id, completed);
 CREATE TABLE samples (
     sample_id SERIAL PRIMARY KEY,
     setup_id INTEGER NOT NULL,
-    value BOOLEAN,
+    value BOOLEAN DEFAULT NULL,
     ticker_id INTEGER NOT NULL,
     t TIMESTAMP NOT NULL,
     FOREIGN KEY (setup_id) REFERENCES setups(setup_id) ON DELETE CASCADE,

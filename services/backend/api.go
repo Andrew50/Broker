@@ -10,20 +10,25 @@ import (
     "api/data"
 )
 
-type Request struct {
-    Function string `json:"function"`
-    Arguments []string `json:"arguments"`
-}
-
-var privateFunc = map[string]func(*data.Conn, int, []string) (interface{}, error){
-    "getJournal": tasks.GetJournal,
-    "setJournal": tasks.SetJournal,
-    "getChart": tasks.GetChart,
-}
-
-var publicFunc = map[string]func(*data.Conn, []string) (interface{}, error) {
+var publicFunc = map[string]func(*data.Conn, json.RawMessage) (interface{}, error) {
     "signup": Signup,
     "login": Login,
+}
+
+var privateFunc = map[string]func(*data.Conn, int, json.RawMessage) (interface{}, error){
+ //   "getJournal": tasks.GetJournal,
+//    "setJournal": tasks.SetJournal,
+    "getChart": tasks.GetChart,
+    "getAnnotations": tasks.GetAnnotations,
+    "delAnnotation": tasks.DelAnnotation,
+    "setAnnotation": tasks.SetAnnotation,
+    "getAnnotationEntry": tasks.GetAnnotationEntry,
+    "newAnnotation": tasks.NewAnnotation,
+}
+
+type Request struct {
+    Function string `json:"func"`
+    Arguments json.RawMessage `json:"args"`
 }
 
 func addCORSHeaders(w http.ResponseWriter) {
@@ -48,11 +53,13 @@ func public_handler(conn *data.Conn) http.HandlerFunc {
         if r.Method == "OPTIONS" {
             return
         }
+        fmt.Println("got public request")
         var req Request
         err := json.NewDecoder(r.Body).Decode(&req)
         if handleError(w, err, "decoding request") {
             return
         }
+        fmt.Println(req.Function)
         if function, ok := publicFunc[req.Function]; ok {
             result, err := function(conn, req.Arguments)
             if handleError(w, err, fmt.Sprintf("executing function %s", req.Function)) {
@@ -65,6 +72,7 @@ func public_handler(conn *data.Conn) http.HandlerFunc {
             return
         } else {
             http.Error(w, fmt.Sprintf("invalid function: %s", req.Function), http.StatusBadRequest)
+            fmt.Printf("invalid function: %s", req.Function)
             return
         }
     }
@@ -76,16 +84,18 @@ func private_handler(conn *data.Conn) http.HandlerFunc {
         if r.Method != "POST" {
             return 
         }
+        fmt.Println("got private request")
         token_string := r.Header.Get("Authorization")
         user_id, err := validate_token(token_string)
         if handleError(w, err, "validating token") {
             return
         }
         var req Request
-        err = json.NewDecoder(r.Body).Decode(&req)
-        if handleError(w, err, "decoding request") {
+        if handleError(w, json.NewDecoder(r.Body).Decode(&req), "decoding request") {
             return
         }
+        fmt.Println(req.Function)
+
         if function, ok := privateFunc[req.Function]; ok {
             result,err := function(conn,user_id, req.Arguments)
             if handleError(w, err, fmt.Sprintf("executing function %s", req.Function)) {
@@ -97,6 +107,7 @@ func private_handler(conn *data.Conn) http.HandlerFunc {
             }
         } else {
             http.Error(w, fmt.Sprintf("invalid function: %s", req.Function), http.StatusBadRequest)
+            fmt.Printf("invalid function: %s", req.Function)
             return
         }
     }
@@ -106,6 +117,8 @@ func main() {
     _, exists := os.LookupEnv("IN_CONTAINER")
     conn := data.GetConn(exists)
     defer conn.DB.Close()
+    quit := data.StartScheduler(conn)
+    defer close(quit)
     http.HandleFunc("/public", public_handler(conn))
     http.HandleFunc("/private", private_handler(conn))
     fmt.Println("Server running on port 5057")

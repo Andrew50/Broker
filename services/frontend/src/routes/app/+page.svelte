@@ -1,4 +1,5 @@
 <script>
+    import Annotate from './Annotate.svelte'
 /*    import Match from './Match.svelte'
     import Screener from './Screener.svelte'
     import Trainer from './Trainer.svelte'
@@ -8,7 +9,7 @@
     import Watchlist from './Watchlist.svelte'
     */
     import Chart from './Chart.svelte'
-    import {auth_data} from '../store.js'
+    import {auth_data} from '../../store.js'
     import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
     import { get } from 'svelte/store';
@@ -38,6 +39,10 @@
 
 <div class="button-container">
     
+    <button class="button {active_menu == 'annotate' ? 'active' : ''}" on:click={() =>toggle_menu('annotate')}>
+        <im class="icon" src="/annotate.png" alt="" />
+    </button>
+<!--
     <button class="button {active_menu == 'watchlist' ? 'active' : ''}" on:click={() =>toggle_menu('watchlist')}>
         <im class="icon" src="/watchlist.png" alt="" />
     </button>
@@ -59,8 +64,10 @@
     <button class="button {active_menu == 'settings' ? 'active' : ''}" on:click={() =>toggle_menu('settings')}>
         <im class="icon" src="/settings.png" alt="" />
     </button>
+    -->
     
 </div>
+<Annotate visible = {active_menu == 'annotate'}/>
 <!--
 <Watchlist visible = {active_menu == 'watchlist'}/>
 <Match visible = {active_menu == 'match'}/>

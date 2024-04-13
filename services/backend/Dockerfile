@@ -7,6 +7,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 FROM alpine:3.19
 ENV IN_CONTAINER=true
 RUN apk --no-cache add ca-certificates
+RUN apk add --no-cache tzdata
 WORKDIR /root/
 COPY --from=0 /go/main .
 CMD ["./main"]

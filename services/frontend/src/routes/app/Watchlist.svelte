@@ -1,6 +1,6 @@
 <script>
     import { writable, get } from "svelte/store";
-    import { chart_data, private_request, watchlist_data } from "../store.js";
+    import { chart_data, private_request, watchlist_data } from "../../store.js";
     import Table from "./Table.svelte";
 
     export let visible = false;

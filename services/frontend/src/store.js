@@ -1,11 +1,12 @@
-//import { bind } from 'svelte/internal';
 import { writable } from 'svelte/store';
 import { get } from 'svelte/store';
+export let annotations = writable([]);
 export let screener_data = writable([]);
-export let chart_data = writable([]);
+export let chartQuery = writable([]);
 export let match_data = writable([[], [], []]);
 export let auth_data = writable(null);
 export let setups_list = writable([]);
+export let currentEntry = writable("");
 export let watchlist_data = writable({});
 export let settings = writable({});
 export const focus = writable(null);
@@ -18,10 +19,36 @@ if (typeof window !== 'undefined') {
         base_url = window.location.origin;
     }
 }
-function logout() {
+export function logout() {
     auth_data.set(null);
     goto('/auth');
 }
+
+export function toDT(timestamp, format = 1) {
+    // Create a Date object in UTC
+    const date = new Date(timestamp);
+    let options;
+    switch (format) {
+        case 1:
+            // Format the date as a local date string
+            return date.toLocaleDateString('en-US');
+        case 2:
+            options = {
+                year: 'numeric', month: 'numeric', day: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                hour12: false,  // This will remove AM/PM
+            };
+            return new Intl.DateTimeFormat('en-US', options).format(date);
+        case 3:
+            options = {
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                hour12: false,  // This will remove AM/PM
+            };
+            return new Intl.DateTimeFormat('en-US', options).format(date);
+    }
+}
+
+
 
 function getAuthHeaders() {
     const token = get(auth_data);
@@ -39,35 +66,64 @@ export async function request(bind_variable, isPrivate, func, ...args) {
         url = `${base_url}/public`;
         headers = { 'Content-Type': 'application/json' };
     }
-    args = args.map(arg => arg != null ? arg.toString() : arg);
+    let argsObj = {};
+    for (let i = 0; i < args.length; i++){
+        argsObj[`a${i+1}`] = args[i];
+    }
     const payload = {
-        function: func,
-        arguments: args
+        func: func,
+        args: argsObj
     };
-    console.log('Request sent to:', url, 'func:', func, 'args:', args);
     const response = await fetch(url, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(payload)
     });
-    let result = await response.json();
-    console.log('result: ', result);
-    if (bind_variable == null) {
-        if (response.ok) {
-            return [result, null]
-        }else{
-            return [null, result]
-        }
+    let result, err;
+    if (response.ok){
+        result = await response.json();
+        err = null;
+    }else{
+        result = null;
+        err = await response.text();
     }
-    else{
-        if (response.ok) {
+    console.log('request:', payload,'result:', result, 'error:', err);
+    if (bind_variable == null){
+        return [result, err];
+    }else{
+        if (err == null){
             bind_variable.set(result);
-            return null
-        }else{
-            return result //this is an error message from backend
         }
+        return err;
     }
 }
+
+//args for reqest = [index, buffer, ...args]
+export async function autoLoad(bind_variable, buffer, func, args, currentPos){
+    let loop = true;
+    async function load(){
+        const current_data = get(bind_variable);
+        console.log('autoloading');
+        if (currentPos() + buffer >= current_data.length){
+            const index = current_data.length > 0 ? current_data[current_data.length - 1][0] : null;
+            let [new_data, error] = await request(null, true, func,index, buffer, ...args);
+            if (error != null){
+                console.log('error:', error);
+            }else if (new_data == null || new_data.length == 0){
+                loop = false;
+            }else{
+                bind_variable.set([...current_data, ...new_data]);
+            }
+        }
+        if (loop){
+            setTimeout(load, 1000);
+        }
+    }
+    load();
+    return () => {loop = false};
+}
+
+
 
 //export async function public_request(bind_variable, func, ...args) {
 //    const url = `${base_url}/public`;

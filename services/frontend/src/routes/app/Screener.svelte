@@ -8,7 +8,7 @@
         private_request,
         backend_request,
         chart_data,
-    } from "../store.js";
+    } from "../../store.js";
     import Table from "./Table.svelte";
 
     let ticker = "";

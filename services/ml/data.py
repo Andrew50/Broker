@@ -14,7 +14,7 @@ class Data:
             cache_host = 'localhost'
             db_host = 'localhost'
         self.cache = redis.Redis(host=cache_host, port=6379)
-        self.db = psycopg2.connect(host=db_host,port='5432',user='root',password='pass')
+        self.db = psycopg2.connect(host=db_host,port='5432',user='postgres',password='pass')
 
     def check_connection(self):
         try:
@@ -25,18 +25,68 @@ class Data:
             self.__init__()
 
 
+    def getTickers(self):
+        with self.db.cursor() as cursor:
+            cursor.execute("SELECT * FROM tickers;")
+            return cursor.fetchall()
 
+    @staticmethod
+    def format_datetime(dt,reverse=False):
+        if reverse:
+            return datetime.datetime.fromtimestamp(dt)
+        if type(dt) == int or type(dt) == float or type(dt) == np.int64 or type(dt) == np.float64:
+            return dt
+        if dt is None or dt == '': return None
+        if dt == 'current': return datetime.datetime.now(pytz.timezone('EST'))
+        if isinstance(dt, str):
+            try: dt = datetime.datetime.strptime(dt, '%Y-%m-%d')
+            except: dt = datetime.datetime.strptime(dt, '%Y-%m-%d %H:%M:%S')
+        time = datetime.time(dt.hour, dt.minute, 0)
+        dt = datetime.datetime.combine(dt.date(), time)
+        if dt.hour == 0 and dt.minute == 0:
+            time = datetime.time(9, 30, 0)
+            dt = datetime.datetime.combine(dt.date(), time)
+        dt = dt.timestamp()
+        return dt
 
-
-
-
-
-
-
-
-
-
-
+    @staticmethod
+    def findex(df, dt):
+        dt = Data.format_datetime(dt)
+        i = int(len(df)/2)      
+        k = int(i/2)
+        while k != 0:
+            #date = df.index[i]
+            date = df[i,0]
+            if date > dt:
+                i -= k
+            elif date < dt:
+                i += k
+            k = int(k/2)
+        while df[i,0] < dt:
+            i += 1
+        while df[i,0] > dt:
+            i -= 1
+            if i < 0:
+                raise TimeoutError
+        return i
+    
+    @staticmethod
+    def is_market_open(pm = False):
+        dt = datetime.datetime.now(pytz.timezone('US/Eastern'))
+        if (dt.weekday() >= 5):
+            return False
+        hour = dt.hour
+        minute = dt.minute
+        if pm:
+            if hour >= 16 or hour < 4:
+                return False
+            return True
+        else:
+            if hour >= 10 and hour <= 16:
+                return True
+            elif hour == 9 and minute >= 30:
+                return True
+            return False
 
 
 class old_Datab:

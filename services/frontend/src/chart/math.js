@@ -1,5 +1,13 @@
 export const math = {};
 
+
+math.sigFigs = (n, sig) => {
+    if (n === 0)
+        return 0
+    var mult = Math.pow(10,sig - Math.floor(Math.log(n < 0 ? -n : n) / Math.LN10) - 1);
+    return Math.round(n * mult) / mult;
+}
+
 math.equals = (p1, p2) => {
     return p1[0] == p2[0] && p1[1] == p2[1];
 }

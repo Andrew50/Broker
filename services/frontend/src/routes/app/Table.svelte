@@ -1,6 +1,6 @@
 <script>
     import { get } from "svelte/store"; // To get values from Svelte stores
-    import { watchlist_data } from "../store.js";
+    import { watchlist_data } from "../../store.js";
     let contextMenuVisible = false;
     let contextMenuPosition = { x: 0, y: 0 };
     let selectedItem = null; // To store the clicked item

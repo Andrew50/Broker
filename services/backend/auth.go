@@ -6,6 +6,7 @@ import (
     "github.com/golang-jwt/jwt/v4"
     "time"
     "fmt"
+    "encoding/json"
 )
 
 var private_key = []byte("2dde9fg9")
@@ -33,27 +34,36 @@ type LoginResponse struct {
     Settings string `json:"settings"`
     Setups []Setup `json:"setups"`
 }
-
-func Signup(conn *data.Conn, args []string) (interface{}, error) {
-    if len(args) != 2 {
-        return "", fmt.Errorf("expected 2 arguments, got %d", len(args))
+type SignupArgs struct {
+    Username string `json:"a1"`
+    Password string `json:"a2"`
+}
+func Signup(conn *data.Conn, rawArgs json.RawMessage) (interface{}, error) {
+    var a SignupArgs
+    if err := json.Unmarshal(rawArgs, &a); err != nil {
+        return nil, fmt.Errorf("Signup invalid args: %v", err)
     }
-    _, err := conn.DB.Exec(context.Background(), "INSERT INTO users (username, password) VALUES ($1, $2)", args[0], args[1])
+    _, err := conn.DB.Exec(context.Background(), "INSERT INTO users (username, password) VALUES ($1, $2)", a.Username, a.Password)
     if err != nil {
         return "", err
     }
-    result, err := Login(conn, args)
+    result, err := Login(conn, rawArgs)
     return result, err
 }
 
-func Login(conn *data.Conn, args []string) (interface{}, error) {
-    if len(args) != 2 {
-        return "", fmt.Errorf("expected 2 arguments, got %d", len(args))
+type LoginArgs struct {
+    Username string `json:"a1"`
+    Password string `json:"a2"`
+}
+func Login(conn *data.Conn, rawArgs json.RawMessage) (interface{}, error) {
+    var a LoginArgs
+    if err := json.Unmarshal(rawArgs, &a); err != nil {
+        return nil, fmt.Errorf("Login invalid args: %v", err)
     }
     var user_id int
     var settings string
     var setups []Setup
-    err := conn.DB.QueryRow(context.Background(), "SELECT user_id, settings FROM users WHERE username=$1 AND password=$2", args[0], args[1]).Scan(&user_id, &settings)
+    err := conn.DB.QueryRow(context.Background(), "SELECT user_id, settings FROM users WHERE username=$1 AND password=$2", a.Username, a.Password).Scan(&user_id, &settings)
     if err != nil {
         return nil, err
     }

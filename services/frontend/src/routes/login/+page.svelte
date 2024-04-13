@@ -2,8 +2,7 @@
     import Header from '../header.svelte';
   import { goto } from '$app/navigation';
   import { writable } from 'svelte/store';
-  import {auth_data,setups_list,settings,request} from '../store.js'
-  
+  import {auth_data,setups_list,settings,request} from '../../store.js'
 
   let username = '';
   let password = '';
@@ -16,9 +15,14 @@
   }
 
   async function signIn(username, password) {
-    let [response, errorMessage] = await request(null,false,'login', username, password);
+    let [response, err] = await request(null,false,'login', username, password);
 
-    if (response) {
+
+    if (err){
+        errorMessage = err;
+    }
+    else{
+
         auth_data.set(response.token);
         settings.set(response.settings);
         setups_list.set(response.setups);
@@ -28,9 +32,8 @@
         //     data[key] = []; // Set each key with an empty list
          //});
     //return data;
-        await goto('/chart');
+        await goto('/app');
     }
-    console.log(response)
 }
 
   async function signUp(username, password) {
@@ -57,6 +60,9 @@
     <button on:click={() => signIn(username, password)}>Sign In</button>
 <!--    <button on:click={() => signUp(username, password)} class="create-account-btn">Create Account</button>-->
     <p class="error-message">{errorMessage}</p>
+    {#if errorMessage}
+      <p class="error-message">{errorMessage}</p>
+    {/if}
   </div>
 </main>
 

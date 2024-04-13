@@ -5,7 +5,7 @@
         chart_data,
         private_request,
         backend_request,
-    } from "../store.js";
+    } from "../../store.js";
     import Table from "./Table.svelte";
     export let visible = false;
     import { onMount } from "svelte";

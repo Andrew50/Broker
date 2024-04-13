@@ -1,5 +1,5 @@
 <script>
-    import { chart_data, private_request, match_data } from "../store.js";
+    import { chart_data, private_request, match_data } from "../../store.js";
     export let visible = false;
     let innerHeight;
 </script>
