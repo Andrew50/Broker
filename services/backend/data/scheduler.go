@@ -18,7 +18,7 @@ func StartScheduler(conn *Conn) chan struct{} {
             case <-ticker.C:
                 now := time.Now().In(location)
                 if c := checkSchedule(now); c != 0 {
-                    Queue(conn, "update-update", []interface{}{c})
+                    Queue(conn, 1, "update-update", []interface{}{c})
                 }
             case <-quit:
                 ticker.Stop()

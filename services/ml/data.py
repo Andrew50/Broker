@@ -51,7 +51,7 @@ class Data:
 
     @staticmethod
     def findex(df, dt):
-        dt = Data.format_datetime(dt)
+#        dt = Data.format_datetime(dt)
         i = int(len(df)/2)      
         k = int(i/2)
         while k != 0:

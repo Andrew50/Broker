@@ -24,6 +24,7 @@ var privateFunc = map[string]func(*data.Conn, int, json.RawMessage) (interface{}
     "setAnnotation": tasks.SetAnnotation,
     "getAnnotationEntry": tasks.GetAnnotationEntry,
     "newAnnotation": tasks.NewAnnotation,
+    "getScreener": tasks.GetScreener,
 }
 
 type Request struct {

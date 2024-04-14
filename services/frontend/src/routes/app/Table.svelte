@@ -43,14 +43,16 @@
     export let clickHandlerArgs = [];
 
     function handleRowClick(item) {
+        const resolvedArgs = clickHandlerArgs.map((arg) =>
+            headers.includes(arg) ? item[headers.indexOf(arg)] : arg,
+        );
         if (typeof onRowClick === "function") {
-            // Resolve dynamic arguments based on the item's values
-            const resolvedArgs = clickHandlerArgs.map((arg) =>
-                headers.includes(arg) ? item[headers.indexOf(arg)] : arg,
-            );
 
             onRowClick(...resolvedArgs);
+        }else{
+            onRowClick.set(resolvedArgs);
         }
+
     }
 </script>
 

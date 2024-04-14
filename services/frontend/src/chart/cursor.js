@@ -21,8 +21,11 @@ chart.prototype.drawCursor = function(){
     this.ctx.clearRect(this.canvas.width - this.margin, this.cursorPos.y - 6, this.margin, 12);
     this.drawCursorText(math.sigFigs(price, 3), [this.canvas.width - 2, this.cursorPos.y], this.margin * 0.5);
     //aj bs
+    //console.log(this.a + xOffset - (this.cursorPos.x/this.candleWidth));
+    const index = Math.round(this.a - (this.dataBounds.right - roundCandle) + 1);
+    //console.log(this.dataBounds.left, this.dataBounds.right);
     this.currentPrice = price;
-    this.currentT = this.data[roundCandle][0];
+    this.currentT = this.data[this.data.length + index][0];
     let arbOffset;
     let arg;
     if (this.isIntraday()) {

@@ -10,7 +10,7 @@ def process_tasks():
 	r = redis.Redis(host='redis', port=6379)
 	data = Data(True)
 	while True:
-		task = r.brpop('task_queue_1', timeout=1000)
+		task = r.brpop('temp_1', timeout=1000)
 		if not task:
 			data.check_connection()
 		else:

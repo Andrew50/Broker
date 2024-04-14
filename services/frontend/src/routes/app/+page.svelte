@@ -1,7 +1,7 @@
 <script>
     import Annotate from './Annotate.svelte'
-/*    import Match from './Match.svelte'
     import Screener from './Screener.svelte'
+/*    import Match from './Match.svelte'
     import Trainer from './Trainer.svelte'
     import Study from './Study.svelte'
     import Account from './Account.svelte'
@@ -24,7 +24,6 @@
         } else {
             active_menu = menuName; // Open the clicked menu and store its name as the active one
         }
-    console.log(active_menu)
     }
 
 
@@ -42,15 +41,15 @@
     <button class="button {active_menu == 'annotate' ? 'active' : ''}" on:click={() =>toggle_menu('annotate')}>
         <im class="icon" src="/annotate.png" alt="" />
     </button>
+    <button class="button {active_menu == 'screener' ? 'active' : ''}" on:click={() =>toggle_menu('screener')}>
+        <img class="icon" src="/screener.png" alt="" />
+    </button>
 <!--
     <button class="button {active_menu == 'watchlist' ? 'active' : ''}" on:click={() =>toggle_menu('watchlist')}>
         <im class="icon" src="/watchlist.png" alt="" />
     </button>
     <button class="button {active_menu == 'match' ? 'active' : ''}" on:click={() =>toggle_menu('match')}>
         <img class="icon" src="/match.png" alt="" />
-    </button>
-    <button class="button {active_menu == 'screener' ? 'active' : ''}" on:click={() =>toggle_menu('screener')}>
-        <img class="icon" src="/screener.png" alt="" />
     </button>
     <button class="button {active_menu == 'trainer' ? 'active' : ''}" on:click={() =>toggle_menu('trainer')}>
         <img class="icon" src="/trainer.png" alt="" />
@@ -68,10 +67,10 @@
     
 </div>
 <Annotate visible = {active_menu == 'annotate'}/>
+<Screener visible = {active_menu == 'screener'}/>
 <!--
 <Watchlist visible = {active_menu == 'watchlist'}/>
 <Match visible = {active_menu == 'match'}/>
-<Screener visible = {active_menu == 'screener'}/>
 <Trainer visible = {active_menu == 'trainer'}/>
 <Study visible = {active_menu == 'study'}/>
 <Account visible = {active_menu == 'account'}/>

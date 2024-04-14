@@ -2,8 +2,10 @@ package data
 
 import (
     "context"
+    "time"
     "encoding/json"
     "github.com/google/uuid"
+    "fmt"
 )
 
 type QueueArgs struct {
@@ -12,7 +14,7 @@ type QueueArgs struct {
     Args []interface{} `json:"args"`
 }
 
-func Queue (conn *Conn, funcName string, args []interface{}) (string, error) {
+func Queue (conn *Conn, queueNum int, funcName string, args []interface{}) (string, error) {
     id := uuid.New().String()
     taskArgs := QueueArgs{
         ID: id,
@@ -24,21 +26,23 @@ func Queue (conn *Conn, funcName string, args []interface{}) (string, error) {
         return "", err
     }
 
-    if err := conn.Cache.LPush(context.Background(), "task_queue_1", serializedTask).Err(); err != nil {
+    queue := fmt.Sprintf("temp_%d", queueNum)
+    if err := conn.Cache.LPush(context.Background(), queue, serializedTask).Err(); err != nil {
         return "", err
     }
 
-    //long polling
-    return "", nil
+    return id, nil
 }
 
 func Poll (conn *Conn, taskID string) (interface{}, error) {
     var result interface{}
-    for true {
+    start := time.Now()
+    for time.Now().Sub(start) < 100 * time.Second{
         result = conn.Cache.Get(context.Background(), taskID).Val()
         if result != nil {
-            break
+            conn.Cache.Del(context.Background(), taskID)
+            return result, nil
         }
     }
-    return result, nil
+    return nil, fmt.Errorf("timeout")
 }

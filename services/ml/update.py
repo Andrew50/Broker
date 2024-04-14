@@ -26,10 +26,13 @@ def setCache(data, df, ticker_id, screenerTensor, screenerKey):
 def setData(cursor,ticker_id,data,df):
     if data.is_market_open(pm = True):
         df = df[:-1]
-    cursor.execute('SELECT EXTRACT(EPOCH FROM MAX(t)) FROM quotes_1_extended WHERE ticker_id = %s;', (ticker_id,))
+    #cursor.execute('SELECT EXTRACT(EPOCH FROM MAX(t)) FROM quotes_1_extended WHERE ticker_id = %s;', (ticker_id,))
+    cursor.execute('SELECT MAX(t) FROM quotes_1_extended WHERE ticker_id = %s;', (ticker_id,))
     last_timestamp = cursor.fetchone()[0]
+    print(type(last_timestamp))
+    print(type(df[0][0]))
     if last_timestamp is not None:
-        last_timestamp = int(last_timestamp)
+        #last_timestamp = int(last_timestamp)
         index = data.findex(df, last_timestamp) 
         df = df[index + 1:,:]
     df = [(ticker_id, row[0].time() >= market_open and row[0].time() < market_close,
@@ -61,11 +64,13 @@ def update1(data):
             np.set_printoptions(threshold=np.inf)
             #setCache(data,df,ticker_id,screenerTensor,screenerKey)
             setData(cursor,ticker_id,data,df)
+#    cursor.execute('CALL refresh_contin
 
 def update2(data):
     #new tickers?
-#clear temp (cahce, any key thats just a uuid)
-    data.cache.delete('temp')
+#clear temp (cahce, any key thats just a uuid) -- dont because just delete after each 
+    data.cache.delete('temp_1')
+    data.cache.delete('temp_2')
 #add journals
     query = """
     INSERT INTO journals (user_id, t)

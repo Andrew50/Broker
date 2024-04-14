@@ -71,7 +71,7 @@ export class chart {
                 const a1 = (this.a + ((this.prev - evt.clientX) / this.candleWidth));
                 const a2 = (this.data.length + (this.a) - Math.floor((this.pixelBounds.right) / this.candleWidth) + (this.prev - evt.clientX) / this.candleWidth);
                 //const a2 = Math.ceil(this.a) - Math.floor((this.pixelBounds.right) / this.candleWidth)
-                console.log(a1, a2);
+                //console.log(a1, a2);
                 if (a1 < -1 && a2 >= -1) {
                 //if (a2 < 0) {
                     this.xAxisOffset = this.xAxisOffset - ((this.prev - neww) / this.candleWidth);

@@ -5,102 +5,52 @@
     import {
         screener_data,
         setups_list,
-        private_request,
-        backend_request,
-        chart_data,
+        chartQuery,
+        request,
     } from "../../store.js";
     import Table from "./Table.svelte";
-
     let ticker = "";
     let datetime = "";
-    // let selectedSetups = writable([]);
-    //console.log(setups_list.get)
-    let selectedSetups = new Set($setups_list.map((subArray) => subArray[0]));
-    console.log("god", selectedSetups);
+    let selectedSetups = new Set($setups_list.map((subArray) => subArray.setup_name));
     export let visible = false;
     let innerWidth;
     let innerHeight;
-    // Function to handle checkbox changes
-    //     onMount(() => {
-    //     selectedSetups.set($setups_list.map(setup => setup[0]));
-    // });
-
-    // When updating selectedSetups, use the store's update method
     function handleCheckboxChange(setup, event) {
         if (event.target.checked) {
             selectedSetups.add(setup);
         } else {
             selectedSetups.delete(setup);
         }
-        console.log(selectedSetups);
-        // selectedSetups.update(currentSelected => {
-        //     if (event.target.checked) {
-        //         return [...currentSelected, setup[0]];
-        //     } else {
-        //         return currentSelected.filter(s => s !== setup);
-        //     }
-        // });
     }
-    // ... [rest of your script] ...
 </script>
 
 <div class="popout-menu" style="min-height: {innerHeight}px;" class:visible>
     {#if visible}
-        <!-- Display setups_list as a checklist above the inputs -->
         {#each $setups_list as setup}
             <div>
                 <label class="setup-item">
                     <input
                         type="checkbox"
                         checked
-                        on:change={(e) => handleCheckboxChange(setup[0], e)}
+                        on:change={(e) => handleCheckboxChange(setup.setup_name, e)}
                     />
-                    {setup[0]}
+                    {setup.setup_name}
                     <!-- {setup.join(' - ')} -->
                 </label>
             </div>
         {/each}
-
-        <form
-            on:submit|preventDefault={() =>
-                backend_request(screener_data, "Screener-get", [
+        <button
+            on:click={() =>
+                request(screener_data, true, "getScreener", [
                     ...selectedSetups,
-                ])}
-            class="input-form"
-        >
-            <div class="form-group">
-                <label for="ticker">Ticker:</label>
-                <input
-                    type="text"
-                    id="ticker"
-                    bind:value={ticker}
-                    placeholder="Ticker"
-                />
-            </div>
-            <div class="form-group">
-                <label for="datetime">Datetime:</label>
-                <input
-                    type="text"
-                    id="datetime"
-                    bind:value={datetime}
-                    placeholder="YYYY-MM-DD HH:MM"
-                />
-            </div>
-            <input type="submit" value="Screen" />
-        </form>
-
+                ])
+            }> Screen </button>
         <Table
             headers={["Ticker", "Setup", "Value"]}
             rows={$screener_data}
-            onRowClick={private_request}
-            clickHandlerArgs={[chart_data, "chart", "Ticker", "1d"]}
+            onRowClick={request}
+            clickHandlerArgs={[chartQuery, "chart", "Ticker", "1d"]}
         />
-        <!-- <div class="screener-data">
-            <!-- Display screener_data -->
-        <!--      {#each $screener_data as dataRow}
-                <div>{dataRow[0]} - {dataRow[1]}</div>
-            {/each} -->
-        <!-- </div> -->
     {/if}
 </div>
 
@@ -127,3 +77,30 @@
     }
     /* Add other styles as needed */
 </style>
+        <!--<form
+            on:submit|preventDefault={() =>
+                request(screener_data, true,"getScreener", [
+                    ...selectedSetups,
+                ])}
+            class="input-form"
+        >
+            <div class="form-group">
+                <label for="ticker">Ticker:</label>
+                <input
+                    type="text"
+                    id="ticker"
+                    bind:value={ticker}
+                    placeholder="Ticker"
+                />
+            </div>
+            <div class="form-group">
+                <label for="datetime">Datetime:</label>
+                <input
+                    type="text"
+                    id="datetime"
+                    bind:value={datetime}
+                    placeholder="YYYY-MM-DD HH:MM"
+                />
+            </div>
+            <input type="submit" value="Screen" />
+        </form> -->

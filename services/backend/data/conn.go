@@ -4,12 +4,14 @@ import (
     "log"
     "context"
     "github.com/jackc/pgx/v4/pgxpool"
+    "github.com/redisAI/redisai-go/redisai"
     "github.com/go-redis/redis/v8"
 )
 
 type Conn struct {
     DB *pgxpool.Pool
     Cache *redis.Client
+    AI *redisai.Client
 }
 
 func GetConn(container bool) *Conn {
@@ -31,5 +33,6 @@ func GetConn(container bool) *Conn {
     if err != nil {
         log.Fatalf("Unable to connect to cache: %v\n", err)
     }
-    return &Conn{DB: db, Cache: cache}
+    ai := redisai.Connect(cache_url,nil)
+    return &Conn{DB: db, Cache: cache, AI: ai}
 }

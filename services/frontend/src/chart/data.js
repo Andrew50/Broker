@@ -14,8 +14,6 @@ chart.prototype.checkData = function() {
             const loadNum = Math.floor(1500 / Math.sqrt(this.candleWidth));
             this.updateData(loadNum,false);
         }
-        //console.log(this.pixelBounds.right);
-        //console.log(distFromEnd);
     }
 
 }
@@ -47,9 +45,10 @@ chart.prototype.updateData = function(bars,newQuery=false) {
         if (newQuery) {
             this.data = data;
         } else {
+            console.log("new", data[0][0],data[data.length-1][0],"old",this.data[0][0],this.data[this.data.length-1][0]);
             this.data = [ ...data,...this.data];
         }
-        this.nextT = data[0][0] - 1;
+        this.nextT = data[0][0];
         this.queryValid = true;
         setTimeout(() => {
             this.dataOffCooldown = true;

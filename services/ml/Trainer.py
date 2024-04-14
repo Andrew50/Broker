@@ -1,6 +1,6 @@
-import tensorflow,  datetime, time, random , numpy as np
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, LSTM, Bidirectional, Dropout, Conv1D, Flatten
+import tensorflow as tf,  datetime, time, random , numpy as np
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import Dense, LSTM, Bidirectional, Dropout, Conv1D, Flatten, Lambda, Input
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.layers import Bidirectional
 from tensorflow.keras.callbacks import EarlyStopping
@@ -93,7 +93,7 @@ class Trainer:
         #opt = SGD(learning_rate=0.0001)
         #model.compile(loss = "categorical_crossentropy", optimizer = opt)
         #model.compile(optimizer='adam', loss='binary_crossentropy', metrics=[tensorflow.keras.metrics.AUC(curve='PR', name='auc_pr')])
-        model.compile(optimizer=Adam(learning_rate=1e-3), loss='binary_crossentropy', metrics=[tensorflow.keras.metrics.AUC(curve='PR', name='auc_pr')])
+        model.compile(optimizer=Adam(learning_rate=1e-3), loss='binary_crossentropy', metrics=[tf.keras.metrics.AUC(curve='PR', name='auc_pr')])
 
 
         # model = Sequential([Bidirectional(LSTM(64, input_shape=(ds.shape[1], ds.shape[2]), return_sequences=True,),), Dropout(
@@ -129,7 +129,7 @@ class Trainer:
         #model.save(f'models/{user_id}_{st}',save_format = 'tf')
             #model.save(f'models/{user_id}_{st}.h5')
             
-        tensorflow.keras.backend.clear_session()
+        tf.keras.backend.clear_session()
         score = round(history.history['val_auc_pr'][-1] * 100)
         data.set_setup_info(user_id, st, score=score)
         return {st: {'score': score}}  # Return the auc pr value of the model to frontend
@@ -176,14 +176,35 @@ class Trainer:
         return
 
 
+    def createModel(data,setupID):
+        input_layer = Input(shape=(100, 7))
+        with data.db.cursor() as cursor:
+            cursor.execute('SELECT dolvol, adr, mcap FROM setups WHERE setupID = %s', (setupID,))
+            thresholds = cursor.fetchone()
+
+        def apply_thresholds(x):
+            metadata = x[:, 0,:]  
+            conditions_met = tf.reduce_all(metadata >= thresholds, axis=-1)  # Check if all conditions are met across last dim
+            conditions_met = tf.expand_dims(conditions_met, -1)
+            conditions_met = tf.expand_dims(conditions_met, -1)
+            filtered_data = tf.where(conditions_met, x[:, 1:, :], tf.zeros_like(x[:, 1:,:]))  # Setting other parts to zero
+            return filtered_data
+
+        threshold_layer = Lambda(apply_thresholds)(input_layer)
+        cnn_layer = Conv1D(filters=32, kernel_size=3, activation='relu')(threshold_layer)
+        lstm_layer = Bidirectional(LSTM(64, return_sequences=False))(cnn_layer)
+        output_layer = Dense(1, activation='sigmoid')(lstm_layer)
+        model = Model(inputs=input_layer, outputs=output_layer)
+        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+        return model
+
+
 def train(data,user_id,st):
     results = Trainer.train_model(data,st,user_id)
     return results
 
-
 def start(data,user_id,st):
     Trainer.run_generator(data,st,user_id)
-
 
 if __name__ == '__main__':
     from data import Data
