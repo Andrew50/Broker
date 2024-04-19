@@ -43,16 +43,6 @@
 </script>
 
 <Header />
-<!-- <main>
-  <div class="container">
-    <h1>Sign In</h1>
-    <input type="text" placeholder="Username" bind:value={username} />
-    <input type="password" placeholder="Password" bind:value={password} />
-    <button on:click={signIn(username,password)}>Sign In</button>
-    <button on:click={signUp(username,password)} class="create-account-btn">Create Account</button>
-    <p class="error-message">{$errorMessage}</p>
-  </div>
-</main> -->
 <main>
   <div class="container">
     <input type="text" placeholder="Username" bind:value={username} on:keydown={handleKeydown} />
@@ -72,7 +62,10 @@
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #f0f0f0;
+    background-color: var(--c2);
+    position: absolute;
+    left: 0;
+    right: 0;
   }
 
   .container {
@@ -87,11 +80,17 @@
     border-radius: 5px;
     border: 1px solid #ccc;
     width: 80%;
+    color: var(--f1);
+    background-color: var(--c1);
+    border: none;
+  }
+  input:focus {
+    outline: none;
   }
 
   button {
-    background-color: #007bff;
-    color: white;
+    background-color: var(--c3);
+    color: var(--f1);
     border: none;
     padding: 10px 20px;
     border-radius: 5px;
@@ -106,14 +105,6 @@
     background-color: #0056b3;
   }
 
-  .create-account-btn {
-    background-color: #28a745; /* Green color for create account button */
-    margin-top: 5px;
-  }
-
-  .create-account-btn:hover {
-    background-color: #218838; /* Darker shade for hover effect */
-  }
 
   .error-message {
     color: red;

@@ -45,13 +45,17 @@ func GetAnnotations(conn *data.Conn, user_id int, rawArgs json.RawMessage) (inte
     }
     defer rows.Close()
     var annotations [][]interface{}
+    var t time.Time
+    var ticker string
+    var setup_name string
+    var completed bool
+    var annotation_id int
     for rows.Next() {
-        var annotation_id, ticker_id, t, completed,setup_name interface{}
-        err = rows.Scan(&annotation_id, &ticker_id, &t,&completed, &setup_name)
+        err = rows.Scan(&t, &ticker, &setup_name,&completed, &annotation_id)
         if err != nil {
             return nil, fmt.Errorf("GetAnnotations: %v", err)
         }
-        annotations = append(annotations, []interface{}{annotation_id, ticker_id, t,completed, setup_name})
+        annotations = append(annotations, []interface{}{t, ticker, setup_name, completed, annotation_id})
     }
     if err = rows.Err(); err != nil {
         return nil, fmt.Errorf("GetAnnotations: %v", err)

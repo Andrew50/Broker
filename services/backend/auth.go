@@ -17,7 +17,7 @@ type Claims struct {
 }
 
 
-type Setup struct {
+/*type Setup struct {
     SetupId int `json:"setup_id"`
     SetupName string `json:"setup_name"`
     Score int `json:"score"`
@@ -27,12 +27,13 @@ type Setup struct {
     DolVol float64 `json:"dol_vol"`
     Adr float64 `json:"adr"`
     Mcap float64 `json:"mcap"`
-}
+}*/
 
 type LoginResponse struct {
     Token string `json:"token"`
     Settings string `json:"settings"`
-    Setups []Setup `json:"setups"`
+    //Setups []Setup `json:"setups"`
+    Setups [][]interface{} `json:"setups"`
 }
 type SignupArgs struct {
     Username string `json:"a1"`
@@ -62,7 +63,6 @@ func Login(conn *data.Conn, rawArgs json.RawMessage) (interface{}, error) {
     }
     var user_id int
     var settings string
-    var setups []Setup
     err := conn.DB.QueryRow(context.Background(), "SELECT user_id, settings FROM users WHERE username=$1 AND password=$2", a.Username, a.Password).Scan(&user_id, &settings)
     if err != nil {
         return nil, err
@@ -76,12 +76,23 @@ func Login(conn *data.Conn, rawArgs json.RawMessage) (interface{}, error) {
         return nil, err
     }
     defer rows.Close()
+    var setups [][]interface{}
     for rows.Next() {
-        var row Setup
-        if err := rows.Scan(&row.SetupId, &row.SetupName, &row.Score, &row.I, &row.Bars, &row.Threshold, &row.DolVol, &row.Adr, &row.Mcap); err != nil {
+        var setupID int
+        var setupName string
+        var score int
+        var i string
+        var bars int
+        var threshold int
+
+        var dolVol float64
+        var adr float64
+        var mcap float64
+        if err := rows.Scan(&setupID, &setupName, &score, &i, &bars, &threshold, &dolVol, &adr, &mcap); err != nil {
             return nil, err
         }
-        setups = append(setups, row)
+        setup := []interface{}{setupID, setupName, score, i, bars, threshold, dolVol, adr, mcap}
+        setups = append(setups, setup)
     }
     err = rows.Err()
     result := LoginResponse{Token: token, Settings: settings, Setups: setups}

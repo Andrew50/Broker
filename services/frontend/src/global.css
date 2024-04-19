@@ -1,0 +1,42 @@
+:root {
+    --c1: #3a3f47; /* secondary */
+    --c2: #2c2f36; /* base */
+    --c3: #2962ff; /* accents */
+    --c4: #c9c9c9; /* spereator */
+    --c5: #ad3d3d; /* error */
+    --f1: #ffffff; /* white font */
+    --f2: #f2f2f2; /* Light grey color, consistent with theme */
+}
+/*p {
+    font-weight: 500;
+    color: var(--f1);
+    font-size: 1.5rem;
+}
+div {
+    background-color: var(--b2);
+    overflow: none;
+}
+button {
+    background-color: var(--c3);
+    color: var(--f1);
+    cursor: pointer;
+    border-color: var(--c3);
+    border-radius: 2px;
+    border-style: solid;
+    margin: 0.4rem;
+}
+
+th {
+    background-color: var(--c2);
+    color: var(--f1);
+    font-weight: 500;
+    font-size: 1.5rem;
+    padding: 0.5rem;
+}
+td {
+    background-color: var(--c1);
+    color: var(--f1);
+    font-weight: 500;
+    font-size: 1.5rem;
+    padding: 0.5rem;
+}*/

@@ -9,18 +9,25 @@
   </div>
 </main>
 <style>
+    @import "../global.css";
   .main-container {
-    padding-top: 60px; /* Offset for fixed header */
+    top: 10vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    background-color: #f0f0f0; /* Example background color */
+    min-height: 90vh;
+    position: absolute;
+    left: 0;
+    right: 0;
+    background-color: var(--c2); /* Example background color */
+  }
+  h1 {
+    font-size: 24px;
+    color: var(--f1);
   }
 
   /* Adjust styles below as needed */
   .content {
     text-align: center;
-    padding: 20px;
   }
 </style>

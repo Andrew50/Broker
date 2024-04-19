@@ -43,6 +43,7 @@ func Poll (conn *Conn, taskID string) (interface{}, error) {
             conn.Cache.Del(context.Background(), taskID)
             return result, nil
         }
+        time.Sleep(300 * time.Millisecond)
     }
     return nil, fmt.Errorf("timeout")
 }

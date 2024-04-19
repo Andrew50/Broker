@@ -2,50 +2,19 @@
     import { writable } from "svelte/store";
     import {
         setups_list,
-        chart_data,
-        private_request,
-        backend_request,
+        chartQuery,
+        request,
     } from "../../store.js";
-    import Table from "./Table.svelte";
-    export let visible = false;
-    import { onMount } from "svelte";
-
-    let setupName = "";
-    let setupTimeframe = "";
-    let setupLength = 0;
-    let helper_store = writable({});
-    //let scores = {};
-    let errorMessage = "";
-    let selected_setup = "";
-    let instance_queue = {};
-    let current_instance = writable([]);
+    let selectedRow = writable(null);
+    let errorMessage, selected_setup = "";
     let training = false;
+    let trainerQueue = writable([]);
 
-    try {
-        setups_list.forEach((setup) => {
-            instance_queue[setup[0]] = [];
+    function newSetup() {
+        setups_list.update((list) => {
+            list.push([]);
+            return list;
         });
-    } catch {}
-    // Function to handle the creation of a new setup
-    function createSetup() {
-        setupLength = parseInt(setupLength);
-        if (!setupName || !setupLength > 0 || !setupTimeframe != "") {
-            errorMessage = "Empty Input";
-        } else if ($setups_list.some((subArray) => subArray[0] === setupName)) {
-            errorMessage = "Duplicate Setup";
-        } else {
-            setups_list.update((list) => {
-                list.push([setupName, setupTimeframe, setupLength]);
-                return list;
-            });
-            private_request(
-                null,
-                "create setup",
-                setupName,
-                setupTimeframe,
-                setupLength,
-            );
-        }
     }
 
     function deleteSetup(name) {
@@ -57,137 +26,96 @@
             }
             return list;
         });
-        private_request(null, "delete setup", name);
+        request(null,true, "delete setup", name);
     }
-    helper_store.subscribe((value) => {
-        Object.keys(value).forEach((st) => {
-            const newScore = value[st].score;
 
-            setups_list.update((list) => {
-                return list.map((setup) => {
-                    if (setup[0] === st) {
-                        setup[4] = newScore;
-                    }
-                    return setup;
-                });
-            });
-        });
-    });
-
-    current_instance.subscribe((value) => {
-        private_request(chart_data, "chart", ...value);
-    });
-
-    function select_setup(setup) {
+    function rowClickHandler(i,setup) {
+        selectedRow.set(i);
+        console.log($selectedRow);
         selected_setup = setup;
-        //private_request(current_instance, "get instance", selected_setup); #TODO fix this and turn it back on
-        // Assuming setupTimeframe needs to be fetched or set here
-    }
-
-    function label_instance(value) {
-        private_request(
-            null,
-            "set sample",
-            selected_setup,
-            ...$current_instance,
-            value,
-        );
-        //instance_queue[selected_setup].shift()
-        private_request(current_instance, "get instance", selected_setup);
     }
 
     function train_all() {
         $setups_list.forEach((setup) => {
-            backend_request(null, "Trainer-train", setup[0]);
+            request(null, true,"Trainer-train", setup[0]);
         });
     }
 </script>
 
-<div class="popout-menu" class:visible>
-    {#if visible}
-        <div>
-            <Table
-                headers={["Name", "TF", "Length", "Samples", "Score"]}
-                rows={$setups_list}
-                onRowClick={select_setup}
-                clickHandlerArgs={["Name"]}
-            />
-        </div>
-
-        {#if errorMessage}
-            <p class="error-message">{errorMessage}</p>
-            <!-- Display the error message -->
-        {/if}
-
-        {#if selected_setup == ""}
-            <div class="setup-details">
-                <!-- Additional content for when a setup is selected -->
-
-                <div class="controls">
-                    <input
-                        class="inp"
-                        type="text"
-                        placeholder="Setup Name"
-                        bind:value={setupName}
-                    />
-
-                    <input
-                        class="inp"
-                        type="text"
-                        placeholder="Setup Timeframe"
-                        bind:value={setupTimeframe}
-                    />
-                    <input
-                        class="inp"
-                        type="text"
-                        placeholder="Setup Length"
-                        bind:value={setupLength}
-                    />
-                </div>
-                <div>
-                    <button on:click={createSetup}>Create Setup</button>
-                    <button on:click={() => deleteSetup(setupName)}
-                        >Delete Setup</button
-                    >
-                </div>
-            </div>
-        {/if}
-
-        {#if selected_setup}
-            <button
-                on:click={() =>
-                    backend_request(null, "Trainer-train", selected_setup)}
-                >Train</button
-            >
-            <p>Is this a {selected_setup}?</p>
-            <div>
-                <button on:click={() => label_instance(true)}> Yes </button>
-                <button on:click={() => label_instance(false)}> No </button>
-                <button
-                    on:click={() => {
-                        selected_setup = "";
-                    }}
-                >
-                    Back
-                </button>
-            </div>
-        {/if}
-
-        <button on:click={train_all}>Train All</button>
-    {/if}
+{#if training}
+    <p>Training...</p>
+    <div>
+        <button on:click={() => {training = false}}>
+            Back
+        </button>
+    </div>
+{:else}
+<div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Score</th>
+                <th>Interval</th>
+                <th>Bars</th>
+                <th>Threshold</th>
+                <th>Dolvol</th>
+                <th>ADR</th>
+                <th>MCap</th>
+            </tr>
+        </thead>
+        <tbody>
+            {#each $setups_list as setup, i}
+                <tr  on:click={() => rowClickHandler(i,setup[0])}>
+                    <td class:selected={i == $selectedRow}>{setup[1]}</td>
+                    <td class:selected={i == $selectedRow}>{setup[2]}</td>
+                    <td class:selected={i == $selectedRow}>{setup[3]}</td>
+                    <td class:selected={i == $selectedRow}>{setup[4]}</td>
+                    <td class:selected={i == $selectedRow}>{setup[5]}</td>
+                    <td class:selected={i == $selectedRow}>{setup[6]}</td>
+                    <td class:selected={i == $selectedRow}>{setup[7]}</td>
+                    <td class:selected={i == $selectedRow}>{setup[8]}</td>
+                </tr>
+            {/each}
+        </tbody>
 </div>
 
+<div class="setup-actions">
+    {#if selected_setup}
+        <button on:click={() => {training = true}}>
+            Train
+        </button>
+        <button on:click={() => {}}>
+            Delete
+        </button>
+        <button on:click={() => {errorMessage = request(null,true,'trainModel',selected_setup)[1]}}>
+            -- Train Model --
+        </button>
+    {/if}
+    <button on:click={newSetup}>New Setup</button>
+</div>
+{/if}
+
+{#if errorMessage}
+    <p class="error-message">{errorMessage}</p>
+{/if}
+
 <style>
-    @import "./style.css";
-    .inp {
-        width: 100px;
-    }
     .error-message {
         color: red;
     }
-    .setup-details {
-        margin-top: 20px; /* Adjust as needed */
-        /* Additional styling for the setup details section */
+    .table {
+        width: 100%;
     }
-    /* ... other styles ... */
+    .selected {
+        background: var(--c2);
+    }
+    th {
+        cursor: pointer;
+        font-size: 10px;
+    }
+    td {
+        padding: 5px;
+        font-size: 14px;
+    }
 </style>

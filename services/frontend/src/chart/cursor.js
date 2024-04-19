@@ -8,6 +8,7 @@ chart.prototype.drawCursor = function(){
     const xOffset = Math.abs(this.a - Math.floor(this.a)) * this.candleWidth;
     const roundCandle = Math.round(math.remap(this.pixelBounds.left, this.pixelBounds.right, this.dataBounds.left, this.dataBounds.right, this.cursorPos.x - this.candleWidth/2 + xOffset));
     const roundCandlePos = math.remap(this.dataBounds.left, this.dataBounds.right, this.pixelBounds.left, this.pixelBounds.right, roundCandle);
+    //console.log(this.pixelBounds.left, this.pixelBounds.right, this.dataBounds.left, this.dataBounds.right, this.cursorPos.x - this.candleWidth/2 + xOffset);
     const price = math.remap(this.pixelBounds.topC, this.pixelBounds.bottomC, this.dataBounds.top, this.dataBounds.bottom, this.cursorPos.y);
     this.ctx.beginPath();
     this.ctx.moveTo(this.pixelBounds.left, this.cursorPos.y);
@@ -21,9 +22,7 @@ chart.prototype.drawCursor = function(){
     this.ctx.clearRect(this.canvas.width - this.margin, this.cursorPos.y - 6, this.margin, 12);
     this.drawCursorText(math.sigFigs(price, 3), [this.canvas.width - 2, this.cursorPos.y], this.margin * 0.5);
     //aj bs
-    //console.log(this.a + xOffset - (this.cursorPos.x/this.candleWidth));
     const index = Math.round(this.a - (this.dataBounds.right - roundCandle) + 1);
-    //console.log(this.dataBounds.left, this.dataBounds.right);
     this.currentPrice = price;
     this.currentT = this.data[this.data.length + index][0];
     let arbOffset;

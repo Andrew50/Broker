@@ -28,18 +28,20 @@ chart.prototype.draw = function (cursor) {
     //console.log(this.data.length + Math.ceil(this.a) - Math.floor((this.canvas.width - this.margin) / this.candleWidth));
     //console.log(this.data.length + Math.ceil(this.a));
     this.pixelBounds = this.getPixelBounds();
-    const dataSliced = this.data.slice(this.data.length + Math.ceil(this.a) - Math.floor((this.pixelBounds.right) / this.candleWidth), this.data.length + Math.ceil(this.a));
-    this.dataBounds = this.getDataBounds(dataSliced);
-    let i = 0;
-    for (const candleStick of dataSliced) {
-        this.drawData(i, candleStick);
-        i++;
-    }
-    if (dataSliced.length > 0) {
-        this.drawAxes(dataSliced);
-    }
-    if (cursor) {
-        this.drawCursor();
+    if (this.queryValid) {
+        const dataSliced = this.data.slice(this.data.length + Math.ceil(this.a) - Math.floor((this.pixelBounds.right) / this.candleWidth), this.data.length + Math.ceil(this.a));
+        this.dataBounds = this.getDataBounds(dataSliced);
+        let i = 0;
+        for (const candleStick of dataSliced) {
+            this.drawData(i, candleStick);
+            i++;
+        }
+        if (dataSliced.length > 0) {
+            this.drawAxes(dataSliced);
+        }
+        if (cursor) {
+            this.drawCursor();
+        }
     }
     
 }

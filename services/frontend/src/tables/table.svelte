@@ -1,10 +1,9 @@
 <script>
     import { get } from "svelte/store"; // To get values from Svelte stores
-    import { watchlist_data } from "../../store.js";
+    import { watchlist_data } from "../store.js";
     let contextMenuVisible = false;
     let contextMenuPosition = { x: 0, y: 0 };
     let selectedItem = null; // To store the clicked item
-    let selectedWatchlist;
 
     // Function to handle right-click on a table row
     function handleRowRightClick(event, item) {
@@ -37,10 +36,10 @@
 
     $: watchlistKeys = Object.keys(get(watchlist_data));
 
-    export let headers = []; // Array of header names
-    export let rows = []; // Array of row data
+    export let headers; // Array of header names
+    export let data; // Array of row data
     export let onRowClick; // Function to handle row click
-    export let clickHandlerArgs = [];
+    export let clickHandlerArgs;
 
     function handleRowClick(item) {
         const resolvedArgs = clickHandlerArgs.map((arg) =>
@@ -68,7 +67,7 @@
     </div>
 {/if}
 
-{#if rows.length > 0}
+{#if $data.length}
     <div class="scrollable-table">
         <table>
             <thead>
@@ -79,13 +78,13 @@
                 </tr>
             </thead>
             <tbody>
-                {#each rows as item}
+                {#each $data as row}
                     <tr
-                        on:click={() => handleRowClick(item)}
+                        on:click={() => handleRowClick(row)}
                         on:contextmenu={(event) =>
-                            handleRowRightClick(event, item)}
+                            handleRowRightClick(event, row)}
                     >
-                        {#each item as cell}
+                        {#each row as cell}
                             <td>{cell}</td>
                         {/each}
                     </tr>
@@ -99,9 +98,8 @@
     .scrollable-table {
         overflow-y: auto;
         max-height: 80vh; /* Adjust this value based on your needs */
-        border-collape: collapse;
         width: 100%;
-        background-color: #f4f4f8;
+        background-color: var(--b1);
 
     }
     table {

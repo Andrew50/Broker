@@ -5,111 +5,171 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.layers import Bidirectional
 from tensorflow.keras.callbacks import EarlyStopping
 from imblearn.over_sampling import SMOTE
+import re
 
 class Trainer:
 
-    def get_ds(data,instances, tf, setup_length): #no reason to try and be efficient by getting everything becuase its prolly just faster to get it one by one becuase thae change of overlaps is low and date is unkown
-        ds = []
-        values = []
-        for ticker, dt, value in instances:
-            try:
-                df = data.get_df('trainer',ticker,tf,dt,setup_length)
-                ds.append(df)
-            except TimeoutError:
-                pass
-            else:
-                values.append(value)
-        return np.array(ds), np.array(values)
+    def getSample(data,setupID,interval,trainingClassRatio, validationClassRatio, splitRatio):
 
-    def sample(data,st, user_id):
-        training_ratio, validation_ratio, oversample = .25, .05, 1.5
-        #training_ratio, validation_ratio, oversample = .3, .2, 1.05
-        
-        all_instances, tf, setup_length = data.get_sample(user_id, st)
-        yes_instances = [x for x in all_instances if x[2] == 1]
-        no_instances = [x for x in all_instances if x[2] == 0]
-        print(len(yes_instances), len(no_instances))
-        
-        data.set_setup_info(user_id,st,size = len(yes_instances))
-        
-        # For validation set
-        num_yes_validation = len(yes_instances)
-        num_no_validation = int((num_yes_validation / validation_ratio) - num_yes_validation)
-        validation_instances = yes_instances + random.sample(no_instances, num_no_validation)
-        validation_x, validation_y = Trainer.get_ds(data,validation_instances, tf, setup_length)
-        print(validation_x.shape)
+        b = 3 # exclusive I think
 
-        num_yes_training = len(yes_instances) * oversample
-        num_no_training = int((num_yes_training / training_ratio) - num_yes_training)
-        training_instances = yes_instances + random.sample(no_instances, num_no_training)
-        
-        training_x, training_y = Trainer.get_ds(data,training_instances, tf, setup_length)
-        # Reshape training set for SMOTE
+        if 'd' in interval:
+            timedelta = datetime.timedelta(days=b*int(interval[:-1]))
+        elif 'w' in interval:
+            timedelta = datetime.timedelta(weeks=b*int(interval[:-1]))
+        elif 'm' in interval:
+            timedelta = datetime.timedelta(weeks=b*int(interval[:-1]))
+        elif 'h' in interval:
+            timedelta = datetime.timedelta(hours=b*int(interval[:-1]))
+        else:
+            timedelta = datetime.timedelta(minutes=b*int(interval))
+        with data.db.cursor() as cursor:
+            yesQuery = """
+            SELECT ticker_id, t, class FROM samples
+            WHERE setup_id = %s AND class IS TRUE
+            ORDER BY t;
+            """
+
+            cursor.execute(yesQuery, (setupID,))
+            yesInstances = cursor.fetchall()
+
+            numYes = len(yesInstances)
+            t = trainingClassRatio
+            v = validationClassRatio
+            s = splitRatio
+            z = t*s + v*(1-s)
+            numYesTraining = int(numYes * (t*s / z))
+            numYesValidation = int(numYes * (v*(1-s) / z))
+            numNoTraining = int(numYesTraining * (1/t - 1))
+            numNoValidation = int(numYesValidation * (1/v - 1))
+            totalNo = numNoTraining + numNoValidation
+
+            unionQuery = []
+
+            for tickerID, t, _ in yesInstances:
+                unionQuery.append(f"""
+                (SELECT sample_id, ticker_id, t, class FROM samples
+                WHERE ticker_id = {tickerID}
+                AND setup_id = {setupID}
+                AND class IS FALSE
+                AND t between '{t - timedelta}' AND '{t + timedelta}'
+                LIMIT {totalNo})
+                """)
+            noQuery = ' UNION '.join(unionQuery)
+            cursor.execute(noQuery)
+            noInstances = cursor.fetchall()
+            noIDs = [x[0] for x in noInstances]
+            noInstances = [x[1:] for x in noInstances]
+            neededNo = totalNo - len(noInstances)
 
 
-        _, shape_1, shape_2 = training_x.shape
-        training_x = training_x.reshape(-1, shape_1 * shape_2)
-
-        # Apply SMOTE
-        smote_percent = training_ratio / (1 - training_ratio)
-        smote = SMOTE(sampling_strategy=smote_percent)
-        training_x, training_y = smote.fit_resample(training_x, training_y)
-
-        # Reshape training set back to original shape
-        training_x = training_x.reshape(-1, shape_1, shape_2)
-
-        print(f"Training set size: {len(training_y)}, Class balance: {np.mean(training_y)}")
-        print(f"Validation set size: {len(validation_y)}, Class balance: {np.mean(validation_y)}")
-    
-        return training_x, training_y, validation_x, validation_y
-    
-    def train_model(data,st, user_id):
-
-        ds, y, ds_val, y_val = Trainer.sample(data,st, user_id)
-        _, num_time_steps, input_dim = ds.shape
-        model = Sequential()
-
-        conv_filter = 32
-        kernal_size = 3
-        lstm_list = [64,32]
-        dense_list = []
-        dropout = .2
-
-        # for i in range(len(ds)):
-        #   if y[i] == 1:
-    #       print(ds[i,:,:])
+            if  neededNo > 0:
+                randomNoQuery = f"""
+                SELECT ticker_id, t, class FROM samples
+                WHERE setup_id = {setupID}
+                AND class IS FALSE
+                AND sample_id NOT IN ({','.join(map(str, noIDs))})
+                LIMIT {neededNo};
+                """
+                cursor.execute(randomNoQuery)
+                noInstances += cursor.fetchall()
             
-        #       input()
-        model.add(Conv1D(filters=conv_filter, kernel_size=kernal_size, activation='relu', input_shape=(num_time_steps, input_dim)))
-        for units in lstm_list[:-1]: 
-            model.add(Bidirectional(LSTM(units=units, return_sequences=True)))  # return_sequences=True for stacking LSTM layers
-            model.add(Dropout(.2))
-        model.add(Bidirectional(LSTM(units=lstm_list[-1], return_sequences=False)))  # Last LSTM layer with return_sequences=False
-        model.add(Flatten())
-        for units in dense_list:  # Using Lucas numbers for Dense layers
-            model.add(Dense(units=units, activation='sigmoid'))
-            model.add(Dropout(dropout))  # Dropout for regularization
-        model.add(Dense(1, activation='sigmoid'))
-        #opt = SGD(learning_rate=0.0001)
-        #model.compile(loss = "categorical_crossentropy", optimizer = opt)
-        #model.compile(optimizer='adam', loss='binary_crossentropy', metrics=[tensorflow.keras.metrics.AUC(curve='PR', name='auc_pr')])
-        model.compile(optimizer=Adam(learning_rate=1e-3), loss='binary_crossentropy', metrics=[tf.keras.metrics.AUC(curve='PR', name='auc_pr')])
+
+            random.shuffle(yesInstances)
+            random.shuffle(noInstances)
+            trainingInstances = yesInstances[:numYesTraining] + noInstances[:numNoTraining]
+            validationInstances = yesInstances[numYesTraining:] + noInstances[numNoTraining:]
+            random.shuffle(trainingInstances)
+            random.shuffle(validationInstances)
+            return np.array(trainingInstances), np.array(validationInstances)
+   
+    def getData(data,instances,interval,bars,pm = False):
+
+        table, bucket,aggregate = data.getQueryInfo(interval, pm)
+
+        queries = []
+        for ticker_id, timestamp, _ in instances:
+            if aggregate:
+                raise Exception("Aggregation not implemented for models...yet?")
+                query = f"""
+                    (SELECT
+                        bucket,
+                        LOG(first_open) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_open,
+                        LOG(max_high) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_high,
+                        LOG(min_low) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_low,
+                        LOG(last_close) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_close
+                    FROM (
+                        SELECT
+                            time_bucket('{bucket}', q.t) AS bucket,
+                            first(q.open, q.t) AS first_open,
+                            max(q.high) AS max_high,
+                            min(q.low) AS min_low,
+                            last(q.close, q.t) AS last_close
+                        FROM {table} AS q
+                        WHERE q.ticker_id = {ticker_id} AND q.t <= '{timestamp}'
+                        GROUP BY bucket
+                        ORDER BY bucket DESC
+                        LIMIT {bars}
+                    ) AS subquery
+                    ORDER BY bucket ASC)
+                    """
+            else:
+               query = f"""
+                    (SELECT
+                        bucket,
+                        LOG(first_open) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_open,
+                        LOG(max_high) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_high,
+                        LOG(min_low) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_low,
+                        LOG(last_close) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_close
+                    FROM (
+                        SELECT
+                            q.t AS bucket,
+                            q.open AS first_open,
+                            q.high AS max_high,
+                            q.low AS min_low,
+                            q.close AS last_close
+                        FROM {table} AS q
+                        WHERE q.ticker_id = {ticker_id} AND q.t <= '{timestamp}'
+                        ORDER BY q.t DESC
+                        LIMIT {bars}
+                    ) AS subquery
+                    ORDER BY bucket ASC)
+                    """
+            queries.append(query)
+        combined_query = " UNION ALL ".join(queries)
+        with data.db.cursor() as cursor:
+            cursor.execute(combined_query)
+            results = cursor.fetchall()
 
 
-        # model = Sequential([Bidirectional(LSTM(64, input_shape=(ds.shape[1], ds.shape[2]), return_sequences=True,),), Dropout(
-        #   0.2), Bidirectional(LSTM(32)), Dense(1, activation='sigmoid'),])
-        # model.compile(loss='binary_crossentropy',
-        #             optimizer=Adam(learning_rate=1e-3), metrics=['accuracy'])
-
-        # model = Sequential([
-        #   TCN(input_shape=(num_time_steps, input_dim)),
-        #   Dense(1, activation='sigmoid')
-        # ])
-
-        # model.compile(optimizer='adam', loss='binary_crossentropy', metrics=[tensorflow.keras.metrics.AUC(curve='PR', name='auc_pr')])
-        # tcn_full_summary(model, expand_residual_blocks=False)
-
-
+        ds = []
+        classes = []
+        for result, i in enumerate(results):
+            if len(result) != bars:
+                continue
+            result = [np.inf for _ in range(4)] + result
+            classes.append(instances[i][2])
+            ds.append(results)
+        ds = np.array(ds)
+        classes = np.array(classes)
+        return ds, classes
+    
+    def train_model(data,setupID):
+        splitRatio = .85
+        trainingClassRatio = .25
+        validationClassRatio = .05
+        with data.db.cursor() as cursor:
+            cursor.execute('SELECT i, bars, dolvol, adr, mcap FROM setups WHERE setup_id = %s', (setupID,))
+            traits = cursor.fetchone()
+        interval = traits[0]
+        bars = traits[1]
+        reqs = traits[2:5]
+        model = Trainer.createModel(data,bars,reqs)
+        trainingSample, validationSample = Trainer.getSample(data,setupID,interval,trainingClassRatio, validationClassRatio, splitRatio)
+        xTrainingData, yTrainingData = Trainer.getData(data,trainingSample,interval,bars)
+        xValidationData, yValidationData = Trainer.getData(data,validationSample,interval,bars)
+        print("training class ratio",np.mean(yTrainingData))
+        print("validation class ratio", np.mean(yValidationData))
         early_stopping = EarlyStopping(
             monitor='val_auc_pr',
             patience=5,
@@ -117,98 +177,57 @@ class Trainer:
             mode='max',
             verbose =1
         )
+        history = model.fit(xTrainingData, yTrainingData,epochs=30,batch_size=64,validation_data=(xValidationData, yValidationData),callbacks=[early_stopping])
 
-        history = model.fit(ds, y,epochs=30,batch_size=64,validation_data=(ds_val, y_val),)  # Use the actual validation set herecallbacks=[early_stopping],verbose=1)
-        
-        # if not os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False):
-        #   print('saved model -----------outside container so kinda useless god---------')
-        #   model.save(f'C:/dev/broker/backend/models/{user_id}_{st}', save_format='tf')
-        #   #model.save(f'C:/dev/broker/backend/models/{user_id}_{st}.h5')
-        # else:
-        data.set_model(user_id, st, model)
-        #model.save(f'models/{user_id}_{st}',save_format = 'tf')
-            #model.save(f'models/{user_id}_{st}.h5')
-            
+        model_id = f"model:{setupID}"
+        model_path = f"models/{model_id}"
+        model.save(model_path, save_format='tf')
+        with open(model_path, 'rb') as model_file:
+            model_blob = model_file.read()
+        data.cache.modelstore(model_key=model_id, backend='TF', device='CPU', model=model_blob)
+
         tf.keras.backend.clear_session()
         score = round(history.history['val_auc_pr'][-1] * 100)
+        with data.db.cursor(buffered=True) as cursor:
+            cursor.execute("UPDATE setups SET score = %s WHERE setup_id = %s;", (score, setupID))
+        data.db.commit()
         data.set_setup_info(user_id, st, score=score)
-        return {st: {'score': score}}  # Return the auc pr value of the model to frontend
-    
+        return score 
 
-
-    def run_generator(data,st,user_id): #busted
-        i = 0
-        model = Screener.load_model(user_id,st)
-        prev_length = None
-        while True:
-            print('in generator',flush=True)
-            length = data.get_trainer_queue_size(user_id,st)
-            print('trainer queue length: ',length,flush=True)
-            if length != prev_length:
-                start = datetime.datetime.now()
-                print('generator timeout reset',flush=True)
-            if (datetime.datetime.now() - start).seconds > 60:
-                break
-            if length < 20:
-                print('running trainer screener',flush=True)
-                if i == 0:
-                    sample,_,_ = data.get_sample(user_id,st)
-                    sample = [[ticker,dt] for ticker,dt,val in sample]
-                    query = sample
-                    i = 1
-                elif i == 1:
-                    raise Warning('to code')
-                # elif i == 1:
-                #   query = []
-                #   for setup in sample:
-                #       #get neihgbor
-                #       neighbors = get_neighbors(setup)
-                #       for neighbor in neighbors:
-                #           if neighbor not in sample:
-                #               query.append(neighbor)
-                #   i = 2
-                #elif i == 2:
-                    #random
-                instances = Screener.screen(user_id,st,'trainer',query,.3,model)
-                [data.set_trainer_queue(user_id,st,instance) for instance in instances]
-            prev_length = length
-            time.sleep(10)
-        return
-
-
-    def createModel(data,setupID):
-        input_layer = Input(shape=(100, 7))
-        with data.db.cursor() as cursor:
-            cursor.execute('SELECT dolvol, adr, mcap FROM setups WHERE setupID = %s', (setupID,))
-            thresholds = cursor.fetchone()
-
-        def apply_thresholds(x):
+    def createModel(data,bars,reqs):
+        dolvol, adr, mcap = reqs
+        reqs = np.array([dolvol, adr, mcap,-np.inf])
+        def customLayer(x):
             metadata = x[:, 0,:]  
-            conditions_met = tf.reduce_all(metadata >= thresholds, axis=-1)  # Check if all conditions are met across last dim
+            conditions_met = tf.reduce_all(metadata >= reqs, axis=-1)
             conditions_met = tf.expand_dims(conditions_met, -1)
             conditions_met = tf.expand_dims(conditions_met, -1)
-            filtered_data = tf.where(conditions_met, x[:, 1:, :], tf.zeros_like(x[:, 1:,:]))  # Setting other parts to zero
-            return filtered_data
-
-        threshold_layer = Lambda(apply_thresholds)(input_layer)
-        cnn_layer = Conv1D(filters=32, kernel_size=3, activation='relu')(threshold_layer)
-        lstm_layer = Bidirectional(LSTM(64, return_sequences=False))(cnn_layer)
-        output_layer = Dense(1, activation='sigmoid')(lstm_layer)
-        model = Model(inputs=input_layer, outputs=output_layer)
-        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+            croppedData = x[:, 1:bars+1,:]
+            return tf.where(conditions_met, croppedData, tf.zeros_like(croppedData))
+        model = Sequential()
+        model.add(Input(shape=(None, 4))) # assuming o h l c
+        model.add(Lambda(customLayer))
+        conv_filter = 32
+        kernal_size = 3
+        lstm_list = [64, 32]
+        dropout = .2
+        model.add(Conv1D(filters=conv_filter, kernel_size=kernal_size, activation='relu'))
+        for units in lstm_list[:-1]:
+            model.add(Bidirectional(LSTM(units=units, return_sequences=True)))
+            model.add(Dropout(dropout))
+        model.add(Bidirectional(LSTM(units=lstm_list[-1], return_sequences=False)))
+        model.add(Flatten())
+        model.add(Dense(1, activation='sigmoid'))
+        model.compile(optimizer=Adam(learning_rate=1e-3), loss='binary_crossentropy', metrics=[tf.keras.metrics.AUC(curve='PR', name='auc_pr')])
         return model
 
-
-def train(data,user_id,st):
-    results = Trainer.train_model(data,st,user_id)
+def train(data,setupID):
+    results = Trainer.train_model(data,setupID)
     return results
-
-def start(data,user_id,st):
-    Trainer.run_generator(data,st,user_id)
 
 if __name__ == '__main__':
     from data import Data
-    print(train(Data(False),1, 'P'))
+    print(train(Data(False),1))
 
     
 

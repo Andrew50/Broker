@@ -1,6 +1,8 @@
 import { writable } from 'svelte/store';
 import { get } from 'svelte/store';
-export let annotations = writable([]);
+export let sidebarWidth = writable(0);
+export let annotateData = writable([]);
+export let journalData = writable([]);
 export let screener_data = writable([]);
 export let chartQuery = writable([]);
 export let match_data = writable([[], [], []]);
@@ -99,8 +101,9 @@ export async function request(bind_variable, isPrivate, func, ...args) {
 }
 
 //args for reqest = [index, buffer, ...args]
-export async function autoLoad(bind_variable, buffer, func, args, currentPos){
+export function autoLoad(bind_variable, buffer, func, args, currentPos){
     let loop = true;
+    let timeoutID;
     async function load(){
         const current_data = get(bind_variable);
         console.log('autoloading');
@@ -112,113 +115,16 @@ export async function autoLoad(bind_variable, buffer, func, args, currentPos){
             }else if (new_data == null || new_data.length == 0){
                 loop = false;
             }else{
-                bind_variable.set([...current_data, ...new_data]);
+                bind_variable.update((b) =>  [...b, ...new_data]);
             }
         }
         if (loop){
-            setTimeout(load, 1000);
+            timeoutID = setTimeout(load, 1000);
         }
     }
     load();
-    return () => {loop = false};
+    return () => {
+        loop = false
+        clearTimeout(timeoutID);
+    };
 }
-
-
-
-//export async function public_request(bind_variable, func, ...args) {
-//    const url = `${base_url}/public`;
-//    const payload = {
-//        function: func,
-//        arguments: args
-//    };
-//    console.log('Request sent to:', url, 'func:', func, 'args:', args);
-//    try {
-//        const response = await fetch(url, {
-//            method: 'POST',
-//            headers: {
-//                'Content-Type': 'application/json'
-//            },
-//            body: JSON.stringify(payload) // Send the payload as a stringified JSON in the body
-//        });
-//        if (!response.ok) {
-//            const errorText = await response.text();
-//            throw new Error(`error: ${errorText}`);
-//        }
-//        let result = await response.json();
-//        //result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
-//        console.log('result: ', result);
-//        if (bind_variable == null) {
-//            return result
-//        }else {
-//            bind_variable.set(result);
-//        }
-//    }
-//    catch (error) {
-//        console.error('Error during backend request:', error);
-//        bind_variable.set(null);
-//    }
-//}
-//
-//export async function private_request(bind_variable, func, ...args) {
-//    const url = `${base_url}/private`;
-//    const payload = {
-//        function: func,
-//        arguments: args
-//    };
-//    console.log('Request sent to:', url, 'func:', func, 'args:', args);
-//    try {
-//        const response = await fetch(url, {
-//            method: 'POST',
-//            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-//            body: JSON.stringify(payload)
-//        });
-//        let result = await response.json();
-//        result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
-//        console.log('result: ', result);
-//        bind_variable.set(result);
-//    } catch (error) {
-//        console.error('Error during backend request:', error);
-//        bind_variable.set(null);
-//        return error;
-//    }
-//}
-
-//export async function backend_request(bind_variable, func, ...args) {
-//    const url = `${base_url}/backend`;
-//    const payload = {
-//        function: func,
-//        arguments: args
-//    };
-//    console.log('Request sent to:', url, 'func:', func, 'args:', args);
-//    try {
-//        const response = await fetch(url, {
-//            method: 'POST',
-//            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-//            body: JSON.stringify(payload)
-//        });
-//        const task_id = JSON.parse(await reponse.json());
-//        console.log('polling');
-//        let result;
-//        const checkStatus = async () => {
-//            const response = await fetch(`${base_url}/poll/${task_id}`);
-//            result = await response.json();
-//            result = JSON.parse(result); // Attempt to parse if result is a stringified JSON
-//            console.log('poll result: ', result);
-//            if (result == 'running' || !result) {
-//            } else {
-//                bind_variable.set(result);
-//                console.log('result: ', result);
-//
-//                console.log('result type : ', typeof result);
-//
-//                clearInterval(intervalId);
-//            }
-//        };
-//        const intervalId = setInterval(checkStatus, 500); // Check every .2 seconds
-//
-//    } catch (error) {
-//        console.error('Error during backend request:', error);
-//        bind_variable.set(null);
-//    }
-//
-//}

@@ -46,10 +46,10 @@ func getQuery(i_num string, i_base string, pm bool) (table string, bucket string
         default:
             err = fmt.Errorf("invalid interval base: %s", i_base)
     }
-    if i_num == "1" {
-        aggregate = false
-    }else{
+    if i_num != "1" || i_base == "m" || i_base == "y"{ 
         aggregate = true
+    }else{
+        aggregate = false
     }
     return
 }
@@ -78,8 +78,6 @@ func GetChart(conn *data.Conn, user_id int, rawArgs json.RawMessage) (interface{
     }
     var sqlQuery string
     var rows pgx.Rows
-    fmt.Println(a.T)
-    fmt.Println(aggregate)
     if a.T.IsZero() {
         if aggregate {
             sqlQuery = fmt.Sprintf(`

@@ -1,106 +1,82 @@
 <script>
-    import { onMount } from "svelte";
-    import { dataset_dev } from "svelte/internal";
-    import { writable } from "svelte/store";
     import {
         screener_data,
         setups_list,
         chartQuery,
         request,
     } from "../../store.js";
-    import Table from "./Table.svelte";
-    let ticker = "";
-    let datetime = "";
-    let selectedSetups = new Set($setups_list.map((subArray) => subArray.setup_name));
-    export let visible = false;
-    let innerWidth;
-    let innerHeight;
-    function handleCheckboxChange(setup, event) {
-        if (event.target.checked) {
-            selectedSetups.add(setup);
-        } else {
-            selectedSetups.delete(setup);
-        }
+    import Table from "../../tables/table.svelte";
+    import { writable, get } from "svelte/store";
+    let selectedSetups = writable(get(setups_list).map((subArray) => subArray[1]));
+
+    function toggleSetup(setupName) {
+        selectedSetups.update((current) => {
+            const index = current.indexOf(setupName);
+            if (index !== -1) {
+                // Remove setup if it's already selected
+                return current.filter((_, i) => i !== index);
+            } else {
+                // Add setup if it's not already selected
+                return [...current, setupName];
+            }
+        });
+        console.log($selectedSetups);
     }
 </script>
 
-<div class="popout-menu" style="min-height: {innerHeight}px;" class:visible>
-    {#if visible}
-        {#each $setups_list as setup}
-            <div>
-                <label class="setup-item">
-                    <input
-                        type="checkbox"
-                        checked
-                        on:change={(e) => handleCheckboxChange(setup.setup_name, e)}
-                    />
-                    {setup.setup_name}
-                    <!-- {setup.join(' - ')} -->
-                </label>
-            </div>
-        {/each}
+
+<div>
+    {#each $setups_list as setup}
         <button
-            on:click={() =>
-                request(screener_data, true, "getScreener", [
-                    ...selectedSetups,
-                ])
-            }> Screen </button>
-        <Table
-            headers={["Ticker", "Setup", "Value"]}
-            rows={$screener_data}
-            onRowClick={request}
-            clickHandlerArgs={[chartQuery, "chart", "Ticker", "1d"]}
-        />
-    {/if}
+            class="setup-item {$selectedSetups.includes(setup[1]) ? 'selected' : ''  }"
+            on:click={() => toggleSetup(setup[1])}
+        >
+        {setup[1]}
+        </button>
+    {/each}
 </div>
+<div>
+    <button
+        on:click={() => request(screener_data, true, "getScreener", get(selectedSetups)) }> Screen 
+    </button>
+</div>
+<Table
+    headers={["Ticker", "Setup", "Value"]}
+    data={screener_data}
+    onRowClick={request}
+    clickHandlerArgs={[chartQuery, "chart", "Ticker", "1d"]}
+/>
 
 <style>
-    @import "./style.css";
-    .popout-menu {
-        /* Your existing styles */
-    }
-    /*  .screener-data {
-        overflow-y: auto;
-        max-height: 200px; /* Adjust as needed 
-    } */
-    .input-form {
-        display: flex;
-        flex-direction: column;
-        gap: 10px; /* Spacing between form elements */
-    }
-    .form-group {
-        display: flex;
-        flex-direction: column;
-    }
+    @import "../../global.css";
     .setup-item {
-        /* Add styling for checklist items here */
+        display: block;
+        background-color: var(--c2);
+        border: none;
+        padding-left: 0.5rem;
+        margin: 0.5rem;
+        padding: 0.3rem;
     }
-    /* Add other styles as needed */
+    .setup-item.selected {
+        background-color: var(--c1);
+    }
+    div {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    button {
+        background-color: var(--c3);
+        color: var(--f1);
+        cursor: pointer;
+        border-color: var(--c3);
+        border-radius: 2px;
+        border-style: solid;
+        margin: 0.4rem;
+    }
+
+    button:hover {
+        background-color: var(--c2);
+    }
+
+
 </style>
-        <!--<form
-            on:submit|preventDefault={() =>
-                request(screener_data, true,"getScreener", [
-                    ...selectedSetups,
-                ])}
-            class="input-form"
-        >
-            <div class="form-group">
-                <label for="ticker">Ticker:</label>
-                <input
-                    type="text"
-                    id="ticker"
-                    bind:value={ticker}
-                    placeholder="Ticker"
-                />
-            </div>
-            <div class="form-group">
-                <label for="datetime">Datetime:</label>
-                <input
-                    type="text"
-                    id="datetime"
-                    bind:value={datetime}
-                    placeholder="YYYY-MM-DD HH:MM"
-                />
-            </div>
-            <input type="submit" value="Screen" />
-        </form> -->

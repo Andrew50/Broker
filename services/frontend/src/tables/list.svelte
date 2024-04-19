@@ -3,14 +3,15 @@
     export let data; // Array of row data
     export let func; // Function to handle row click
     export let useDelete;
-    export let visible;
-    import {request,autoLoad,currentEntry,toDT} from "../../store.js";
-    import {onMount} from 'svelte';
+    import {request,autoLoad,currentEntry,toDT} from "../store.js";
+    import {onMount,onDestroy} from 'svelte';
+    import Entry from './entry.svelte';
     let visibleAnnotationID = null;
-    let stop = () => {};
+    let stopAutoLoad = () => {};
 
-    $: if (visible ){
-        stop = autoLoad(data,50,'getAnnotations',[],() =>
+
+    onMount(() => {
+        stopAutoLoad = autoLoad(data,50,`get${func}s`,[],() =>
         {
             //get current table location
             const table = document.querySelector('.list');
@@ -25,22 +26,28 @@
             }
             return current;
         });
-    }
-    else{
-        stop();
-    }
-
-    function autoResize(event){
-        event.target.style.height = 'auto';
-        event.target.style.height = (event.target.scrollHeight) + 'px';
-    }
-
-    onMount(() => {
         const textareas = document.querySelectorAll('textarea');
         textareas.forEach((textarea) => {
             textarea.style.height = textarea.scrollHeight + 'px';
         });
+        console.log('stop is',stop);
     });
+    onDestroy(() => {
+        stopAutoLoad();
+    });
+
+    /*function autoResize() {
+        const textarea = document.querySelector('textarea');
+        if (textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        }
+    }
+
+    // Subscribe to currentEntry and call autoResize after the DOM updates
+    currentEntry.subscribe(value => {
+        setTimeout(autoResize, 0); // Defer the resizing to the next event loop
+    });*/
 
     function saveRow(i){
         const entry = $currentEntry;
@@ -71,7 +78,7 @@
     }
 
     function deleteRow(i){
-        row = $data[i];
+        const row = $data[i];
         request(null,true,`del${func}`,row[row.length - 1]);
         data.update((a) => {a.splice(i,1);return a;});
     }
@@ -90,7 +97,7 @@
             {#if $data.length}
                 <tbody>
                     {#each $data as row, i}
-                        <tr class:clean-green={!row[row.length - 2]} on:click={() => handleRowClick(row)}>
+                        <tr class:finished={row[row.length - 2]} on:click={() => handleRowClick(row)}>
                             <td>{toDT(row[0])}</td> <!-- Date -->
                             {#each row.slice(1,row.length - 2) as cell}
                                 <td>{cell}</td>
@@ -99,7 +106,8 @@
                       {#if visibleAnnotationID == row[row.length - 1]}
                         <tr class="text-entry">
                           <td colspan= {headers.length}>
-                            <textarea bind:value={$currentEntry} on:input={autoResize} placeholder="Type here..." rows="1"></textarea>
+     <!--                       <textarea bind:value={$currentEntry} placeholder="Type here..." rows="1"></textarea> -->
+                            <Entry />
                             <div class="button-row">
                               <button on:click|stopPropagation={() => saveRow(i)}>Save</button>
                               {#if useDelete}
@@ -117,40 +125,49 @@
 {/if}
 
 <style>
-    @import "./style.css";
+    @import "../global.css";
 
     .list {
         overflow-y: auto;
         height: 100%;
         text-align: center;
-        font-family: 'Arial', sans-serif;
+        color: var(--f1);
+        overflow-x: hidden;
     }
 
     table {
         width: 100%;
         border-collapse: collapse;
-        background: #333; /* Dark grey for all table parts */
+        background: var(--c2); /* Dark grey for all table parts */
     }
 
     table thead tr th {
-        background: #333; /* Dark grey for headers */
-        color: white;
-        border-bottom: 1px solid white; /* White line between header and rows */
+        background: var(--c2); /* Dark grey for headers */
+        color: var(--f2);
+        border-bottom: 1px solid var(--c4); /* White line between header and rows */
+        padding: 5px;
     }
 
     table tbody tr {
-        border-bottom: 1px solid grey; /* White line between rows */
+        border-bottom: 1px solid var(--c4); /* White line between rows */
+        background: var(--c3); /* Dark grey for rows */
     }
 
-    .clean-green {
-        background-color: #5e5e5e; /* Light green rows */
+    .finished {
+        background: var(--c2);
     }
+
+    .text-entry {
+        background: var(--c2); /* Dark grey for text entry */
+    }
+        
+
 
     textarea {
         width: 100%;
         min-height: 50px;
-        background: #333; /* Dark grey for textarea */
-        color: white;
+        background: var(--c2); /* Dark grey for textarea */
+        color: var(--f1);
         border: none;
         resize: none;
         overflow: hidden;
@@ -158,17 +175,21 @@
         line-height: 1.2;
         padding: 10px; /* Smaller padding for textarea */
     }
+    textarea:focus {
+        outline: none;
+    }
 
     .button-row {
         display: flex;
         justify-content: center;
         gap: 10px;
         margin: 5px;
+        background: var(--c2); /* Dark grey for buttons */
     }
 
     .button-row button {
-        background: #333; /* Dark grey for buttons */
-        color: white;
+        background: var(--c2); /* Dark grey for buttons */
+        color: var(--f1);
         border: none;
         cursor: pointer;
         padding: 5px 10px; /* Smaller buttons */

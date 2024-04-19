@@ -17,6 +17,7 @@ services/frontend/.svelte-kit
 services/worker/models
 services/worker/tuner
 services/worker/tuner_results
+services/ml/quotes
 tuner
 tuner_results
 # User-specific files (MonoDevelop/Xamarin Studio)

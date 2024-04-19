@@ -1,23 +1,18 @@
 <script>
-    import {annotations} from "../../store.js";
+    import {annotateData} from "../../store.js";
     export let visible = false;
-    import List from "./list.svelte";
-    let innerHeight;
+    import List from "../../tables/list.svelte";
 </script>
 
-<div class="popout-menu" style="min-height: {innerHeight}px;" class:visible>
-    {#if visible}
-        <List 
-            headers = {["Date","Ticker","Setup"]}
-            data = {annotations}
-            func = "Annotation"
-            useDelete = {true}
-            visible = {visible}
-        />
+<List 
+    headers = {["Date","Ticker","Setup"]}
+    data = {annotateData}
+    func = "Annotation"
+    useDelete = {true}
+/>
         
-    {/if}
-</div>
 
 <style>
-    @import "./style.css";
+    @import "../../global.css";
 </style>
+

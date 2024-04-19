@@ -1,13 +1,18 @@
+//class.js 
 export class chart {
-    constructor(container, options) {
-        this.defaultCandleWidth = options.defaultCandleWidth;
+    constructor(canvas, options) {
+        /*this.container = container;
         this.candleWidth = this.defaultCandleWidth;
         this.canvas = document.createElement('canvas')
-        this.canvas.width = window.innerWidth - options.widthOffset;
-        this.canvas.height = window.innerHeight;
-        this.canvas.style = 'background-color:black;';
+        this.canvas.style = `
+        background-color:black; cursor:crosshair;
+        'overflow:hidden;
+        `
         //        this.canvas.requestFullscreen();
         container.appendChild(this.canvas);
+        //        */
+        this.candleWidth = options.defaultCandleWidth;
+        this.canvas = canvas;
         this.ctx = this.canvas.getContext("2d");
         this.margin = options.margin;
         this.prev, this.ticker, this.i, this.nextT, this.pm, this.currentPrice;
@@ -71,7 +76,6 @@ export class chart {
                 const a1 = (this.a + ((this.prev - evt.clientX) / this.candleWidth));
                 const a2 = (this.data.length + (this.a) - Math.floor((this.pixelBounds.right) / this.candleWidth) + (this.prev - evt.clientX) / this.candleWidth);
                 //const a2 = Math.ceil(this.a) - Math.floor((this.pixelBounds.right) / this.candleWidth)
-                //console.log(a1, a2);
                 if (a1 < -1 && a2 >= -1) {
                 //if (a2 < 0) {
                     this.xAxisOffset = this.xAxisOffset - ((this.prev - neww) / this.candleWidth);
@@ -94,6 +98,7 @@ export class chart {
             if (this.queryValid == false) {
                 return;
             }
+
             const newCandleWidth = (this.pixelBounds.right) / ((evt.deltaY / (this.candleWidth ^ .5)) + (this.pixelBounds.right) / (this.candleWidth));
             if ((this.data.length + (this.a) - Math.floor((this.pixelBounds.right) / newCandleWidth)) >= 0) {
                 if (newCandleWidth > 1 && newCandleWidth < 81) {

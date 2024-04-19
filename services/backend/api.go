@@ -16,8 +16,6 @@ var publicFunc = map[string]func(*data.Conn, json.RawMessage) (interface{}, erro
 }
 
 var privateFunc = map[string]func(*data.Conn, int, json.RawMessage) (interface{}, error){
- //   "getJournal": tasks.GetJournal,
-//    "setJournal": tasks.SetJournal,
     "getChart": tasks.GetChart,
     "getAnnotations": tasks.GetAnnotations,
     "delAnnotation": tasks.DelAnnotation,
@@ -25,6 +23,12 @@ var privateFunc = map[string]func(*data.Conn, int, json.RawMessage) (interface{}
     "getAnnotationEntry": tasks.GetAnnotationEntry,
     "newAnnotation": tasks.NewAnnotation,
     "getScreener": tasks.GetScreener,
+    "getJournals": tasks.GetJournals,
+    "setJournal": tasks.SetJournal,
+    "getJournalEntry": tasks.GetJournalEntry,
+    "trainModel": tasks.TrainModel,
+    "setTrainer": tasks.SetTrainer,
+    "getTrainer": tasks.GetTrainer,
 }
 
 type Request struct {

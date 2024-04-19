@@ -24,16 +24,18 @@
 
 <style>
   .header {
+    box-sizing: border-box;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
-    background-color: #007bff; /* Example header background color */
-    color: white;
+    background-color: var(--c1); /* Example header background color */
+    color: var(--f1);
     position: fixed;
     top: 0;
-    width: 100%;
-    height: 60px;
+    left: 0;
+    right: 0;
+    height: 10vh;
     z-index: 1000;
   }
 

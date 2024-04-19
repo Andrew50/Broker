@@ -162,14 +162,14 @@ CREATE INDEX idx_journals ON journals (user_id, completed);
 CREATE TABLE samples (
     sample_id SERIAL PRIMARY KEY,
     setup_id INTEGER NOT NULL,
-    value BOOLEAN DEFAULT NULL,
+    class BOOLEAN DEFAULT NULL,
     ticker_id INTEGER NOT NULL,
     t TIMESTAMP NOT NULL,
     FOREIGN KEY (setup_id) REFERENCES setups(setup_id) ON DELETE CASCADE,
     FOREIGN KEY (ticker_id) REFERENCES tickers(ticker_id) ON DELETE CASCADE,
     UNIQUE (setup_id, ticker_id, t)
 );
-CREATE INDEX idx_samples ON samples (setup_id, value);
+CREATE INDEX idx_samples ON samples (setup_id, class);
 COPY tickers(ticker) FROM '/postgres-data/tickers.csv' WITH (FORMAT csv, HEADER true, DELIMITER ',');    
 INSERT INTO users (user_id, username, password, settings) VALUES (0, 'user', 'pass', jsonb_build_object());
 INSERT INTO setups (setup_id,user_id,setup_name,i,bars,threshold,dolvol,adr,mcap) VALUES 
@@ -188,7 +188,7 @@ CREATE TEMP TABLE temp (
 );
 
 COPY temp(setup_id,ticker,t,value) FROM '/postgres-data/samples.csv' WITH (FORMAT csv, HEADER true, DELIMITER ',');
-INSERT INTO samples (setup_id, ticker_id, t, value)
+INSERT INTO samples (setup_id, ticker_id, t, class)
 SELECT
     ts.setup_id,
     t.ticker_id,
