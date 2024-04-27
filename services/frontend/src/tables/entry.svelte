@@ -1,83 +1,107 @@
 <script>
-    import { writable } from 'svelte/store';
-    import { currentEntry } from '../store.js';
+  import { onMount } from 'svelte';
+  if (import.meta.env.SSR) {
+    // Server side
+} else {
+    // Client side
+    import('quill').then(Quill => {
+        // Use Quill
+    });
+}
+  import { currentEntry, chartQuery } from '../store.js';
+  import { browser } from '$app/environment';
+  import 'quill/dist/quill.snow.css';
 
-    let editor; // Reference to the contenteditable div
-    let content = writable(""); // Store to hold the raw text
+  let editorContainer;
 
-    // Function to update the content within the contenteditable div
-    function updateContent(inputText) {
-        const regex = /\[(.*?)\|(.*?)\|(.*?)\]/g;
-        const innerHTML = inputText.replace(regex, (match, ticker, time, interval) => {
-            return `<button class='dynamic-button' onclick='runFunction("${ticker}", "${time}", "${interval}")'>${ticker}</button>`;
+    onMount(() => {
+        if (browser) {
+            const editor = new Quill(editorContainer, {
+            theme: 'snow',
+            modules: {
+                toolbar: false // Explicitly disable the toolbar
+            }
         });
-        content.set(innerHTML); // Store the formatted HTML
+    
+        currentEntry.subscribe(value => {
+          if (editor.getText() !== value) {
+            editor.setText(value); 
+          }
+        });
+
+
+
+    editor.on('text-change', (delta, oldDelta, source) => {
+      if (source === 'user' || source === 'api') {
+        let text = editor.getText();
+        if (source === 'user') {
+            currentEntry.set(text); 
+        }
+
+        delta.ops.forEach(op => {
+          if (typeof op.insert === 'string') {
+            const regex = /\[([^\|]+)\|([^\|]+)\|([^\|]+)\|([^\]]+)\]/g;
+            let match;
+            while ((match = regex.exec(op.insert)) !== null) {
+              const [_, ticker, interval, t, pm] = match;
+              const index = match.index;
+              editor.deleteText(index, match[0].length);
+              editor.insertEmbed(index, 'chart', { ticker, interval, t, pm });
+            }
+          }
+        });
+      }
+    });
+
+    class ChartBlot extends Quill.import('blots/embed') {
+      static create(value) {
+        let node = super.create();
+        node.setAttribute('type', 'button');
+        node.className = 'btn';
+        node.textContent = `${value.ticker}`; 
+        node.onclick = () => chartQuery.set([value.ticker, value.interval, value.t, value.pm]);
+        return node;
+      }
+
+      static value(node) {
+        return {
+          ticker: node.dataset.ticker,
+          interval: node.dataset.interval,
+          t: node.dataset.t,
+          pm: node.dataset.pm
+        };
+      }
     }
-
-    // Subscribe to currentEntry for changes
-    //$: $currentEntry, updateContent($currentEntry);
-
-    // Function to insert a match and update the entry
-    function insertMatch(matchString) {
-        let currentText = editor.innerText;
-        let selection = document.getSelection();
-        if (!selection.rangeCount) return;
-
-        let range = selection.getRangeAt(0);
-        range.deleteContents();
-        range.insertNode(document.createTextNode(matchString));
-
-        currentEntry.set(editor.innerText); // Update the entry with new text
-        updateContent(editor.innerText); // Re-parse and update the content
-
-        setTimeout(() => {
-            editor.focus(); // Refocus the editor
-            const pos = range.endOffset;
-            setCaretPosition(pos); // Restore caret position
-        }, 0);
+    ChartBlot.blotName = 'chart';
+    ChartBlot.tagName = 'button';
+    Quill.register('formats/chart', ChartBlot);
     }
-
-    // Set caret position function
-    function setCaretPosition(pos) {
-        const setPos = document.createRange();
-        const set = window.getSelection();
-        setPos.selectNodeContents(editor);
-        setPos.setStart(editor.childNodes[0], pos);
-        setPos.collapse(true);
-        set.removeAllRanges();
-        set.addRange(setPos);
-    }
-
-    // Function to log button actions
-    function runFunction(ticker, time, interval) {
-        console.log(`Ticker: ${ticker}, Time: ${time}, Interval: ${interval}`);
-    }
-    window.runFunction = runFunction; // Make function globally accessible
+  });
+ 
 </script>
 
-<div contenteditable="true" class="editable"/>
-
+<div bind:this={editorContainer}></div>
 
 <style>
-    .editable {
-        min-height: 50px;
-        padding: 10px;
-        overflow: auto;
-        max-width: 100%;
-        text-align: left;
-        direction: ltr;
-        vertical-align: top;
-        white-space: normal;
-        word-wrap: break-word;
-
-    }
-    .editable:focus {
-        outline: none;
-    }
-    .dynamic-button {
-        padding: 2px 5px;
-        margin: 0 2px;
-        cursor: pointer;
-    }
+  .ql-container {
+    /*height: 200px;*/
+    max-height: 75%;
+    width: 100%;
+    height: auto;
+    overflow-y: auto;
+    border: none;
+  }
+  :global(.btn) {
+    background-color: #f1f1f1;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    color: #333;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 14px;
+    margin: 5px;
+    padding: 5px 10px;
+    text-align: center;
+  }
 </style>
 

@@ -1,11 +1,24 @@
 :root {
-    --c1: #3a3f47; /* secondary */
-    --c2: #2c2f36; /* base */
-    --c3: #2962ff; /* accents */
-    --c4: #c9c9c9; /* spereator */
-    --c5: #ad3d3d; /* error */
+    --c1: #3a3f47; /* secondary - grey*/
+    --c2: #2c2f36; /* base - dark greay*/
+    --c3: #2962ff; /* accents - blue*/
+    --c4: #c9c9c9; /* spereator - light grey */
+    --c5: #ad3d3d; /* error - red*/
+    --c6: #28a745; /* - green */
+    --c3-hover: #0056b3; /* blue hover */
+    --c6-hover: #218838; /* green hover */
+
     --f1: #ffffff; /* white font */
     --f2: #f2f2f2; /* Light grey color, consistent with theme */
+}
+.page {
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    background-color: var(--c2);
+    overflow: hidden;
 }
 /*p {
     font-weight: 500;

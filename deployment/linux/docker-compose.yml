@@ -2,77 +2,86 @@ version: '3.6'
 
 services:
 
+#    frontend:
+#        build:
+#            context: /home/aj/dev/broker/services/frontend
+#            dockerfile: Dockerfile
+#        volumes: 
+#          - /home/aj/dev/broker/services/frontend/:/app/
+#        restart: always
+#        ports:
+#        - "5173:5173"
+#        expose: 
+#          - 5173
+
+    tf:
+        build:
+            context: /home/aj/dev/broker/services/tf
+            dockerfile: Dockerfile
+        restart: always
+        ports:
+        - "8501:8501"
+        volumes:
+            - tf:/models
+
     backend:
         depends_on:
-            - mysql
-            - redis
+            - db
+            - cache
         build:
-            context: /home/aj/dev/Broker/services/backend
+            context: /home/aj/dev/broker/services/backend
             dockerfile: Dockerfile
         restart: always
         ports:
         - "5057:5057"
         volumes:
-            #- /home/aj/dev/Broker/services/backend/api.py:/app/api.py
-            - /home/aj/dev/Broker/services/backend/:/app/
+            - /home/aj/dev/broker/services/backend/:/app/
         networks:
             - compose_network
 
-    worker: 
+    ml: 
         build: #satish was here
-            context: /home/aj/dev/Broker/services/worker
+            context: /home/aj/dev/broker/services/ml
             dockerfile: Dockerfile
         restart: on-failure
-        volumes: 
-            - /home/aj/dev/Broker/services/worker/:/app/
-             #- ./:/app
         depends_on:
-            - mysql
-            - redis
+            - db
+            - cache
         networks:
             - compose_network
-
-    jobs:
+        volumes:
+          - tf:/models
+    db:
         build:
-            context: /home/aj/dev/Broker/services/jobs
-            dockerfile: Dockerfile
+           context: /home/aj/dev/broker/services/db
+           dockerfile: Dockerfile
         volumes:
-            - /home/aj/dev/Broker/services/jobs:/app/
-        command: python Database.py
-        restart: on-failure
-        networks:
-            - compose_network
-        environment:
-            - DEV_ENV=True
-
-    mysql:
-        image: mysql:latest
-        environment:
-            MYSQL_ROOT_PASSWORD: 7+WCy76_2$%g
+           - db:/var/lib/postgresql/data
+           - /home/aj/dev/broker/services/db/quotes:/postgres-data/quotes
         ports:
-            - "3306:3306"
-        volumes:
-            - mysql-data:/var/lib/mysql
-           # - /home/aj/dev/Broker/services/mysql/my.cnf:/etc/mysql/my.cnf
+          - "5432:5432"
         networks:
             - compose_network
-            
-    redis:
-        image: redis:latest
+    cache:
+        build:
+            context: /home/aj/dev/broker/services/cache
+            dockerfile: Dockerfile
         ports:
           - 6379:6379
         networks:
           - compose_network
         hostname: redis
         volumes:
-          - redis-data:/data
+          - cache:/data
         command: redis-server
         mem_limit: 12G
-
 volumes:
-    mysql-data:
-    redis-data:
+    db:
+    cache:
+    tf:
 
 networks:
     compose_network:    
         driver: bridge
+
+

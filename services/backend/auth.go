@@ -65,7 +65,7 @@ func Login(conn *data.Conn, rawArgs json.RawMessage) (interface{}, error) {
     var settings string
     err := conn.DB.QueryRow(context.Background(), "SELECT user_id, settings FROM users WHERE username=$1 AND password=$2", a.Username, a.Password).Scan(&user_id, &settings)
     if err != nil {
-        return nil, err
+        return nil, fmt.Errorf("Invalid Credentials")
     }
     token, err := create_token(user_id)
     if err != nil {

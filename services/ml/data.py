@@ -1,6 +1,6 @@
-import os, numpy as np, time,datetime, mysql.connector, pytz, redis, pickle,  multiprocessing, json, yfinance as yf, io, warnings, pandas as pd, re
+import os, numpy as np, time,datetime,  pytz, redis, pickle,  multiprocessing, json, yfinance as yf, io, warnings, pandas as pd, re
 warnings.filterwarnings("ignore", category=FutureWarning, message="The 'unit' keyword in TimedeltaIndex construction is deprecated")
-import psycopg2
+import psycopg2, redisai
 
 class Data:
 
@@ -13,8 +13,16 @@ class Data:
         else:
             cache_host = 'localhost'
             db_host = 'localhost'
-        self.cache = redis.Redis(host=cache_host, port=6379)
-        self.db = psycopg2.connect(host=db_host,port='5432',user='postgres',password='pass')
+        while True:
+            try:
+                #self.cache = redis.Redis(host=cache_host, port=6379)
+                self.cache = redisai.Client(host=cache_host,port=6379)
+                self.db = psycopg2.connect(host=db_host,port='5432',user='postgres',password='pass')
+            except  psycopg2.OperationalError:
+                print("waiting for db", flush = True)
+                time.sleep(5)
+            else:
+                break
 
     def check_connection(self):
         try:
@@ -88,48 +96,39 @@ class Data:
                 return True
             return False
 
-def getQueryInfo(interval,pm):
-    match = re.match(r'(\d+)([a-zA-Z]*)', interval)
-    if not match:
-        raise ValueError("Invalid interval format")
-    i_num, i_base =  match.groups()
-    if i_base == "":
-        bucket = f"{i_num} minute"
-        table = "quotes_1_extended"
-    elif i_base == "h":
-        bucket = f"{i_num} hour"
-        table = "quotes_h_pm" if pm else "quotes_h"
-    elif i_base == "d":
-        bucket = f"{i_num} day"
-        table = "quotes_d"
-    elif i_base == "w":
-        bucket = f"{i_num} week"
-        table = "quotes_w"
-    elif i_base == "m":
-        bucket = f"{i_num} month"
-        table = "quotes_w"  # Possible change once we have quotes_m
-    elif i_base == "y":
-        bucket = f"{i_num} year"
-        table = "quotes_w"  # Possible change once we have quotes_y
-    else:
-        raise ValueError(f"Invalid interval base: {i_base}")
-    if i_num != "1" or i_base in ["m", "y"]:
-        aggregate = True
-    else:
-        aggregate = False
-    return table, bucket, aggregate
+    @staticmethod
+    def getQueryInfo(interval,pm):
+        match = re.match(r'(\d+)([a-zA-Z]*)', interval)
+        if not match:
+            raise ValueError("Invalid interval format")
+        i_num, i_base =  match.groups()
+        if i_base == "":
+            bucket = f"{i_num} minute"
+            table = "quotes_1_extended"
+        elif i_base == "h":
+            bucket = f"{i_num} hour"
+            table = "quotes_h_pm" if pm else "quotes_h"
+        elif i_base == "d":
+            bucket = f"{i_num} day"
+            table = "quotes_d"
+        elif i_base == "w":
+            bucket = f"{i_num} week"
+            table = "quotes_w"
+        elif i_base == "m":
+            bucket = f"{i_num} month"
+            table = "quotes_w"  # Possible change once we have quotes_m
+        elif i_base == "y":
+            bucket = f"{i_num} year"
+            table = "quotes_w"  # Possible change once we have quotes_y
+        else:
+            raise ValueError(f"Invalid interval base: {i_base}")
+        if i_num != "1" or i_base in ["m", "y"]:
+            aggregate = True
+        else:
+            aggregate = False
+        return table, bucket, aggregate
 
-def updateCache(data, df, ticker_id, screenerTensor, screenerKey):
-    passinstances[i][2]
-
-def setCache(tickers):
-    for interval in SCREENER_INTERVALS:
-        if interval != "1d":
-            raise Exception("good luck")
-
-
-
-class old_Datab:
+class old_Data:
 
     def get_trainer_queue_size(self,user_id,st):
         return self.cache.llen(str(user_id)+st)

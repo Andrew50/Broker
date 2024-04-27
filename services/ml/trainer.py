@@ -1,4 +1,4 @@
-import tensorflow as tf,  datetime, time, random , numpy as np
+import tensorflow as tf,  datetime, time, random , numpy as np, os
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import Dense, LSTM, Bidirectional, Dropout, Conv1D, Flatten, Lambda, Input
 from tensorflow.keras.optimizers import Adam
@@ -83,87 +83,87 @@ class Trainer:
             random.shuffle(validationInstances)
             return np.array(trainingInstances), np.array(validationInstances)
    
-    def getData(data,instances,interval,bars,pm = False):
+#    def getData(data,instances,interval,bars,pm = False):
+#
+#        table, bucket,aggregate = data.getQueryInfo(interval, pm)
+#
+#        queries = []
+#        print(len(instances))
+#        for ticker_id, timestamp, _ in instances:
+#            query = "("
+#            if aggregate:
+#                query += f"SELECT  first(open, t), max(high), min(low), last(close, t), sum(volume) "
+#            else:
+#                query += "SELECT open, high, low, close, volume "
+#            query += f"""FROM {table} WHERE ticker_id = {ticker_id} 
+#                    AND time_bucket('{bucket}',t) <= '{timestamp}' """
+#        #    if not timestamp.IsZero():
+#        #        query += f"AND bucket <= {timestamp} "
+#            if not pm and "extended" in table:
+#                query += "AND extended_hours = true "
+#            if aggregate:
+#                query += f"GROUP BY time_bucket('{bucket}',t) "
+#            query += f"ORDER BY time_bucket('{bucket}', t) DESC LIMIT {bars + 1} )"
+#            queries.append(query)
+#
+#        combined_query = " UNION ALL ".join(queries)
+#        with data.db.cursor() as cursor:
+#            cursor.execute(combined_query)
+#            results = cursor.fetchall()
+#        ds = []
+#        classes = []
+#        for result, i in enumerate(results):
+#            if len(result) != bars:
+#                continue
+#            result = [np.inf for _ in range(4)] + result
+#            classes.append(instances[i][2])
+#            ds.append(results)
+#        ds = np.array(ds,dtype=np.float64)
+#        ds = np.diff(np.log(ds),axis=0)
+#        classes = np.array(classes)
+#        return ds, classes
+#
+#        return results
 
-        table, bucket,aggregate = data.getQueryInfo(interval, pm)
-
-        queries = []
-        for ticker_id, timestamp, _ in instances:
-            if aggregate:
-                raise Exception("Aggregation not implemented for models...yet?")
-                query = f"""
-                    (SELECT
-                        bucket,
-                        LOG(first_open) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_open,
-                        LOG(max_high) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_high,
-                        LOG(min_low) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_low,
-                        LOG(last_close) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_close
-                    FROM (
-                        SELECT
-                            time_bucket('{bucket}', q.t) AS bucket,
-                            first(q.open, q.t) AS first_open,
-                            max(q.high) AS max_high,
-                            min(q.low) AS min_low,
-                            last(q.close, q.t) AS last_close
-                        FROM {table} AS q
-                        WHERE q.ticker_id = {ticker_id} AND q.t <= '{timestamp}'
-                        GROUP BY bucket
-                        ORDER BY bucket DESC
-                        LIMIT {bars}
-                    ) AS subquery
-                    ORDER BY bucket ASC)
-                    """
-            else:
-               query = f"""
-                    (SELECT
-                        bucket,
-                        LOG(first_open) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_open,
-                        LOG(max_high) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_high,
-                        LOG(min_low) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_low,
-                        LOG(last_close) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_close
-                    FROM (
-                        SELECT
-                            q.t AS bucket,
-                            q.open AS first_open,
-                            q.high AS max_high,
-                            q.low AS min_low,
-                            q.close AS last_close
-                        FROM {table} AS q
-                        WHERE q.ticker_id = {ticker_id} AND q.t <= '{timestamp}'
-                        ORDER BY q.t DESC
-                        LIMIT {bars}
-                    ) AS subquery
-                    ORDER BY bucket ASC)
-                    """
-            queries.append(query)
-        combined_query = " UNION ALL ".join(queries)
-        with data.db.cursor() as cursor:
-            cursor.execute(combined_query)
-            results = cursor.fetchall()
-
-
+    def getData(data, instances, interval, bars, pm=False):
+        table, bucket, aggregate = data.getQueryInfo(interval, pm)
         ds = []
         classes = []
-        for result, i in enumerate(results):
-            if len(result) != bars:
-                continue
-            result = [np.inf for _ in range(4)] + result
-            classes.append(instances[i][2])
-            ds.append(results)
-        ds = np.array(ds)
-        classes = np.array(classes)
-        return ds, classes
-    
+        for ticker_id, timestamp, class_info in instances:
+            query = ""
+            args = [ticker_id]
+            if aggregate:
+                raise Exception('to code')
+            else:
+                query = f"""SELECT open, high, low, close
+                            FROM {table}
+                            WHERE ticker_id = {ticker_id} AND t <= '{timestamp}'
+                            ORDER BY t DESC
+                            LIMIT {bars}"""
+            with data.db.cursor() as cursor:
+                cursor.execute(query)
+                results = cursor.fetchall()
+            if len(results) < bars:
+                continue  # Skip if insufficient data
+            results = np.array(results, dtype=np.float64)
+            results = np.log(results)
+            close = np.roll(results[:,2], shift=1)
+            results = results - close[:,np.newaxis]
+            ds.append(results[1:])
+            classes.append(class_info)
+        return np.array(ds), np.array(classes)
+
     def train_model(data,setupID):
         splitRatio = .85
         trainingClassRatio = .25
         validationClassRatio = .05
         with data.db.cursor() as cursor:
-            cursor.execute('SELECT i, bars, dolvol, adr, mcap FROM setups WHERE setup_id = %s', (setupID,))
+            cursor.execute('SELECT i, bars, model_version, dolvol, adr, mcap FROM setups WHERE setup_id = %s', (setupID,))
             traits = cursor.fetchone()
         interval = traits[0]
         bars = traits[1]
-        reqs = traits[2:5]
+        modelVersion = traits[2] + 1
+        reqs = traits[3:6]
         model = Trainer.createModel(data,bars,reqs)
         trainingSample, validationSample = Trainer.getSample(data,setupID,interval,trainingClassRatio, validationClassRatio, splitRatio)
         xTrainingData, yTrainingData = Trainer.getData(data,trainingSample,interval,bars)
@@ -177,19 +177,15 @@ class Trainer:
             mode='max',
             verbose =1
         )
-        history = model.fit(xTrainingData, yTrainingData,epochs=30,batch_size=64,validation_data=(xValidationData, yValidationData),callbacks=[early_stopping])
+        history = model.fit(xTrainingData, yTrainingData,epochs=100,batch_size=64,validation_data=(xValidationData, yValidationData),callbacks=[early_stopping])
 
-        model_id = f"model:{setupID}"
-        model_path = f"models/{model_id}"
+        model_path = f"models/{setupID}/{modelVersion}"
         model.save(model_path, save_format='tf')
-        with open(model_path, 'rb') as model_file:
-            model_blob = model_file.read()
-        data.cache.modelstore(model_key=model_id, backend='TF', device='CPU', model=model_blob)
 
         tf.keras.backend.clear_session()
         score = round(history.history['val_auc_pr'][-1] * 100)
         with data.db.cursor(buffered=True) as cursor:
-            cursor.execute("UPDATE setups SET score = %s WHERE setup_id = %s;", (score, setupID))
+            cursor.execute("UPDATE setups SET score = %s, model_version = %s WHERE setup_id = %s;", (score, modelVersion, setupID))
         data.db.commit()
         data.set_setup_info(user_id, st, score=score)
         return score 

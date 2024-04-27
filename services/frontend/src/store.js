@@ -1,6 +1,7 @@
 import { writable } from 'svelte/store';
 import { get } from 'svelte/store';
-export let sidebarWidth = writable(0);
+import { goto } from "$app/navigation";
+export let menuLeftPos = writable();
 export let annotateData = writable([]);
 export let journalData = writable([]);
 export let screener_data = writable([]);
@@ -23,7 +24,7 @@ if (typeof window !== 'undefined') {
 }
 export function logout() {
     auth_data.set(null);
-    goto('/auth');
+    goto('/');
 }
 
 export function toDT(timestamp, format = 1) {

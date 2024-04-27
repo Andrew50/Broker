@@ -23,13 +23,13 @@ chart.prototype.getDataBounds = function (dataSliced) {
 
 chart.prototype.draw = function (cursor) {
     const { ctx, canvas } = this;
-    //clear area
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    //console.log(this.data.length + Math.ceil(this.a) - Math.floor((this.canvas.width - this.margin) / this.candleWidth));
-    //console.log(this.data.length + Math.ceil(this.a));
     this.pixelBounds = this.getPixelBounds();
     if (this.queryValid) {
-        const dataSliced = this.data.slice(this.data.length + Math.ceil(this.a) - Math.floor((this.pixelBounds.right) / this.candleWidth), this.data.length + Math.ceil(this.a));
+        const rightVisibleIndex = this.data.length + Math.ceil(this.a);
+        const screenSizeInCandles = Math.floor((this.pixelBounds.right) / this.candleWidth)
+        //console.log(screenSizeInCandles, this.pixelBounds.right, this.candleWidth)
+        const dataSliced = this.data.slice(rightVisibleIndex - screenSizeInCandles,rightVisibleIndex);
         this.dataBounds = this.getDataBounds(dataSliced);
         let i = 0;
         for (const candleStick of dataSliced) {

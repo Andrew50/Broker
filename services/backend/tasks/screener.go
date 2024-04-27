@@ -4,8 +4,10 @@ import (
     "api/data"
     "errors"
     "encoding/json"
-    "github.com/google/uuid"
     "context"
+    "fmt"
+    "net/http"
+    "bytes"
 )
 
 type GetScreenerArgs struct {
@@ -18,7 +20,6 @@ func GetScreener(conn *data.Conn, user_id int, rawArgs json.RawMessage) (interfa
     if err != nil {
         return nil, err
     }
-
     var keys [][]interface{}
     cmd := conn.Cache.Get(context.Background(),"1d_screener_key")
     if cmd.Err() != nil {
@@ -31,7 +32,6 @@ func GetScreener(conn *data.Conn, user_id int, rawArgs json.RawMessage) (interfa
     if err := json.Unmarshal(val, &keys); err != nil {
         return nil, err
     }
-
     var setups [][]interface{}
     for _, setupID := range args.Setups {
         var threshold int
@@ -40,33 +40,30 @@ func GetScreener(conn *data.Conn, user_id int, rawArgs json.RawMessage) (interfa
         if err != nil {
             return nil, err
         }
-        thresholdFloat := float64(threshold) / 100.0
-        
-        modelKey := string(setupID)
-        inputTensorKey := interval + "_screener"
-        outputTensorKey := uuid.New().String() 
-
-        err = conn.AI.ModelRun(modelKey, []string{inputTensorKey}, []string{outputTensorKey})
+        var tensor json.RawMessage
+        err = conn.Cache.Get(context.Background(), fmt.Sprintf("%s_screener",interval)).Scan(&tensor)
         if err != nil {
             return nil, err
         }
-        dt, shape, rawResult, err := conn.AI.TensorGetValues(outputTensorKey)
+        //assuming tensor is already json
+        requestBody, err := json.Marshal(map[string]interface{}{
+            "instances": []map[string]interface{}{{"input_tensor": tensor}},
+        })
+        url := fmt.Sprintf("http://tf:8501/v1/models/%s:predict",setupID)
+        response, err := http.Post(url, "application/json", bytes.NewBuffer(requestBody))
         if err != nil {
             return nil, err
         }
-        if dt != "float32" || len(shape) != 1 {
-            err = errors.New("unexpected tensor shape or data type")
+        defer response.Body.Close()
+        var result struct {
+            Predictions [][]float64 `json:"predictions"`
+        }
+        if err := json.NewDecoder(response.Body).Decode(&result); err != nil {
             return nil, err
         }
-
-        result, ok := rawResult.([]float32)
-        if !ok {
-            err = errors.New("bad conversion to float32 slice")
-            return nil, err
-        }
-        
-
-        for i, score := range result {
+        thresholdFloat := float64(threshold) / 100
+        for i, row := range result.Predictions {
+            score := row[0]
             if float64(score) >= thresholdFloat { 
                 if i < len(keys) {
                     setups = append(setups, keys[i])

@@ -2,14 +2,16 @@
 <script>
 	import { onMount } from "svelte";
 	import { chart } from "../../chart/chart.js";
-	import {toDT, chartQuery, setups_list, sidebarWidth, request , currentEntry} from "../../store.js";
+	import {toDT, chartQuery, setups_list,menuLeftPos,  request , currentEntry} from "../../store.js";
 	let innerWidth, canvas, innerHeight, Chart, queryLabel,  selectedT, selectedPrice, selectedMenuAction, clickX, clickY;
-    let ticker = "MSFT";
-	let tf = "1d";
+    let ticker = "AAPL";
+	let tf = "1";
 	let dt = null;
-    let pm, chartMenuVisible = false;
+    let chartMenuVisible = false;
+    let pm = false;
     let chartFocused = true;
-	let queryValue, queryError = "";
+	let queryError = "";
+    let queryValue = "";
 
     function handleChartClick(event) {
         chartFocused = true;
@@ -17,14 +19,10 @@
         selectedMenuAction = null;
     }
 
-    function updateChartSize() {
+    function updateChartSize(v) {
         if (!canvas) return;
-        const sidebarWidthPx = $sidebarWidth / 100 * window.innerWidth;
-        const menuWidthPx = window.innerWidth * 0.05;
-        const chartWidth = window.innerWidth - sidebarWidthPx - menuWidthPx;
-        const chartHeight = window.innerHeight;
-        canvas.width = chartWidth;
-        canvas.height = chartHeight;
+        canvas.width = v;
+        canvas.height = window.innerHeight;
         Chart.draw();
     }
 
@@ -43,7 +41,7 @@
             defaultCandleWidth: 10,
         });
         window.addEventListener("resize", updateChartSize);
-        sidebarWidth.subscribe(updateChartSize);
+        menuLeftPos.subscribe((v) => updateChartSize(v));
         updateChartSize();
         chartQuery.subscribe((value) => {Chart.updateQuery(value[0],value[1],value[2],value[3]);});
         canvas.addEventListener("contextmenu", (event) => {
@@ -75,6 +73,7 @@
         if (!chartFocused) return;
         chartMenuVisible = false;
 		if (/^[a-zA-Z0-9]$/.test(event.key.toLowerCase())) {
+            console.log(queryValue);
             queryError = ""
 			queryValue += event.key;
             queryLabel = classifyInput(queryValue);
@@ -115,7 +114,7 @@
     <div class="menu" style="top: {clickY}px; left: {clickX}px;">
         <p>Add {`${Chart.ticker} ${toDT(selectedT)}`} to ...</p>
         <button on:click={() => {selectedMenuAction = "newAnnotation"; chartMenuVisible = false}}>Annotate</button>
-        <button on:click={() => {currentEntry.update((e) => `${e} [${Chart.ticker}|${Chart.i}|${selectedT}] `)}}>Entry</button>
+        <button on:click={() => {currentEntry.update((e) => `${e} [${Chart.ticker}|${Chart.i}|${selectedT}|${Chart.pm}] `)}}>Entry</button>
     </div>
 {/if}
 {#if selectedMenuAction}
@@ -144,41 +143,41 @@
         background-color: black;
         width: 100%;
         height: 100%;
-        flex-grow: 1;
+        /*flex-grow: 1;*/
 
     }
 	.menu {
         position: absolute;
-        color: white; /* Text color */
-        background-color: var(--c2); /* Dark background color from the screenshot */
-        padding: 10px; /* Adjust to your preference */
-        border-radius: 5px; /* Smaller border radius to match the theme */
-        text-align: left; /* Align text to the left */
+        color: white; 
+        background-color: var(--c2); 
+        padding: 10px; 
+        border-radius: 5px; 
+        text-align: left; 
         box-sizing: border-box;
         z-index: 1000;
-        font-size: 16px; /* Adjust to your preference */
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
-        font-family: Arial, sans-serif; /* Match font to the screenshot */
-        border: 2px solid var(--c3); /* Blue border as in the second screenshot */
+        font-size: 16px; 
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+        font-family: Arial, sans-serif; 
+        border: 2px solid var(--c3); 
     }
 
     .menu button {
-        display: block; /* Make buttons stack vertically */
-        margin: 5px 0; /* Add some margin between buttons */
-        background-color: var(--c1); /* Darker background for buttons to stand out */
-        color: var(--f1); /* Text color for buttons */
+        display: block; 
+        margin: 5px 0; 
+        background-color: var(--c1); 
+        color: var(--f1); 
         border: none;
-        border-radius: 4px; /* Rounded borders for buttons */
+        border-radius: 4px;
         padding: 10px 20px;
-        text-align: left; /* Align text to the left for buttons */
-        width: 100%; /* Make buttons full width */
-        box-sizing: border-box; /* Include padding and border in the width */
-        transition: background-color 0.3s; /* Transition for interactive effect */
-        cursor: pointer; /* Pointer cursor on hover */
+        text-align: left; 
+        width: 100%; 
+        box-sizing: border-box; 
+        transition: background-color 0.3s; 
+        cursor: pointer; 
     }
 
     .menu button:hover {
-        background-color: #505760; /* Slightly lighter on hover */
+        background-color: #505760; 
     }
 
     .query {
@@ -186,25 +185,24 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background-color: var(--c2); /* Solid background color to match the screenshot */
-        border: 2px solid var(--c3); /* Blue border as in the second screenshot */
+        background-color: var(--c2); 
+        border: 2px solid var(--c3);
         padding: 10px;
         border-radius: 5px;
         text-align: center;
         box-sizing: border-box;
         z-index: 2000;
-        font-size: 16px; /* Adjust font size to match the theme */
-        color: var(--f1); /* Text color to match the theme */
-        font-family: Arial, sans-serif; /* Match font to the screenshot */
-        text-transform: uppercase; /* Uppercase text for the value */
+        font-size: 16px; 
+        color: var(--f1);
+        font-family: Arial, sans-serif; 
+        text-transform: uppercase; 
     }
     .value {
-        font-size: 16pt; /* Adjusted font size for consistency */
+        font-size: 16pt; 
     }
     .label {
-        margin-top: 10px; /* Adjust spacing between value and label */
-        font-size: 14pt; /* Smaller font size for the label */
-        /*color: #000; /* Optional: different color for the label */
+        margin-top: 10px; 
+        font-size: 14pt; 
     }
     .queryError {
         position: fixed;

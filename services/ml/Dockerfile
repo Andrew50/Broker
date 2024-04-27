@@ -4,6 +4,7 @@ COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt --no-cache-dir
 COPY . .
+RUN rm -rf venv
 #RUN rm -rf /app/models
 CMD ["python", "worker.py"]
 

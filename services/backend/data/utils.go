@@ -26,7 +26,7 @@ func Queue (conn *Conn, queueNum int, funcName string, args []interface{}) (stri
         return "", err
     }
 
-    queue := fmt.Sprintf("temp_%d", queueNum)
+    queue := fmt.Sprintf("task_queue_%d", queueNum)
     if err := conn.Cache.LPush(context.Background(), queue, serializedTask).Err(); err != nil {
         return "", err
     }

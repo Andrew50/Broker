@@ -31,7 +31,7 @@ chart.prototype.updateQuery = function(ticker, i, t,pm) {
 chart.prototype.updateData = function(bars,newQuery=false) {
     this.dataOffCooldown = false;
     request(null, true, "getChart", this.ticker, this.i, this.nextT, bars).then(val => {
-        const [data,err] = val;
+        let [data,err] = val;
         if (err || data == null) {
             if (newQuery) {
                 this.data = [];
@@ -42,6 +42,7 @@ chart.prototype.updateData = function(bars,newQuery=false) {
             }
             return;
         }
+        data = data.reverse()
         if (newQuery) {
             this.data = data;
         } else {

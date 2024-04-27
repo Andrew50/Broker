@@ -10,10 +10,8 @@
 
 <header class="header">
   <div class="left">
-    <a href="/home" on:click={() => navigateTo('/')} class="logo">EdgeFinder</a>
-    <a href="/services" on:click={() => navigateTo('/services')}>Services</a>
-    <a href="/about" on:click={() => navigateTo('/about')}>About</a>
-    <a href="/plans" on:click={() => navigateTo('/plans')}>Plans</a>
+    <a href="/" on:click={() => navigateTo('/')} class="logo">EdgeFinder</a>
+    <a href="/features" on:click={() => navigateTo('/features')}>Features</a>
   </div>
   <div class="right">
     <a href="/login" on:click={() => navigateTo('/login')}>Log In</a>

@@ -36,19 +36,6 @@
         stopAutoLoad();
     });
 
-    /*function autoResize() {
-        const textarea = document.querySelector('textarea');
-        if (textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = `${textarea.scrollHeight}px`;
-        }
-    }
-
-    // Subscribe to currentEntry and call autoResize after the DOM updates
-    currentEntry.subscribe(value => {
-        setTimeout(autoResize, 0); // Defer the resizing to the next event loop
-    });*/
-
     function saveRow(i){
         const entry = $currentEntry;
         if (entry != ""){
@@ -84,45 +71,43 @@
     }
 </script>
 
-{#if $data.length}
-    <div class="list">
-        <table id="list-table">
-            <thead>
-                <tr>
-                    {#each headers as header}
-                        <th>{header}</th>
-                    {/each}
-                </tr>
-            </thead>
-            {#if $data.length}
-                <tbody>
-                    {#each $data as row, i}
-                        <tr class:finished={row[row.length - 2]} on:click={() => handleRowClick(row)}>
-                            <td>{toDT(row[0])}</td> <!-- Date -->
-                            {#each row.slice(1,row.length - 2) as cell}
-                                <td>{cell}</td>
-                            {/each}
-                      </tr>
-                      {#if visibleAnnotationID == row[row.length - 1]}
-                        <tr class="text-entry">
-                          <td colspan= {headers.length}>
-     <!--                       <textarea bind:value={$currentEntry} placeholder="Type here..." rows="1"></textarea> -->
-                            <Entry />
-                            <div class="button-row">
-                              <button on:click|stopPropagation={() => saveRow(i)}>Save</button>
-                              {#if useDelete}
-                                <button on:click|stopPropagation={() => deleteRow(i)}>Delete</button>
-                              {/if}
-                            </div>
-                          </td>
-                        </tr>
-                      {/if}
-                    {/each}
-                </tbody>
-            {/if}
-        </table>
-    </div>
-{/if}
+<div class="list">
+    <table id="list-table">
+        <thead>
+            <tr>
+                {#each headers as header}
+                    <th>{header}</th>
+                {/each}
+            </tr>
+        </thead>
+        {#if $data.length}
+            <tbody>
+                {#each $data as row, i}
+                    <tr class:finished={row[row.length - 2]} on:click={() => handleRowClick(row)}>
+                        <td>{toDT(row[0])}</td> <!-- Date -->
+                        {#each row.slice(1,row.length - 2) as cell}
+                            <td>{cell}</td>
+                        {/each}
+                  </tr>
+                  {#if visibleAnnotationID == row[row.length - 1]}
+                    <tr class="text-entry">
+                      <td colspan= {headers.length}>
+ <!--                       <textarea bind:value={$currentEntry} placeholder="Type here..." rows="1"></textarea> -->
+                        <Entry />
+                        <div class="button-row">
+                          <button on:click|stopPropagation={() => saveRow(i)}>Save</button>
+                          {#if useDelete}
+                            <button on:click|stopPropagation={() => deleteRow(i)}>Delete</button>
+                          {/if}
+                        </div>
+                      </td>
+                    </tr>
+                  {/if}
+                {/each}
+            </tbody>
+        {/if}
+    </table>
+</div>
 
 <style>
     @import "../global.css";

@@ -1,7 +1,8 @@
 ALTER DATABASE postgres SET timezone TO 'America/New_York';
 CREATE TABLE tickers (
     ticker_id SMALLSERIAL PRIMARY KEY,
-    ticker VARCHAR(10) NOT NULL UNIQUE
+    ticker VARCHAR(10) NOT NULL UNIQUE,
+    listed BOOLEAN NOT NULL
 );
 CREATE INDEX idx_ticker ON tickers (ticker);
 --1 minute extended
@@ -13,17 +14,25 @@ CREATE TABLE quotes_1_extended (
     high FLOAT NOT NULL,
     low FLOAT NOT NULL,
     close FLOAT NOT NULL,
-    volume FLOAT NOT NULL,
-    FOREIGN KEY (ticker_id) REFERENCES tickers(ticker_id) ON DELETE CASCADE,
-    PRIMARY KEY (ticker_id, t)
+    volume FLOAT NOT NULL
+-- contraints are added in init.sh after mass data insertion
+--    FOREIGN KEY (ticker_id) REFERENCES tickers(ticker_id) ON DELETE CASCADE,
+--    PRIMARY KEY (ticker_id, t)
 );
 CREATE INDEX idx_quotes_1_extended ON quotes_1_extended (ticker_id, t) 
 WHERE NOT extended_hours;
 SELECT create_hypertable('quotes_1_extended', 't', 'ticker_id', 100);
+ALTER TABLE quotes_1_extended SET (
+    timescaledb.compress,
+    timescaledb.compress_orderby = 't DESC',
+    timescaledb.compress_segmentby = 'ticker_id'
+);
+SELECT add_compression_policy('quotes_1_extended', INTERVAL '7 days');
+
 --hourly extended hours
 CREATE MATERIALIZED VIEW quotes_h_extended
 WITH (timescaledb.continuous) AS
-SELECT 
+SELECT
     ticker_id,
     time_bucket('1 hour', t) AS t,
     first(open, t) AS open,
@@ -34,16 +43,17 @@ SELECT
 FROM quotes_1_extended
 GROUP BY ticker_id, time_bucket('1 hour', t)
 WITH NO DATA;
+
 SELECT add_continuous_aggregate_policy('quotes_h_extended',
     start_offset => INTERVAL '2000 years',
     end_offset => INTERVAL '1 hour',
     schedule_interval => INTERVAL '1 hour');
+
 --hourly regular hours
 CREATE MATERIALIZED VIEW quotes_h
 WITH (timescaledb.continuous) AS
-SELECT 
+SELECT
     ticker_id,
-    --time_t('1 hour', date_trunc('hour', t - INTERVAL '30 minutes')) + INTERVAL '30 minutes' AS t,
     time_bucket('1 hour', t) AS t,
     first(open, t) AS open,
     max(high) AS high,
@@ -61,7 +71,7 @@ SELECT add_continuous_aggregate_policy('quotes_h',
 --daily
 CREATE MATERIALIZED VIEW quotes_d
 WITH (timescaledb.continuous) AS
-SELECT 
+SELECT
     ticker_id,
     time_bucket('1 day', t) AS t,
     first(open, t) AS open,
@@ -80,7 +90,7 @@ SELECT add_continuous_aggregate_policy('quotes_d',
 --weekly
 CREATE MATERIALIZED VIEW quotes_w
 WITH (timescaledb.continuous) AS
-SELECT 
+SELECT
     ticker_id,
     time_bucket('1 week', t) AS t,
     first(open, t) AS open,
@@ -113,6 +123,7 @@ CREATE TABLE setups (
     i VARCHAR(5) DEFAULT '1d' NOT NULL,
     bars INTEGER DEFAULT 30 NOT NULL,
     threshold INTEGER DEFAULT 30 NOT NULL,
+    model_version INTEGER DEFAULT 0 NOT NULL,
     dolvol FLOAT DEFAULT 5000000 NOT NULL,
     adr FLOAT DEFAULT 2.5 NOT NULL,
     mcap FLOAT DEFAULT 0 NOT NULL,
@@ -170,7 +181,7 @@ CREATE TABLE samples (
     UNIQUE (setup_id, ticker_id, t)
 );
 CREATE INDEX idx_samples ON samples (setup_id, class);
-COPY tickers(ticker) FROM '/postgres-data/tickers.csv' WITH (FORMAT csv, HEADER true, DELIMITER ',');    
+COPY tickers(ticker, listed) FROM '/postgres-data/tickers.csv' WITH (FORMAT csv, HEADER true, DELIMITER ',');    
 INSERT INTO users (user_id, username, password, settings) VALUES (0, 'user', 'pass', jsonb_build_object());
 INSERT INTO setups (setup_id,user_id,setup_name,i,bars,threshold,dolvol,adr,mcap) VALUES 
 (1,0, 'EP', '1d', 30, .3, 5000000, 2.5, 0),

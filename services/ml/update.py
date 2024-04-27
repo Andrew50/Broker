@@ -6,7 +6,13 @@ SCREENER_INTERVALS = "1d",
 market_open = datetime.time(9, 30, 0)
 market_close = datetime.time(16, 0, 0)
 
-def updateCache(data, df, ticker_id, screenerTensor, screenerKey):
+def updateCache(data, df, ticker, screenerTensor, screenerKey):
+
+    log_1, log_0, next_update = helper[ticker]
+    if time.now() >= next_update:
+        new = log
+
+
 
     """
     else: #update cache
@@ -114,9 +120,10 @@ def update1(data):
     tickers = data.getTickers()
     cacheDataDict = {}
     for interval in SCREENER_INTERVALS:
-        tensor, key = data.cache.get(f'{interval}_screener'), data.cache.get(f'{interval}_screener_key')
-        _update = tensor is not None and key is not None
-        cacheDataDict[interval] = tensor, key, _update
+        tensor, key, helper = data.cache.get(f'{interval}_screener'), data.cache.get(f'{interval}_screener_key'), data.cache.get(f'{interval}_screener_helper')
+        _update = tensor is not None and key is not None and helper is not None
+
+        cacheDataDict[interval] = tensor, key, helper, _update
     with data.db.cursor() as cursor:
         for ticker_id, ticker in tqdm(tickers):
             df = yf.download(tickers = ticker, period = '5d', group_by='ticker', interval = '1m', ignore_tz = False, auto_adjust=True, progress=False, show_errors = False, threads = True, prepost = True) 
@@ -127,23 +134,29 @@ def update1(data):
             #np.set_printoptions(threshold=np.inf)
             
             for interval in SCREENER_INTERVALS:
-                tensor, key, _update = cacheDataDict[interval]
+                tensor, key, helper, _update = cacheDataDict[interval]
                 if _update:
-                    tensor, key = updateCache(data, df, ticker_id, screenerTensor, screenerKey)
-                    cacheDataDict[interval] = tensor, key, _update
+                    tensor, key, helper = updateCache(data, df, ticker, tensor, key, helper)
+                    cacheDataDict[interval] = tensor, key, helper, _update
             setData(cursor,ticker_id,data,df)
     for interval in SCREENER_INTERVALS:
-        tensor, key, _update = cacheDataDict[interval]
+        tensor, key, helper, _update = cacheDataDict[interval]
         if not _update:
-            tensor, key = getCache(data,interval,tickers)
+            tensor, key, helper = getCache(data,interval,tickers)
         data.cache.tensor_set(f'{interval}_screener', tensor)
         data.cache.set(f'{interval}_screener_key', json.dumps(key))
+        data.cache.set(f'{interval}_screener_helper', json.dumps(helper))
 
 def update2(data):
     #new tickers?
 #clear temp (cahce, any key thats just a uuid) -- dont because just delete after each 
-    data.cache.delete('temp_1')
-    data.cache.delete('temp_2')
+    data.cache.delete('temp')
+    data.cache.delete('task_queue_1')
+    data.cache.delete('task_queue_2')
+    for interval in SCREENER_INTERVALS:
+        data.cache.delete(f'{interval}_screener')
+        data.cache.delete(f'{interval}_screener_key')
+        data.cache.delete(f'{interval}_screener_helper')
 #add journals
     query = """
     INSERT INTO journals (user_id, t)

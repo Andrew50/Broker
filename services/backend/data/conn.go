@@ -6,6 +6,8 @@ import (
     "github.com/jackc/pgx/v4/pgxpool"
     "github.com/redisAI/redisai-go/redisai"
     "github.com/go-redis/redis/v8"
+    "time"
+    "strings"
 )
 
 type Conn struct {
@@ -24,15 +26,25 @@ func GetConn(container bool) *Conn {
         db_url = "postgres://postgres:pass@localhost:5432"
         cache_url="localhost:6379"
     }
-    db, err := pgxpool.Connect(context.Background(), db_url)
-    if err != nil {
-        log.Fatalf("Unable to connect to database: %v\n", err)
+    var db *pgxpool.Pool
+    var err error
+    for true {
+        db, err = pgxpool.Connect(context.Background(), db_url)
+        if err != nil {
+            if strings.Contains(err.Error(), "the database system is starting up") {
+                log.Println("waiting for db")
+            } else {
+                log.Fatalf("Unable to connect to database: %v\n", err)
+            }
+            time.Sleep(5 * time.Second)
+        } else {
+            break
+        }
     }
     cache := redis.NewClient(&redis.Options{Addr: cache_url,})
     err = cache.Ping(context.Background()).Err()
     if err != nil {
         log.Fatalf("Unable to connect to cache: %v\n", err)
     }
-    ai := redisai.Connect(cache_url,nil)
-    return &Conn{DB: db, Cache: cache, AI: ai}
+    return &Conn{DB: db, Cache: cache}
 }
