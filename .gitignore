@@ -1,5 +1,5 @@
-services/ml/venv
-deployment/venv
-services/db/quotes
-services/frontend/node_modules
-services/frontend/.svelte-kit
+/services/ml/venv
+/deployment/venv
+/services/db/quotes
+/services/frontend/node_modules
+/services/frontend/.svelte-kit

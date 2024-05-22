@@ -10,5 +10,6 @@ RUN apk --no-cache add ca-certificates
 RUN apk add --no-cache tzdata
 WORKDIR /root/
 COPY --from=0 /go/main .
+EXPOSE 5057
 CMD ["./main"]
 

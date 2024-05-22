@@ -16,12 +16,19 @@ export const focus = writable(null);
 let base_url;
 
 if (typeof window !== 'undefined') {
-    if (window.location.hostname === 'localhost') {
-        base_url = 'http://localhost:5057';
+    const url = new URL(window.location.origin);
+    url.port = 5057;
+    base_url = url.toString();
+    base_url = base_url.substring(0,base_url.length - 1);
+
+
+/*    if (window.location.hostname === 'localhost') {
+        base_url = 'http://localhost:5057'; //dev
     } else {
-        base_url = window.location.origin;
-    }
+        base_url = window.location.origin; //prod
+    }*/
 }
+
 export function logout() {
     auth_data.set(null);
     goto('/');
@@ -50,8 +57,6 @@ export function toDT(timestamp, format = 1) {
             return new Intl.DateTimeFormat('en-US', options).format(date);
     }
 }
-
-
 
 function getAuthHeaders() {
     const token = get(auth_data);

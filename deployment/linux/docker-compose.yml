@@ -43,7 +43,7 @@ services:
         build: #satish was here
             context: /home/aj/dev/broker/services/ml
             dockerfile: Dockerfile
-        restart: on-failure
+              #      restart: on-failure
         depends_on:
             - db
             - cache

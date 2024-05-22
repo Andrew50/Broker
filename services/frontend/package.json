@@ -20,6 +20,6 @@
 		"vite": "^5.0.10"
 	},
 	"dependencies": {
-		"quill": "^2.0.0"
+		"quill": "^2.0.2"
 	}
 }
