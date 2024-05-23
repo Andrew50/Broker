@@ -45,17 +45,19 @@
     function resize(event) {
         if (resizing) {
             let l = event.clientX;
-            if (event.clientX > thresh) {
+            console.log(thresh);
+            console.log("d",event.clientX)
+            /*if (event.clientX > thresh) {
                 l = close;
                 active_menu = '';
-            }
-            else if (event.clientX > max) {
+            }*/
+            //else 
+            if (event.clientX > max) {
                 l = max;
             }
             else if (event.clientX < min) {
                 l = min;
             }
-            console.log(l);
             menuLeftPos.set(l);
         }
     }

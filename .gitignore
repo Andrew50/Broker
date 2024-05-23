@@ -3,3 +3,7 @@
 /services/db/quotes
 /services/frontend/node_modules
 /services/frontend/.svelte-kit
+/services/ml/__pycache__
+/services/ml/models
+/services/ml/*.tf
+
