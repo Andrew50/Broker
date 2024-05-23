@@ -6,4 +6,5 @@
 /services/ml/__pycache__
 /services/ml/models
 /services/ml/*.tf
+venv/
 

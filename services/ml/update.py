@@ -1,20 +1,29 @@
 from tqdm import tqdm
 from data import Data
-import time, numpy as np, yfinance as yf, json, datetime
+import time, numpy as np, yfinance as yf, json, datetime, math
 SCREENER_INTERVALS = "1d",
 
 market_open = datetime.time(9, 30, 0)
 market_close = datetime.time(16, 0, 0)
 
-def updateCache(data, df, ticker, screenerTensor, screenerKey):
+def updateCache(data, df, ticker_id, interval, screenerTensor, helper):
 
-    log_1, log_0, next_update = helper[ticker]
-    if time.now() >= next_update:
-        new = log
-
+    log_1 = helper[ticker]
+    key = screenerTensor[:,0,4]
+    if ticker_id in key:
+        index = screenerTensor.index(ticker_id)
+    else:
+        raise Exception('man')
+    screenerTensor[index,-1,:] = np.array([math.log(x) - log_1 for x in df[-1]])
+    return screenerTensor
 
 
     """
+    if time.now() >= next_update:
+        
+        new = log
+        next_update = df[-1:0] + pd.timedelta(interval)
+
     else: #update cache
         if ticker_id in screenerKey:
             index = screenerKey.index(ticker_id)
@@ -25,78 +34,48 @@ def updateCache(data, df, ticker, screenerTensor, screenerKey):
     #push key to 1d_screener_key
     """
 
-def setCache(data,interval,tickers):
+
+def newCache(data,interval,tickers):
+    bars = 100
+
     if interval != "1d":
         raise Exception("good luck")
     table, bucket, aggregate = data.getQueryInfo(interval, pm)
-    bars = 100
-    queries = []
-    for ticker_id, ticker in tickers:
-        if aggregate:
-            raise Exception("Aggregation not implemented for models...yet?")
-            query = f"""
-                (SELECT
-                    bucket,
-                    LOG(first_open) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_open,
-                    LOG(max_high) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_high,
-                    LOG(min_low) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_low,
-                    LOG(last_close) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_close
-                FROM (
-                    SELECT
-                        time_bucket('{bucket}', q.t) AS bucket,
-                        first(q.open, q.t) AS first_open,
-                        max(q.high) AS max_high,
-                        min(q.low) AS min_low,
-                        last(q.close, q.t) AS last_close
-                    FROM {table} AS q
-                    WHERE q.ticker_id = {ticker_id}
-                    GROUP BY bucket
-                    ORDER BY bucket DESC
-                    LIMIT {bars}
-                ) AS subquery
-                ORDER BY bucket ASC)
-                """
-        else:
-           query = f"""
-                (SELECT
-                    bucket,
-                    LOG(first_open) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_open,
-                    LOG(max_high) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_high,
-                    LOG(min_low) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_low,
-                    LOG(last_close) - LAG(LOG(last_close), 1) OVER (ORDER BY bucket) AS log_diff_close
-                FROM (
-                    SELECT
-                        q.t AS bucket,
-                        q.open AS first_open,
-                        q.high AS max_high,
-                        q.low AS min_low,
-                        q.close AS last_close
-                    FROM {table} AS q
-                    WHERE q.ticker_id = {ticker_id}
-                    ORDER BY q.t DESC
-                    LIMIT {bars}
-                ) AS subquery
-                ORDER BY bucket ASC)
-                """
-        queries.append(query)
-    combined_query = " UNION ALL ".join(queries)
-    with data.db.cursor() as cursor:
-        cursor.execute(combined_query)
-        results = cursor.fetchall()
     ds = []
-    keys = []
-    for result, i in enumerate(results):
-        if len(result) != bars:
-            #pad
+    key = []
+    for ticker_id, ticker in tickers:
+        query = ""
+        args = [ticker_id]
+        if aggregate:
+            raise Exception('to code')
+        else:
+            query = f"""SELECT open, high, low, close, volume
+                        FROM {table}
+                        WHERE ticker_id = {ticker_id}
+                        ORDER BY t DESC
+                        LIMIT {bars}"""
+        with data.db.cursor() as cursor:
+            cursor.execute(query)
+            results = cursor.fetchall()
+        if len(results) < bars:
+            #TODO pad
             continue
-        #result = [np.inf for _ in range(4)] + result
-        keys.append(tickers[i][0])
-        ds.append(results)
-    ds = np.array(ds)
-    classes = np.array(classes)
-    return ds, classes
+        results = np.array(results, dtype=np.float64)
+        l = 20
+        dolvol = np.mean(results[-l:,4]) * np.mean(results[-l:,3])
+        adr = (np.mean((results[-l:,1] / results[-l:,2])) - 1 ) * 100
+        mcap = np.inf #TODO
+        results = results[:,:5]
+        results = np.log(results)
+        close = np.roll(results[:,2], shift=1)
+        results = results - close[:,np.newaxis]
+        results[0,:] = np.array([dolvol,adr,mcap,ticker_id]) 
+        ds.append(results[1:])
+        #key.append(ticker)
+    return np.array(ds)
+    #return np.array(ds), np.array(key)
 
-def setData(cursor,ticker_id,data,df):
+def setQuotes(cursor,ticker_id,data,df):
     if data.is_market_open(pm = True):
         df = df[:-1]
     #cursor.execute('SELECT EXTRACT(EPOCH FROM MAX(t)) FROM quotes_1_extended WHERE ticker_id = %s;', (ticker_id,))
@@ -116,14 +95,12 @@ def setData(cursor,ticker_id,data,df):
     cursor.executemany(insert_query, df)
     data.db.commit()
 
-def update1(data):
+def dayUpdate(data):
     tickers = data.getTickers()
     cacheDataDict = {}
     for interval in SCREENER_INTERVALS:
-        tensor, key, helper = data.cache.get(f'{interval}_screener'), data.cache.get(f'{interval}_screener_key'), data.cache.get(f'{interval}_screener_helper')
-        _update = tensor is not None and key is not None and helper is not None
-
-        cacheDataDict[interval] = tensor, key, helper, _update
+        tensor,  helper = json.loads(data.cache.get(f'{interval}_screener')), json.loads(data.cache.get(f'{interval}_screener_helper'))
+        cacheDataDict[interval] = tensor, helper
     with data.db.cursor() as cursor:
         for ticker_id, ticker in tqdm(tickers):
             df = yf.download(tickers = ticker, period = '5d', group_by='ticker', interval = '1m', ignore_tz = False, auto_adjust=True, progress=False, show_errors = False, threads = True, prepost = True) 
@@ -132,30 +109,26 @@ def update1(data):
                 continue
             df = df.reset_index().to_numpy()
             #np.set_printoptions(threshold=np.inf)
-            
             for interval in SCREENER_INTERVALS:
-                tensor, key, helper, _update = cacheDataDict[interval]
-                if _update:
-                    tensor, key, helper = updateCache(data, df, ticker, tensor, key, helper)
-                    cacheDataDict[interval] = tensor, key, helper, _update
-            setData(cursor,ticker_id,data,df)
+                tensor, helper = cacheDataDict[interval]
+                tensor, helper = updateCache(data, df, ticker_id, interval, tensor, helper)
+                cacheDataDict[interval] = tensor, helper
+            setQuotes(cursor,ticker_id,data,df)
     for interval in SCREENER_INTERVALS:
-        tensor, key, helper, _update = cacheDataDict[interval]
-        if not _update:
-            tensor, key, helper = getCache(data,interval,tickers)
-        data.cache.tensor_set(f'{interval}_screener', tensor)
-        data.cache.set(f'{interval}_screener_key', json.dumps(key))
+        tensor, helper = cacheDataDict[interval]
+        data.cache.tensor_set(f'{interval}_screener', json.dumps(tensor))
         data.cache.set(f'{interval}_screener_helper', json.dumps(helper))
 
-def update2(data):
+
+def updateTickers():
+    #TODO
+    return
+
+def nightUpdate(data):
     #new tickers?
-#clear temp (cahce, any key thats just a uuid) -- dont because just delete after each 
-    data.cache.delete('temp')
-    data.cache.delete('task_queue_1')
-    data.cache.delete('task_queue_2')
+    updateTickers()
     for interval in SCREENER_INTERVALS:
         data.cache.delete(f'{interval}_screener')
-        data.cache.delete(f'{interval}_screener_key')
         data.cache.delete(f'{interval}_screener_helper')
 #add journals
     query = """
@@ -173,12 +146,17 @@ def update2(data):
         cursor.execute(query)
         data.db.commit()
 
+    for interval in SCREENER_INTERVALS:
+        tensor, helper = newCache(data,interval,data.getTickers())
+        data.cache.tensor_set(f'{interval}_screener', json.dumps(tensor))
+        data.cache.set(f'{interval}_screener_helper', json.dumps(helper))
+
 
 def update(data, case):
     if case == 1:
-        update1(data)
+        dayUpdate(data)
     elif case == 2:
-        update2(data)
+        nightUpdate(data)
     else:
         raise ValueError('Invalid case')
 

@@ -161,6 +161,8 @@ class Trainer:
             cursor.execute('SELECT i, bars, model_version, dolvol, adr, mcap FROM setups WHERE setup_id = %s', (setupID,))
             traits = cursor.fetchone()
         interval = traits[0]
+        if interval != "1d":
+            return 'invalid tf'
         bars = traits[1]
         modelVersion = traits[2] + 1
         reqs = traits[3:6]
