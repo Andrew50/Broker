@@ -7,17 +7,17 @@
     } from "../../store.js";
     import Table from "../../tables/table.svelte";
     import { writable, get } from "svelte/store";
-    let selectedSetups = writable(get(setups_list).map((subArray) => subArray[1]));
+    let selectedSetups = writable(get(setups_list).map((subArray) => subArray[0]));
 
-    function toggleSetup(setupName) {
+    function toggleSetup(setupID) {
         selectedSetups.update((current) => {
-            const index = current.indexOf(setupName);
+            const index = current.indexOf(setupID);
             if (index !== -1) {
                 // Remove setup if it's already selected
                 return current.filter((_, i) => i !== index);
             } else {
                 // Add setup if it's not already selected
-                return [...current, setupName];
+                return [...current, setupID];
             }
         });
         console.log($selectedSetups);
@@ -28,8 +28,8 @@
 <div>
     {#each $setups_list as setup}
         <button
-            class="setup-item {$selectedSetups.includes(setup[1]) ? 'selected' : ''  }"
-            on:click={() => toggleSetup(setup[1])}
+            class="setup-item {$selectedSetups.includes(setup[0]) ? 'selected' : ''  }"
+            on:click={() => toggleSetup(setup[0])}
         >
         {setup[1]}
         </button>

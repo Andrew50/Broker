@@ -88,7 +88,7 @@
         <button on:click={() => {}}>
             Delete
         </button>
-        <button on:click={() => {errorMessage = request(null,true,'trainModel',selected_setup)[1]}}>
+        <button on:click={() => {console.log(selected_setup); errorMessage = request(null,true,'trainModel',selected_setup, 'god')[1]}}>
             -- Train Model --
         </button>
     {/if}

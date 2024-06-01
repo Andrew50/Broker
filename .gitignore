@@ -1,10 +1,16 @@
 /services/ml/venv
 /deployment/venv
 /services/db/quotes
+/services/db/feather
 /services/frontend/node_modules
-/services/frontend/.svelte-kit
+/services/frontend/.svelte-kit/
 /services/ml/__pycache__
 /services/ml/models
 /services/ml/*.tf
+/services/tf/default
+*.pyo
+*.pyc
+*.tf
 venv/
+env
 

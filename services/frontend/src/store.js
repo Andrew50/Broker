@@ -87,6 +87,7 @@ export async function request(bind_variable, isPrivate, func, ...args) {
         headers: headers,
         body: JSON.stringify(payload)
     });
+    console.log(JSON.stringify(payload))
     let result, err;
     if (response.ok){
         result = await response.json();

@@ -105,6 +105,7 @@ func GetChart(conn *data.Conn, user_id int, rawArgs json.RawMessage) (interface{
             LIMIT $%d`, len(args) + 1)
     args = append(args, a.N)
 
+    fmt.Printf(query)
     rows, err := conn.DB.Query(context.Background(), query, args...)
     if err != nil {
         return nil, fmt.Errorf("query execution error: %v", err)

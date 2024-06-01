@@ -5,7 +5,11 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.layers import Bidirectional
 from tensorflow.keras.callbacks import EarlyStopping
 from imblearn.over_sampling import SMOTE
-import re
+from google.protobuf import text_format
+from tensorflow_serving.config import model_server_config_pb2
+#import grpc
+#from tensorflow_serving.apis import model_management_pb2, model_management_pb2_grpc
+import requests
 
 class Trainer:
 
@@ -83,55 +87,12 @@ class Trainer:
             random.shuffle(validationInstances)
             return np.array(trainingInstances), np.array(validationInstances)
    
-#    def getData(data,instances,interval,bars,pm = False):
-#
-#        table, bucket,aggregate = data.getQueryInfo(interval, pm)
-#
-#        queries = []
-#        print(len(instances))
-#        for ticker_id, timestamp, _ in instances:
-#            query = "("
-#            if aggregate:
-#                query += f"SELECT  first(open, t), max(high), min(low), last(close, t), sum(volume) "
-#            else:
-#                query += "SELECT open, high, low, close, volume "
-#            query += f"""FROM {table} WHERE ticker_id = {ticker_id} 
-#                    AND time_bucket('{bucket}',t) <= '{timestamp}' """
-#        #    if not timestamp.IsZero():
-#        #        query += f"AND bucket <= {timestamp} "
-#            if not pm and "extended" in table:
-#                query += "AND extended_hours = true "
-#            if aggregate:
-#                query += f"GROUP BY time_bucket('{bucket}',t) "
-#            query += f"ORDER BY time_bucket('{bucket}', t) DESC LIMIT {bars + 1} )"
-#            queries.append(query)
-#
-#        combined_query = " UNION ALL ".join(queries)
-#        with data.db.cursor() as cursor:
-#            cursor.execute(combined_query)
-#            results = cursor.fetchall()
-#        ds = []
-#        classes = []
-#        for result, i in enumerate(results):
-#            if len(result) != bars:
-#                continue
-#            result = [np.inf for _ in range(4)] + result
-#            classes.append(instances[i][2])
-#            ds.append(results)
-#        ds = np.array(ds,dtype=np.float64)
-#        ds = np.diff(np.log(ds),axis=0)
-#        classes = np.array(classes)
-#        return ds, classes
-#
-#        return results
-
     def getData(data, instances, interval, bars, pm=False):
         table, bucket, aggregate = data.getQueryInfo(interval, pm)
         ds = []
         classes = []
         for ticker_id, timestamp, class_info in instances:
             query = ""
-            args = [ticker_id]
             if aggregate:
                 raise Exception('to code')
             else:
@@ -153,44 +114,6 @@ class Trainer:
             classes.append(class_info)
         return np.array(ds), np.array(classes)
 
-    def train_model(data,setupID):
-        splitRatio = .85
-        trainingClassRatio = .25
-        validationClassRatio = .05
-        with data.db.cursor() as cursor:
-            cursor.execute('SELECT i, bars, model_version, dolvol, adr, mcap FROM setups WHERE setup_id = %s', (setupID,))
-            traits = cursor.fetchone()
-        interval = traits[0]
-        if interval != "1d":
-            return 'invalid tf'
-        bars = traits[1]
-        modelVersion = traits[2] + 1
-        reqs = traits[3:6]
-        model = Trainer.createModel(data,bars,reqs)
-        trainingSample, validationSample = Trainer.getSample(data,setupID,interval,trainingClassRatio, validationClassRatio, splitRatio)
-        xTrainingData, yTrainingData = Trainer.getData(data,trainingSample,interval,bars)
-        xValidationData, yValidationData = Trainer.getData(data,validationSample,interval,bars)
-        print("training class ratio",np.mean(yTrainingData))
-        print("validation class ratio", np.mean(yValidationData))
-        early_stopping = EarlyStopping(
-            monitor='val_auc_pr',
-            patience=5,
-            restore_best_weights=True,
-            mode='max',
-            verbose =1
-        )
-        history = model.fit(xTrainingData, yTrainingData,epochs=100,batch_size=64,validation_data=(xValidationData, yValidationData),callbacks=[early_stopping])
-
-        model_path = f"models/{setupID}/{modelVersion}"
-        model.save(model_path, save_format='tf')
-
-        tf.keras.backend.clear_session()
-        score = round(history.history['val_auc_pr'][-1] * 100)
-        with data.db.cursor(buffered=True) as cursor:
-            cursor.execute("UPDATE setups SET score = %s, model_version = %s WHERE setup_id = %s;", (score, modelVersion, setupID))
-        data.db.commit()
-        data.set_setup_info(user_id, st, score=score)
-        return score 
 
     def createModel(data,bars,reqs):
         dolvol, adr, mcap = reqs
@@ -219,6 +142,126 @@ class Trainer:
         model.compile(optimizer=Adam(learning_rate=1e-3), loss='binary_crossentropy', metrics=[tf.keras.metrics.AUC(curve='PR', name='auc_pr')])
         return model
 
+    def train_model(data,setupID):
+        splitRatio = .85
+        trainingClassRatio = .25
+        validationClassRatio = .05
+        with data.db.cursor() as cursor:
+            cursor.execute('SELECT i, bars, model_version, dolvol, adr, mcap FROM setups WHERE setup_id = %s', (setupID,))
+            traits = cursor.fetchone()
+        interval = traits[0]
+        if interval != "1d":
+            return 'invalid tf'
+        bars = traits[1]
+        modelVersion = traits[2] + 1
+        reqs = traits[3:6]
+        model = Trainer.createModel(data,bars,reqs)
+        trainingSample, validationSample = Trainer.getSample(data,setupID,interval,trainingClassRatio, validationClassRatio, splitRatio)
+        xTrainingData, yTrainingData = Trainer.getData(data,trainingSample,interval,bars)
+        xValidationData, yValidationData = Trainer.getData(data,validationSample,interval,bars)
+        failure = (len(xTrainingData) + len(xValidationData)) / (len(trainingSample) + len(validationSample))
+        print(f"{failure * 100}% failure of {len(trainingSample) + len(validationSample)} samples")
+        print("training class ratio",np.mean(yTrainingData))
+        print("validation class ratio", np.mean(yValidationData))
+        early_stopping = EarlyStopping(
+            monitor='val_auc_pr',
+            patience=5,
+            restore_best_weights=True,
+            mode='max',
+            verbose =1
+        )
+        history = model.fit(xTrainingData, yTrainingData,epochs=100,batch_size=64,validation_data=(xValidationData, yValidationData),callbacks=[early_stopping])
+        tf.keras.backend.clear_session()
+        score = round(history.history['val_auc_pr'][-1] * 100)
+        with data.db.cursor() as cursor:
+            cursor.execute("UPDATE setups SET score = %s, model_version = %s WHERE setup_id = %s;", (score, modelVersion, setupID))
+        data.db.commit()
+        Trainer.save(data,setupID,modelVersion,model)
+        size = None
+        for val, ident in [[size,'sample_size'],[score,'score']]:
+            if val != None:
+                with data.db.cursor() as cursor:
+                    query = f"UPDATE setups SET {ident} = %s WHERE setup_id = %s;"
+                    cursor.execute(query, (val, setupID))
+        data.db.commit()
+        return score 
+
+    def save(data,setupID,modelVersion,model):
+        model_folder = f"models/{setupID}/{modelVersion}"
+        #model_path = f"{model_folder}/model.keras"
+        configPath = "/models/models.config"
+        if not os.path.exists(model_folder):
+            os.makedirs(model_folder)
+        #model.save(model_path)#, save_format='tf')
+        #model.save(model_folder)
+        model.export(model_folder)
+        config = model_server_config_pb2.ModelServerConfig()
+        with open(configPath, 'r') as f:
+            text_format.Merge(f.read(), config)
+        config_exists = False
+        for model in config.model_config_list.config:
+            if model.name == str(setupID):
+                config_exists = True
+                break
+        if not config_exists:
+            new_model_text = f"""
+            model_config_list {{
+                config {{
+                    name: "{setupID}"
+                    base_path: "/models/{setupID}"
+                    model_platform: "tensorflow"
+                    model_version_policy {{ all {{}} }}
+                }}
+            }}
+            """
+            new_model_config = model_server_config_pb2.ModelServerConfig()
+            text_format.Merge(new_model_text, new_model_config)
+            config.model_config_list.config.extend(new_model_config.model_config_list.config)
+            with open(configPath, 'w') as f:
+                f.write(text_format.MessageToString(config))
+#        # Reload the config no even if config not changed so that it can update to new model version
+#        url = "http://tf:8501/v1/config/reload"
+#        #data.tf + "v1/config/reload"
+#        response = requests.post((url))
+#        if response.status_code == 200:
+#            print("reloaded tf")
+#        else:
+#            print(f"reload failed {response.text}")
+
+        if False: #reload request, might work to just have the auto reload handle it
+            try:
+                # Create a channel to the TensorFlow Serving gRPC server
+                channel = grpc.insecure_channel('tf:8500')
+                
+                # Create a stub (client)
+                stub = model_management_pb2_grpc.ModelServiceStub(channel)
+                
+                # Create a ReloadConfigRequest
+                request = model_management_pb2.ReloadConfigRequest()
+                
+                # Populate the request with the new configuration
+                #with open(configPath, 'r') as f:
+                    #                config_text = f.read()
+                
+                #new_config = model_server_config_pb2.ModelServerConfig()
+                #text_format.Merge(config_text, new_config)
+                
+                request.config.CopyFrom(config)
+                
+                # Send the request
+                response = stub.HandleReloadConfigRequest(request)
+                
+                if response.status.error_code == 0:
+                    print("Successfully reloaded config")
+                else:
+                    print(f"Failed to reload config: {response.status.error_message}")
+            except grpc.RpcError as e:
+                print(f"gRPC call failed: {e}")
+
+            if config_exists:
+                print(f"Model {setupID} already exists in the configuration.")
+
+
 def train(data,setupID):
     results = Trainer.train_model(data,setupID)
     return results
@@ -226,9 +269,3 @@ def train(data,setupID):
 if __name__ == '__main__':
     from data import Data
     print(train(Data(False),1))
-
-    
-
-
-
-

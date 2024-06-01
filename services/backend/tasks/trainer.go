@@ -41,7 +41,7 @@ func TrainModel(conn *data.Conn, user_id int, rawArgs json.RawMessage) (interfac
     if err := json.Unmarshal(rawArgs, &a); err != nil {
         return nil, fmt.Errorf("TrainModel invalid args: %v", err)
     }
-    id, err := data.Queue(conn, 1, "trainer-train", []interface{}{user_id, a.SetupID})
+    id, err := data.Queue(conn, 1, "trainer-train", []interface{}{a.SetupID})
     if err != nil {
         return nil, err
     }

@@ -5,19 +5,20 @@ import psycopg2, redisai
 class Data:
 
     def __init__(self, inside_container = True):
-
-        #if os.environ.get('INSIDE_CONTAINER', False): #inside container
         if inside_container:
             cache_host = 'cache'
             db_host = 'db'
+            tf_host = 'http://tf:8501/'
         else:
             cache_host = 'localhost'
             db_host = 'localhost'
+            tf_host = 'http://localhost:8501/'
         while True:
             try:
                 #self.cache = redis.Redis(host=cache_host, port=6379)
                 self.cache = redisai.Client(host=cache_host,port=6379)
                 self.db = psycopg2.connect(host=db_host,port='5432',user='postgres',password='pass')
+                self.tf = tf_host
             except  psycopg2.OperationalError:
                 print("waiting for db", flush = True)
                 time.sleep(5)
@@ -32,10 +33,12 @@ class Data:
             print('Connection error')
             self.__init__()
 
-
-    def getTickers(self):
+    def getTickers(self, listed = True):
         with self.db.cursor() as cursor:
-            cursor.execute("SELECT * FROM tickers;")
+            if listed:
+                cursor.execute("SELECT ticker_id, ticker FROM tickers WHERE listed IS TRUE;")
+            else:
+                cursor.execute("SELECT ticker_id, ticker FROM tickers;")
             return cursor.fetchall()
 
     @staticmethod

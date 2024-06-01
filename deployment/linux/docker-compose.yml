@@ -21,8 +21,11 @@ services:
         restart: always
         ports:
         - "8501:8501"
+        - "8500:8500"
         volumes:
             - tf:/models
+        networks:
+          - compose_network
 
     backend:
         depends_on:
@@ -30,12 +33,12 @@ services:
             - cache
         build:
             context: /home/aj/dev/broker/services/backend
-            dockerfile: Dockerfile
+            dockerfile: Dockerfile.dev
         restart: always
         ports:
         - "5057:5057"
         volumes:
-            - /home/aj/dev/broker/services/backend/:/app/
+            - /home/aj/dev/broker/services/backend/:/app
         networks:
             - compose_network
 
