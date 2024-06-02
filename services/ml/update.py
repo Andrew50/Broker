@@ -7,44 +7,7 @@ SCREENER_INTERVALS = "1d",
 market_open = datetime.time(9, 30, 0)
 market_close = datetime.time(16, 0, 0)
 
-def updateCache(data, df, ticker_id, interval, screenerTensor, helper):
-
-    log_1 = helper[ticker_id]
-    key = screenerTensor[:,0,4]
-    if ticker_id in key:
-        index = screenerTensor.index(ticker_id)
-    else:
-        raise Exception('man')
-    screenerTensor[index,-1,:] = np.array([math.log(x) - log_1 for x in df[-1]])
-    return screenerTensor, helper
-
-
-    """
-    if time.now() >= next_update:
-        
-        new = log
-        next_update = df[-1:0] + pd.timedelta(interval)
-
-    else: #update cache
-        if ticker_id in screenerKey:
-            index = screenerKey.index(ticker_id)
-            base = screenerTensor[index,:,:]
-
-
-    #push to tensor in redis AI at 1d_screener
-    #push key to 1d_screener_key
-    """
-
-
-#def cacheTensor(data, key: str, array):
-#    buffer = io.BytesIO()
-#    np.save(buffer,array)
-#    arrayBin = buffer.getvalue()
-#    array_base64 = base64.b64encode(arrayBin).decode('utf-8')
-#    data.cache.set(key,array_base64)
-
 def cacheTensor(data, key: str, tensor):
-#    data.cache.set(key, tf.make_tensor_proto(tensor).SerializeToString())
     data.cache.set(key, json.dumps(tensor.to_list()))
 
 def newCache(data):
@@ -71,7 +34,6 @@ def newCache(data):
                 cursor.execute(query)
                 df = cursor.fetchall()
             if len(df) == 0:
-                #print(f"zero l#en array hit on {ticker}")
                 zeroArrays += 1
                 continue
             df = np.array(df, dtype=np.float64)
@@ -96,8 +58,6 @@ def newCache(data):
 def setQuotes(cursor,ticker_id,data,df):
     if data.is_market_open(pm = True):
         df = df[:-1]
-    #cursor.execute('SELECT EXTRACT(EPOCH FROM MAX(t)) FROM quotes_1_extended WHERE ticker_id = %s;', (ticker_id,))
-
     cursor.execute('SELECT MAX(t) FROM quotes_1_extended WHERE ticker_id = %s;', (ticker_id,))
     last_timestamp = cursor.fetchone()[0]
     if last_timestamp is not None:
@@ -123,19 +83,6 @@ def dayUpdate(data):
     """
     interval = "1d"
     tickers = data.getTickers()
-#    tensorJson, helperJson = data.cache.get(f'{interval}_screener'), data.cache.get(f'{interval}_screener_helper')
-    #if tensorJson is None or helperJson is None:
-#    cacheExists = False
-    #else:
-#        tensor_binary = base64.b64decode(tensorJson)
-#        helper_binary = base64.b64decode(helperJson)
-#        tensor = np.load(io.BytesIO(tensor_binary))
-#        helper = np.load(io.BytesIO(helper_binary))
-#        print(tensor.shape)
-#        print(helper.shape)
-#        cacheExists = True
-#    #hard code
-#    cacheExists = False
     with data.db.cursor() as cursor:
         for ticker_id, ticker in tqdm(tickers):
             try:
@@ -144,46 +91,11 @@ def dayUpdate(data):
                 if df.empty:
                     continue
                 df = df.reset_index().to_numpy()
-    #            if cacheExists:
-    #                tensor, helper = updateCache(data,df, ticker_id, interval, tensor, helper)
                 setQuotes(cursor,ticker_id,data,df)
             except Exception as e:
                 raise(e)
-                print(e)
-    #if cacheExists:
-        #cacheTensor(data,f'{interval}_screener',tensor)
-        #just pickle it becuase only accessed by pythoncacheTensor(data,f'{interval}_screener_helper',helper)
-    #else:
     newCache(data)
     
-
-#def dayUpdate(data):
-#    tickers = data.getTickers()
-#    cacheDataDict = {}
-#    for interval in SCREENER_INTERVALS:
-#        tensorJson, helperJson = data.cache.get(f'{interval}_screener'), data.cache.get(f'{interval}_screener_helper')
-#        if tensorJson is None or helperJson is None:
-#            emptyCache = True
-#        else:
-#            emptyCache = False
-#            cacheDataDict[interval] = json.loads(tensorJson), json.loads(helperJson)
-#    with data.db.cursor() as cursor:
-#        for ticker_id, ticker, listed in tqdm(tickers):
-#            df = yf.download(tickers = ticker, period = '5d', group_by='ticker', interval = '1m', ignore_tz = False, auto_adjust=True, progress=False, show_errors = False, threads = True, prepost = True) 
-#            df.dropna(inplace = True)
-#            if df.empty:
-#                continue
-#            df = df.reset_index().to_numpy()
-#            for interval in SCREENER_INTERVALS:
-#                tensor, helper = cacheDataDict[interval]
-#                cacheDataDict[interval]  = updateCache(data, df, ticker_id, interval, tensor, helper)
-#            setQuotes(cursor,ticker_id,data,df)
-#    for interval in SCREENER_INTERVALS:
-#        tensor, helper = cacheDataDict[interval]
-#        data.cache.tensor_set(f'{interval}_screener', json.dumps(tensor))
-#        data.cache.set(f'{interval}_screener_helper', json.dumps(helper))
-
-
 def updateTickers():
     #TODO
     return
