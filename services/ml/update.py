@@ -36,12 +36,16 @@ def updateCache(data, df, ticker_id, interval, screenerTensor, helper):
     """
 
 
-def cacheArray(data, key: str, array):
-    buffer = io.BytesIO()
-    np.save(buffer,array)
-    arrayBin = buffer.getvalue()
-    array_base64 = base64.b64encode(arrayBin).decode('utf-8')
-    data.cache.set(key,array_base64)
+#def cacheTensor(data, key: str, array):
+#    buffer = io.BytesIO()
+#    np.save(buffer,array)
+#    arrayBin = buffer.getvalue()
+#    array_base64 = base64.b64encode(arrayBin).decode('utf-8')
+#    data.cache.set(key,array_base64)
+
+def cacheTensor(data, key: str, tensor):
+#    data.cache.set(key, tf.make_tensor_proto(tensor).SerializeToString())
+    data.cache.set(key, json.dumps(tensor.to_list()))
 
 def newCache(data):
     tickers = data.getTickers()
@@ -86,8 +90,8 @@ def newCache(data):
         print(f'{zeroArrays} empty arrays')
         tensor = np.stack(ds)
         helper = np.array(key)
-        cacheArray(data,f'{interval}_screener',tensor)
-        cacheArray(data,f'{interval}_screener_helper',helper)
+        cacheTensor(data,f'{interval}_screener',tensor)
+        #cacheTensor(data,f'{interval}_screener_helper',helper) TODO make this pickled
 
 def setQuotes(cursor,ticker_id,data,df):
     if data.is_market_open(pm = True):
@@ -147,8 +151,8 @@ def dayUpdate(data):
                 raise(e)
                 print(e)
     #if cacheExists:
-        #cacheArray(data,f'{interval}_screener',tensor)
-        #cacheArray(data,f'{interval}_screener_helper',helper)
+        #cacheTensor(data,f'{interval}_screener',tensor)
+        #just pickle it becuase only accessed by pythoncacheTensor(data,f'{interval}_screener_helper',helper)
     #else:
     newCache(data)
     

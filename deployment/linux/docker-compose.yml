@@ -45,8 +45,7 @@ services:
     ml: 
         build: #satish was here
             context: /home/aj/dev/broker/services/ml
-            dockerfile: Dockerfile
-              #      restart: on-failure
+            dockerfile: Dockerfile.dev
         depends_on:
             - db
             - cache
@@ -54,6 +53,7 @@ services:
             - compose_network
         volumes:
           - tf:/models
+          - /home/aj/dev/broker/services/ml:/app
     db:
         build:
            context: /home/aj/dev/broker/services/db

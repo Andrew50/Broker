@@ -15,4 +15,4 @@ exec tensorflow_model_server \
   --port=8500 \
   --rest_api_port=8501 \
   --model_config_file=$CONFIG_FILE \
-  --model_config_file_poll_wait_seconds=5
+  --model_config_file_poll_wait_seconds=60
