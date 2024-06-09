@@ -56,6 +56,8 @@ def refresh_all_aggregates(aggregates, t, slice_size_days=SLICE_SIZE_DAYS):
     end_date = datetime.datetime.now()
     if t is None:
         start_date = datetime.datetime(2008,1,1)
+    elif t + datetime.timedelta(days = 15) > end_date:
+        start_date = end_date - datetime.timedelta(days = 15)
     else:
         start_date = t
     date_slices = get_date_slices(start_date, end_date, slice_size_days)
@@ -147,26 +149,25 @@ def loop (bar):
     data = Data()
     query = " ".join(tickers)
     #print(query)
-    download = yf.download(tickers = query, period = '5d', group_by='ticker', interval = '1m', ignore_tz = False, auto_adjust=True, progress=True, show_errors = True, threads = True, prepost = True) 
-    input()
-    #return
-    print('worked')
+    download = yf.download(tickers = query, period = '5d', group_by='ticker', interval = '1m', ignore_tz = False, auto_adjust=True, progress=False, show_errors = True, threads = True, prepost = True) 
+    tickers = download.columns
     ds = download.to_numpy()
-    print(ds.shape)
-    print(ds)
+    print("1",flush=True)
     for i in range(download.shape[0]):
-        df = ds[i,:,:]
+        ticker = tickers[i]
+        print("shape",ds.shape,flush=True)
+        df = ds[i]
+        if df.empty:
+            print(f"{ticker} empty",flush=True)
+            continue
+        print("2")
         try:
             df.dropna(inplace = True)
-            if df.empty:
-                print(f"{ticker} was empy")
-                continue
-            df = df.reset_index().to_numpy()
-            setQuotes(cursor,ticker_id,data,df)
+            print("3")
         except TimeoutError as e:
             traceback.print_exc()
             print(e)
-            print(ticker_id,ticker,"failed")
+            print(ticker,"failed")
     return failed
 
 def dayUpdate(data):

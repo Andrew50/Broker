@@ -10,6 +10,7 @@ chart.prototype.drawAxes = function(dataSliced) {
     this.ctx.beginPath();
     const xOffset = Math.abs(this.a - Math.floor(this.a)) * this.candleWidth
     let xAxisOffset = Math.abs(this.a) - Math.floor(dataSliced.length / 5) * this.Lines;
+    console.log(xAxisOffset)
     if (Math.floor(xAxisOffset) > Math.floor(dataSliced.length / 5)) {
         
         this.Lines = this.Lines + 1;
@@ -20,15 +21,22 @@ chart.prototype.drawAxes = function(dataSliced) {
         this.Lines = this.Lines - 1;
         xAxisOffset = Math.abs(this.a) - Math.floor(dataSliced.length / 5) * this.Lines;
     }
-    for (let i = xAxisOffset; i < dataSliced.length + 1; i += Math.floor(dataSliced.length / 5)) {
+    for (let i = xAxisOffset; i < dataSliced.length; i += Math.floor(dataSliced.length / 5)) {
         const pixelLoc = math.remap(this.dataBounds.left, this.dataBounds.right, this.pixelBounds.left, this.pixelBounds.right, Math.floor(i) + 0.5);
         if (i < dataSliced.length) {
             const arg = this.isIntraday() ? 3 : 1;
-            try{
-            this.drawAxesText(toDT(dataSliced[Math.floor(i)][0],arg), [pixelLoc - xOffset - this.wickWidth / 2, this.pixelBounds.bottom + this.margin / 2], this.margin * 0.5);
-            }catch{
+            //try{
+                if (i < 0){
+                    //TODO somehow i < 0, math screwed up 
+                    i = 0
+                }
+                const dt = toDT(dataSliced[Math.floor(i)][0],arg)
+                const list = [pixelLoc - xOffset - this.wickWidth / 2, this.pixelBounds.bottom + this.margin / 2]
+                const textSize = this.margin / 2
+                this.drawAxesText(dt, list, textSize);
+            /*}catch{
                 console.log("axes.js 27")
-            }
+            }*/
         }
         this.ctx.beginPath();
         this.ctx.moveTo(pixelLoc - xOffset - this.wickWidth / 2, this.pixelBounds.bottom);

@@ -5,6 +5,7 @@ CREATE TABLE tickers (
     listed BOOLEAN NOT NULL
 );
 CREATE INDEX idx_ticker ON tickers (ticker);
+CREATE INDEX idx_ticker_id ON tickers (ticker_id);
 --1 minute extended
 CREATE TABLE quotes_1_extended (
     ticker_id INTEGER NOT NULL,
@@ -21,7 +22,9 @@ CREATE TABLE quotes_1_extended (
 );
 CREATE INDEX idx_quotes_1_extended ON quotes_1_extended (ticker_id, t) 
 WHERE NOT extended_hours;
-SELECT create_hypertable('quotes_1_extended', 't', 'ticker_id', 100);
+create index idx_t on quotes_1_extended (t);
+--SELECT create_hypertable('quotes_1_extended', 't', 'ticker_id', 100);
+select create_hypertable('quotes_1_extended',by_range('t', INTERVAL '1 day'));
 ALTER TABLE quotes_1_extended SET (
     timescaledb.compress,
     timescaledb.compress_orderby = 't DESC',

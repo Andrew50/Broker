@@ -29,7 +29,6 @@ chart.prototype.updateQuery = function(ticker, i, t,pm) {
 }
 
 chart.prototype.updateData = function(bars,newQuery=false) {
-    console.log('god')
     this.dataOffCooldown = false;
     request(null, true, "getChart", this.ticker, this.i, this.nextT, bars).then(val => {
         let [data,err] = val;
@@ -39,7 +38,6 @@ chart.prototype.updateData = function(bars,newQuery=false) {
                 this.draw();
                 this.queryValid = false;
             }else{
-                console.log("no more data to load");
             }
             return;
         }
@@ -47,7 +45,7 @@ chart.prototype.updateData = function(bars,newQuery=false) {
         if (newQuery) {
             this.data = data;
         } else {
-            console.log("new", data[0][0],data[data.length-1][0],"old",this.data[0][0],this.data[this.data.length-1][0]);
+            //console.log("new", data[0][0],data[data.length-1][0],"old",this.data[0][0],this.data[this.data.length-1][0]);
             this.data = [ ...data,...this.data];
         }
         this.nextT = data[0][0];

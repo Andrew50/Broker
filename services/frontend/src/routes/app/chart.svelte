@@ -22,11 +22,8 @@
 
     function updateChartSize(v) {
         if (!canvas) {
-            console.log("god")
             return;
         }
-
-        console.log(v)
         canvas.width = v;
         canvas.height = window.innerHeight;
         Chart.draw();
