@@ -8,6 +8,7 @@
     import Table from "../../tables/table.svelte";
     import { writable, get } from "svelte/store";
     let selectedSetups = writable(get(setups_list).map((subArray) => subArray[0]));
+    //screener_data.subscribe((v) => console.log(v))
 
     function toggleSetup(setupID) {
         selectedSetups.update((current) => {
@@ -43,8 +44,8 @@
 <Table
     headers={["Ticker", "Setup", "Value"]}
     data={screener_data}
-    onRowClick={request}
-    clickHandlerArgs={[chartQuery, "chart", "Ticker", "1d"]}
+    onRowClick={chartQuery}
+    clickHandlerArgs={["Ticker", "1d", null, 300]}
 />
 
 <style>

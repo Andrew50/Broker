@@ -29,6 +29,7 @@ chart.prototype.updateQuery = function(ticker, i, t,pm) {
 }
 
 chart.prototype.updateData = function(bars,newQuery=false) {
+    console.log('god')
     this.dataOffCooldown = false;
     request(null, true, "getChart", this.ticker, this.i, this.nextT, bars).then(val => {
         let [data,err] = val;

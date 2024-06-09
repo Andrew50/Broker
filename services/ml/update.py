@@ -8,7 +8,8 @@ market_open = datetime.time(9, 30, 0)
 market_close = datetime.time(16, 0, 0)
 
 def cacheTensor(data, key: str, tensor):
-    data.cache.set(key, json.dumps(tensor.to_list()))
+    tensorJson = json.dumps(tensor.tolist())
+    data.cache.set(key, tensorJson)
 
 def newCache(data):
     tickers = data.getTickers()
@@ -39,7 +40,7 @@ def newCache(data):
             df = np.array(df, dtype=np.float64)
             dolvol = np.mean(df[-l:,4]) * np.mean(df[-l:,3])
             adr = (np.mean((df[-l:,1] / df[-l:,2])) - 1 ) * 100
-            mcap = np.inf #TODO
+            mcap = 100000000000 #TODO 10 billion
             df = df[:,:4]
             df = np.log(df)
             close = df[:-1,3]
@@ -81,19 +82,21 @@ def dayUpdate(data):
     """
     single interval (1d) updating. if cache nonexistent then will calc new cache
     """
+    justCache = True #change 
     interval = "1d"
     tickers = data.getTickers()
-    with data.db.cursor() as cursor:
-        for ticker_id, ticker in tqdm(tickers):
-            try:
-                df = yf.download(tickers = ticker, period = '5d', group_by='ticker', interval = '1m', ignore_tz = False, auto_adjust=True, progress=False, show_errors = False, threads = True, prepost = True) 
-                df.dropna(inplace = True)
-                if df.empty:
-                    continue
-                df = df.reset_index().to_numpy()
-                setQuotes(cursor,ticker_id,data,df)
-            except Exception as e:
-                raise(e)
+    if not justCache:
+        with data.db.cursor() as cursor:
+            for ticker_id, ticker in tqdm(tickers):
+                try:
+                    df = yf.download(tickers = ticker, period = '5d', group_by='ticker', interval = '1m', ignore_tz = False, auto_adjust=True, progress=False, show_errors = False, threads = True, prepost = True) 
+                    df.dropna(inplace = True)
+                    if df.empty:
+                        continue
+                    df = df.reset_index().to_numpy()
+                    setQuotes(cursor,ticker_id,data,df)
+                except Exception as e:
+                    raise(e)
     newCache(data)
     
 def updateTickers():

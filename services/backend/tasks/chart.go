@@ -92,20 +92,19 @@ func GetChart(conn *data.Conn, user_id int, rawArgs json.RawMessage) (interface{
     query += fmt.Sprintf("FROM %s WHERE ticker_id = $1 ",table)
     args = append(args, tickerID)
     if !a.T.IsZero() {
-        query += " AND bucket <= $2 "
+        query += " AND t <= $2 "
         args = append(args, a.T)
     }
     if !a.PM && i_base == "" {
         query += "AND extended_hours = true "
     }
     if aggregate {
-        query += "GROUP BY bucket "
+        query += "GROUP BY t "
     }
-    query += fmt.Sprintf(`ORDER BY bucket DESC
+    query += fmt.Sprintf(`ORDER BY t DESC
             LIMIT $%d`, len(args) + 1)
     args = append(args, a.N)
 
-    fmt.Printf(query)
     rows, err := conn.DB.Query(context.Background(), query, args...)
     if err != nil {
         return nil, fmt.Errorf("query execution error: %v", err)
