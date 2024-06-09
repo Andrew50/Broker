@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import { get } from 'svelte/store';
 import { goto } from "$app/navigation";
-export let menuLeftPos = writable();
+export let menuLeftPos = writable(400);
 export let annotateData = writable([]);
 export let journalData = writable([]);
 export let screener_data = writable([]);
@@ -35,6 +35,9 @@ export function logout() {
 }
 
 export function toDT(timestamp, format = 1) {
+    if (timestamp == null) {
+        return null
+    }
     // Create a Date object in UTC
     const date = new Date(timestamp);
     let options;
@@ -87,7 +90,6 @@ export async function request(bind_variable, isPrivate, func, ...args) {
         headers: headers,
         body: JSON.stringify(payload)
     });
-    console.log(JSON.stringify(payload))
     let result, err;
     if (response.ok){
         result = await response.json();

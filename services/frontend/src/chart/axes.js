@@ -24,7 +24,11 @@ chart.prototype.drawAxes = function(dataSliced) {
         const pixelLoc = math.remap(this.dataBounds.left, this.dataBounds.right, this.pixelBounds.left, this.pixelBounds.right, Math.floor(i) + 0.5);
         if (i < dataSliced.length) {
             const arg = this.isIntraday() ? 3 : 1;
+            try{
             this.drawAxesText(toDT(dataSliced[Math.floor(i)][0],arg), [pixelLoc - xOffset - this.wickWidth / 2, this.pixelBounds.bottom + this.margin / 2], this.margin * 0.5);
+            }catch{
+                console.log("axes.js 27")
+            }
         }
         this.ctx.beginPath();
         this.ctx.moveTo(pixelLoc - xOffset - this.wickWidth / 2, this.pixelBounds.bottom);

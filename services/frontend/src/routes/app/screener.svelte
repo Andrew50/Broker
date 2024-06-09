@@ -41,6 +41,13 @@
         on:click={() => request(screener_data, true, "getScreener", get(selectedSetups)) }> Screen 
     </button>
 </div>
+<div>
+    <button
+    on:click={() => request(null,true, "update")}>update
+    </button>
+    </div>
+
+
 <Table
     headers={["Ticker", "Setup", "Value"]}
     data={screener_data}

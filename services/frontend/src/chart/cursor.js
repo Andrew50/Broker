@@ -27,8 +27,10 @@ chart.prototype.drawCursor = function(){
     this.currentPrice = price;
     const idk = this.data[this.data.length + index]
     
-    console.log(index);
+    try{
     this.currentT = idk[0];
+    }catch{
+        this.currentT = null}
     let arbOffset;
     let arg;
     if (this.isIntraday()) {

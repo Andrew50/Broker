@@ -14,18 +14,18 @@ services:
 #        expose: 
 #          - 5173
 
-    tf:
-        build:
-            context: /home/aj/dev/broker/services/tf
-            dockerfile: Dockerfile
-        restart: always
-        ports:
-        - "8501:8501"
-        - "8500:8500"
-        volumes:
-            - tf:/models
-        networks:
-          - compose_network
+#    tf:
+#        build:
+#            context: /home/aj/dev/broker/services/tf
+#            dockerfile: Dockerfile
+#        restart: on-failure:5
+#        ports:
+#        - "8501:8501"
+#        - "8500:8500"
+#        volumes:
+#            - tf:/models
+#        networks:
+#          - compose_network
 
     backend:
         depends_on:
@@ -77,7 +77,7 @@ services:
         volumes:
           - cache:/data
         command: redis-server
-        mem_limit: 12G
+        mem_limit: 24G
 volumes:
     db:
     cache:

@@ -29,6 +29,7 @@ var privateFunc = map[string]func(*data.Conn, int, json.RawMessage) (interface{}
     "trainModel": tasks.TrainModel,
     "setTrainer": tasks.SetTrainer,
     "getTrainer": tasks.GetTrainer,
+    "update": tasks.Update,
 }
 
 type Request struct {

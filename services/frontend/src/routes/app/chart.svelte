@@ -12,6 +12,7 @@
     let chartFocused = true;
 	let queryError = "";
     let queryValue = "";
+    import { get } from 'svelte/store';
 
     function handleChartClick(event) {
         chartFocused = true;
@@ -20,7 +21,12 @@
     }
 
     function updateChartSize(v) {
-        if (!canvas) return;
+        if (!canvas) {
+            console.log("god")
+            return;
+        }
+
+        console.log(v)
         canvas.width = v;
         canvas.height = window.innerHeight;
         Chart.draw();
@@ -42,7 +48,9 @@
         });
         window.addEventListener("resize", updateChartSize);
         menuLeftPos.subscribe((v) => updateChartSize(v));
-        updateChartSize();
+        const m = get(menuLeftPos)
+        console.log(m)
+        menuLeftPos.set(m)
         chartQuery.subscribe((value) => {Chart.updateQuery(value[0],value[1],value[2],value[3]);});
         canvas.addEventListener("contextmenu", (event) => {
             event.preventDefault();
@@ -55,6 +63,9 @@
         });
         canvas.addEventListener("click", handleChartClick);
         window.addEventListener("click", handleWindowClick);
+        chartQuery.set([ticker,tf,dt,pm]);
+        Chart.draw(false)
+        console.log(Chart.isQueryValid)
         return () => {
             window.removeEventListener("click", handleWindowClick);
             canvas.removeEventListener("click", handleChartClick);
@@ -68,6 +79,8 @@
             return null;
         }
     }
+
+
 
 	function onKeydown(event) {
         if (!chartFocused) return;

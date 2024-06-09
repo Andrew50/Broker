@@ -9,7 +9,6 @@ from google.protobuf import text_format
 from tensorflow_serving.config import model_server_config_pb2
 #import matplotlib.pyplot as plt
 import pandas as pd
-import mplfinance as mplf
 #import grpc
 #from tensorflow_serving.apis import model_management_pb2, model_management_pb2_grpc
 #import requests
@@ -90,6 +89,7 @@ class Trainer:
             if aggregate:
                 raise Exception('to code')
             else:
+
                 query = f"""SELECT open, high, low, close
                             FROM {table}
                             WHERE ticker_id = {ticker_id} AND t <= '{timestamp}'
@@ -102,15 +102,36 @@ class Trainer:
                 if ticker_id not in failed:
                     failed.append(ticker_id)
                 continue  # Skip if insufficient data
-            df = np.array(df, dtype=np.float64)
+            #if df 
+#            df = np.array(df, dtype=np.float64)
+#            df = np.log(df)
+#            close = np.roll(df[:,2], shift=-1)
+#            df = df - close[:,np.newaxis]
+#            df[:-1]
+#            ds.append(df)
+#            classes.append(class_info)
+##plot
+#            df = df.copy()
+#            df = pd.DataFrame(df)
+#            df["datetime"] = pd.to_datetime([timestamp - datetime.timedelta(days=x) for x in list(range(len(df)))])
+#            df.set_index(df.index)
+#            mpf.plot(df, title=f"{class_info} {ticker_id} {timestamp}")
+            #df = list(reversed(df))
+            df = pd.DataFrame(df, columns=['open', 'high', 'low', 'close'])
+            #df.iloc[0] = df.iat[-1,3] * 1.1
+            #df['datetime'] = pd.to_datetime([timestamp - datetime.timedelta(days=i) for i in range(len(df))])
+            path = f"/home/aj/dev/broker/local/{ticker_id}_{timestamp}_{class_info}.png"
+            #df.set_index('datetime', inplace=True)
+            #c =  df[::-1]
+            #mpf.plot(c.iloc[1:], type='candle',title=f"{class_info} {ticker_id} {timestamp}",savefig=path)
             df = np.log(df)
-            close = np.roll(df[:,2], shift=-1)
-            df = df - close[:,np.newaxis]
+            close = np.roll(df['close'].values, shift=-1)
+            df = df.sub(close, axis=0)
             df = df[:-1]
+            df = df.to_numpy().tolist()
+            df = [[10000000000000 for x in list(range(4))]] + df
             ds.append(df)
             classes.append(class_info)
-            mplf.plot(ds, title=f"{class_info} {ticker} {timestamp}")
-            
         return np.array(ds), np.array(classes)
 
     def createModel(data,bars,reqs):
@@ -161,22 +182,20 @@ class Trainer:
         failure = 1 - (len(xTrainingData) + len(xValidationData)) / (len(trainingSample) + len(validationSample))
         validationRatio = np.mean(yValidationData)
         trainingRatio = np.mean(yTrainingData)
+        #TODO all this needs to be sent to frontend instead of just logged
         print(f"{failure * 100}% failure of {len(trainingSample) + len(validationSample)} samples")
         print(f"{len(xValidationData) * validationRatio + len(xTrainingData) * trainingRatio} yes samples")
         print("training class ratio",trainingRatio)
         print("validation class ratio", validationRatio)
         print("training sample size", len(xTrainingData))
-        #print(xTrainingData)
         early_stopping = EarlyStopping(
             monitor='val_auc_pr',
-            patience=20,
+            patience=50,
             restore_best_weights=True,
             mode='max',
             verbose =1
         )
-        print(xValidationData)
-        print(yValidationData)
-        history = model.fit(xTrainingData, yTrainingData,epochs=100,batch_size=64,validation_data=(xValidationData, yValidationData),callbacks=[early_stopping])
+        history = model.fit(xTrainingData, yTrainingData,epochs=300,batch_size=64,validation_data=(xValidationData, yValidationData),callbacks=[early_stopping])
         tf.keras.backend.clear_session()
         score = round(history.history['val_auc_pr'][-1] * 100)
         with data.db.cursor() as cursor:

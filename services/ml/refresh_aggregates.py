@@ -54,6 +54,10 @@ def refresh_all_aggregates(aggregates, base_table, slice_size_days=SLICE_SIZE_DA
         list(tqdm(pool.imap_unordered(refresh_aggregates, [[start_date, end_date, aggregates] for start_date, end_date in date_slices]), total=len(date_slices), desc="Refreshing aggregates"))
 
 if __name__ == "__main__":
+    refreshAggregates()
+
+def refreshAggregates():
     aggregates = ['quotes_h_extended', 'quotes_h', 'quotes_d', 'quotes_w']
     base_table = 'quotes_1_extended'
     refresh_all_aggregates(aggregates, base_table)
+

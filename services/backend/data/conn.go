@@ -7,7 +7,7 @@ import (
     "github.com/redisAI/redisai-go/redisai"
     "github.com/go-redis/redis/v8"
     "time"
-    "strings"
+    //"strings"
 )
 
 type Conn struct {
@@ -31,7 +31,8 @@ func GetConn(container bool) *Conn {
     for true {
         db, err = pgxpool.Connect(context.Background(), db_url)
         if err != nil {
-            if strings.Contains(err.Error(), "the database system is starting up") {
+            //if strings.Contains(err.Error(), "the database system is starting up") {
+            if true{
                 log.Println("waiting for db")
             } else {
                 log.Fatalf("Unable to connect to database: %v\n", err)

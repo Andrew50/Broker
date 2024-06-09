@@ -72,6 +72,7 @@ export class chart {
                 y: evt.clientY
             };
             if (this.isDragging){// && evt.clientX < this.canvas.width - this.margin) {
+                console.log("draggin")
                 const neww = evt.clientX;
                 const a1 = (this.a + ((this.prev - evt.clientX) / this.candleWidth));
                 const a2 = (this.data.length + (this.a) - Math.floor((this.pixelBounds.right) / this.candleWidth) + (this.prev - evt.clientX) / this.candleWidth);

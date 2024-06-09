@@ -45,8 +45,8 @@
     function resize(event) {
         if (resizing) {
             let l = event.clientX;
-            console.log(thresh);
-            console.log("d",event.clientX)
+            //console.log(thresh);
+            //console.log("d",event.clientX)
             /*if (event.clientX > thresh) {
                 l = close;
                 active_menu = '';

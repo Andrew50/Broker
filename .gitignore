@@ -13,4 +13,4 @@
 *.tf
 venv/
 env
-
+/local/
